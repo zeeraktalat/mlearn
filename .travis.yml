@@ -1,0 +1,21 @@
+language: python
+
+python:
+  - "3.2"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+
+install:
+  pip install -r requirements.txt
+
+# Run tests
+script:
+  - flake8
+  - pydocstyle
+  - python -m unittest discover
+
+branches:
+  only:
+    - staging
