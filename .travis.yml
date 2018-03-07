@@ -8,7 +8,8 @@ python:
   - "3.6"
 
 install:
-  pip install -r requirements.txt
+  - pip install flake8 pydocstyle
+  - pip install -r requirements.txt
 
 # Run tests
 script:
