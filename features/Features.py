@@ -7,7 +7,7 @@ from nltk import ngrams, word_tokenize
 from nltk.util import skipgrams
 import spacy
 
-class LinguisticFeatures(object):
+class Features(object):
     def __init__(self, methods: List[str] = [], cleaner: Callable = None, **kwargs):
         # Initialise variables
         self.args       = kwargs
@@ -42,9 +42,16 @@ class LinguisticFeatures(object):
         self.document             = document
         self.tokens, self.stopped = self.cleaner(document)
 
-    def unigrams(self) -> list:
+class LinguisticFeatures(Features):
+    def unigrams(self) -> List[str]:
         """ Returns unigrams after removal of stopwords"""
         return self.tokens
 
-    def ngrams(self, n: int) -> list:
-        return ngrams(self.tokens, n)
+    def token_ngrams(self, **kwargs) -> List[str]:
+        return ["_".join(toks) for toks in ngrams(self.tok, kwargs['ngrams'])]
+
+    def skip_grams(self, **kwargs) -> List[str]:
+        return ["_".join(item) for item in skipgrams(self.tok, kwargs['ngrams'], kwargs['skip_size'])]
+
+    def char_ngrams(self, **kwargs) -> List[str]:
+        return ["_".join(toks) for toks in ngrams(self.tok_str, kwargs['ngrams'])]
