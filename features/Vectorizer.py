@@ -1,4 +1,5 @@
 class Vectorisation(object):
+    """ This is an issue """
     def __init__(self, X, y, vectoriser):
         self.vect = vectoriser
 
