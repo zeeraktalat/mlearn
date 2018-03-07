@@ -11,6 +11,7 @@ class LinguisticFeatures(object):
     """ Linguistic feature generation class. """
 
     def __init__(self, methods: List[str] = [], cleaner: Callable = None, **kwargs):
+        """ Set initialisations so that loading only happens once. """
         # Initialise variables
         self.args       = kwargs
         self.method     = methods

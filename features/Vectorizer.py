@@ -1,6 +1,7 @@
 class Vectorisation(object):
     """ This is an issue """
     def __init__(self, X, y, vectoriser):
+        """ Initialise vectoriser """
         self.vect = vectoriser
 
     @property
