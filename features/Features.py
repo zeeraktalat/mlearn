@@ -62,7 +62,7 @@ class LinguisticFeatures(object):
     def token_ngrams(self, **kwargs) -> List[str]:
         """ Generate list of token n-grams, n given in kwargs['ngrams'].
         :param kwargs: Keyword Arguments (must contain 'ngrams').
-        :returns: list[str]: Multi-token tokens joined by _.
+        :return: list[str]: Multi-token tokens joined by _.
         e.g.: Outstanding blossom -> Outstanding_blossom
         """
         return ["_".join(toks) for toks in ngrams(self.tokens, kwargs['ngrams'])]
@@ -70,13 +70,13 @@ class LinguisticFeatures(object):
     def skip_grams(self, **kwargs) -> List[str]:
         """ Generate list of skip-grams.
         :param kwargs: Keyword Arguments (must contain 'ngrams' and 'skip_size').
-        :returns: list[str]: Multi-token tokens joined by _.
+        :return: list[str]: Multi-token tokens joined by _.
         """
         return ["_".join(item) for item in skipgrams(self.tokens, kwargs['ngrams'], kwargs['skip_size'])]
 
     def char_ngrams(self, **kwargs) -> List[str]:
         """ Generate list of character n-grams.
         :param kwargs: Keyword Arguments (must contain 'char-ngrams').
-        :returns: list[str]: Multi-token tokens joined by _.
+        :return: list[str]: Multi-token tokens joined by _.
         """
         return ["_".join(toks) for toks in ngrams(" ".join(self.tokens), kwargs['ngrams'])]
