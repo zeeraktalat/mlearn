@@ -1,13 +1,16 @@
-from typing import Union, List, Dict, Tuple, Callable
+import spacy
+from nltk.util import skipgrams
+from nltk import ngrams, word_tokenize
 from collections import Counter, defaultdict
+from typing import Union, List, Dict, Tuple, Callable
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from nltk import ngrams, word_tokenize
-from nltk.util import skipgrams
-import spacy
 
-class Features(object):
+class FeaturesClass(object):
+    """
+    Base class for feature generation. Contains methods that aren't features specific.
+    """
     def __init__(self, methods: List[str] = [], cleaner: Callable = None, **kwargs):
         # Initialise variables
         self.args       = kwargs
@@ -42,16 +45,17 @@ class Features(object):
         self.document             = document
         self.tokens, self.stopped = self.cleaner(document)
 
-class LinguisticFeatures(Features):
+class LinguisticFeatures(FeaturesClass):
+
     def unigrams(self) -> List[str]:
         """ Returns unigrams after removal of stopwords"""
         return self.tokens
 
     def token_ngrams(self, **kwargs) -> List[str]:
-        return ["_".join(toks) for toks in ngrams(self.tok, kwargs['ngrams'])]
+        return ["_".join(toks) for toks in ngrams(self.tokens, kwargs['ngrams'])]
 
     def skip_grams(self, **kwargs) -> List[str]:
-        return ["_".join(item) for item in skipgrams(self.tok, kwargs['ngrams'], kwargs['skip_size'])]
+        return ["_".join(item) for item in skipgrams(self.tokens, kwargs['ngrams'], kwargs['skip_size'])]
 
     def char_ngrams(self, **kwargs) -> List[str]:
-        return ["_".join(toks) for toks in ngrams(self.tok_str, kwargs['ngrams'])]
+        return ["_".join(toks) for toks in ngrams(" ".join(self.tokens), kwargs['ngrams'])]
