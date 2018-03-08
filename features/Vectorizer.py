@@ -1,5 +1,6 @@
 """This module creates vectoriser and related methods."""
 
+
 class Vectorisation(object):
     """Set up the vectoriser."""
 
