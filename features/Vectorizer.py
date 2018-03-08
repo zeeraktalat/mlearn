@@ -3,6 +3,7 @@
 class Vectorisation(object):
     """Set up the vectoriser."""
 
+
     def __init__(self, X, y, vectoriser):
         """Initialise vectoriser."""
         self.vect = vectoriser
@@ -13,7 +14,7 @@ class Vectorisation(object):
         return self.vect
 
     @vectoriser.setter
-    def vectoriser(self, vect):
+    def vectoriser(self, vectoriser):
         self.vect = vectoriser
 
     def train(self, X):
