@@ -5,6 +5,8 @@ python:
   - "3.5"
   - "3.6"
 
+cache: pip
+
 install:
   - pip install flake8 pydocstyle
   - pip install -r requirements.txt
