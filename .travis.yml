@@ -1,17 +1,20 @@
 language: python
 
 python:
-  - "3.2"
-  - "3.3"
   - "3.4"
   - "3.5"
   - "3.6"
+
+cache: pip
 
 install:
   - pip install flake8 pydocstyle
   - pip install -r requirements.txt
 
-# Run tests
+before_script:
+  - python -m spacy download en
+  - python -m nltk.downloader popular
+
 script:
   - flake8
   - pydocstyle
@@ -20,3 +23,6 @@ script:
 branches:
   only:
     - staging
+
+notifications:
+    slack: usfd-nlp:79cXz6zwLt3ApzgjxKx7Yvdx
