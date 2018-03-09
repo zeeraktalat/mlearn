@@ -20,3 +20,6 @@ script:
 branches:
   only:
     - staging
+
+notifications:
+    slack: usfd-nlp:79cXz6zwLt3ApzgjxKx7Yvdx
