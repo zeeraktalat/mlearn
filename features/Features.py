@@ -86,4 +86,14 @@ class LinguisticFeatures(object):
         :param kwargs: Keyword Args (must contain 'char-ngrams').
         :return: list[str]: Multi-token tokens joined by _.
         """
-        return ["_".join(toks) for toks in ngrams(" ".join(self.tokens), kwargs['ngrams'])]
+        return ["_".join(toks) for toks in ngrams(" ".join(self.tokens), kwargs['char-ngrams'])]
+
+    def sentiment(self) -> None:
+        sent = self.sent.polarity_scores(self.document)
+
+        if sent['compound'] >= 0.5:
+            self.features.update({'SENTIMENT': 'pos'})
+        elif sent['compound'] > -0.5 and sent['compound'] < 0.5:
+            self.features.update({'SENTIMENT': 'neu'})
+        else:
+            self.features.update({'SENTIMENT': 'neg'})
