@@ -54,8 +54,9 @@ class LinguisticFeatures(object):
             self.str_to_method = self.methods
 
         for m_str in self.method_map:
-            self.features.update(
-                Counter(self.method_map[m_str](**self.kwargs)))
+            res = self.method_map[m_str](**self.kwargs)
+            if res:
+                self.features.update(Counter(res))
         return self.features
 
     def unigrams(self) -> List[str]:
@@ -86,4 +87,33 @@ class LinguisticFeatures(object):
         :param kwargs: Keyword Args (must contain 'char-ngrams').
         :return: list[str]: Multi-token tokens joined by _.
         """
-        return ["_".join(toks) for toks in ngrams(" ".join(self.tokens), kwargs['ngrams'])]
+        return ["_".join(toks) for toks in ngrams(" ".join(self.tokens), kwargs['char-ngrams'])]
+
+    def sentiment(self) -> None:
+        """Compute sentiment and directly update features dictionary."""
+        sent = self.sent.polarity_scores(self.document)
+
+        if sent['compound'] >= 0.5:
+            self.features.update({'SENTIMENT': 'pos'})
+        elif sent['compound'] > -0.5 and sent['compound'] < 0.5:
+            self.features.update({'SENTIMENT': 'neu'})
+        else:
+            self.features.update({'SENTIMENT': 'neg'})
+
+    def word_count(self, **kwargs) -> dict:
+        """Compute the number of words in the document.
+
+        :param stopped: bool: Use stopword filtered text.
+        :return: dict: Contains token count.
+        """
+        return {'TOK_COUNT': len(self.tokens)} if not kwargs['stopped']\
+                else {'TOK_COUNT': len(self.stopped)}
+
+    def avg_word_length(self, **kwargs):
+        """Compute the average word length in the document.
+
+        :param stopped: bool: Use stopword filtered text.
+        :return: dict: Contains token count.
+        """
+        return {'AVG_TOK_LEN': sum(len(w) for w in self.tokens) / len(self.tokens)} if not\
+                kwargs['stopped'] else {'AVG_TOK_LEN': sum(len(w) for w in self.stopped)}
