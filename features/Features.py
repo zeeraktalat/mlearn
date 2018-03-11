@@ -100,20 +100,20 @@ class LinguisticFeatures(object):
         else:
             self.features.update({'SENTIMENT': 'neg'})
 
-    def word_count(self, stopped: bool = False) -> dict:
+    def word_count(self, **kwargs) -> dict:
         """Compute the number of words in the document.
 
         :param stopped: bool: Use stopword filtered text.
         :return: dict: Contains token count.
         """
+        return {'TOK_COUNT': len(self.tokens)} if not kwargs['stopped']\
+                else {'TOK_COUNT': len(self.stopped)}
 
-        return {'TOK_COUNT': len(self.tokens)} if not stopped else {'TOK_COUNT': len(self.stopped)}
-
-    def avg_word_length(self, stopped = False):
+    def avg_word_length(self, **kwargs):
         """Compute the average word length in the document.
 
         :param stopped: bool: Use stopword filtered text.
         :return: dict: Contains token count.
         """
-        return {'AVG_TOK_LEN': sum(len(w) for w in self.tokens) / len(self.tokens)} if not stopped\
-                else {'AVG_TOK_LEN': sum(len(w) for w in self.stopped)}
+        return {'AVG_TOK_LEN': sum(len(w) for w in self.tokens) / len(self.tokens)} if not\
+                kwargs['stopped'] else {'AVG_TOK_LEN': sum(len(w) for w in self.stopped)}
