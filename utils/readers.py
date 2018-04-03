@@ -3,7 +3,7 @@
 import pymongo
 import logger
 from pymongo import MongoClient
-from nltk import word_tokenize
+# from nltk import word_tokenize
 
 
 class MongoDB(object):
