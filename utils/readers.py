@@ -3,7 +3,6 @@
 import pymongo
 import logger
 from pymongo import MongoClient
-# from nltk import word_tokenize
 
 
 class MongoDB(object):
@@ -25,10 +24,9 @@ class MongoDB(object):
     def __iter__(self):
         """Overload __iter__ so that reusable iterators can be used.
 
-        TODO: Unfinished.
+        TODO: Needs testing
         """
-        # TODO Unfinished
-        for record in self.retrieve_many_records(self.collection, {}, no_cursor_timeout = False):
+        for record in self.iterator:
             yield record
 
     @property
@@ -131,31 +129,5 @@ class MongoDB(object):
         :param *args: Optional arguments
         :returns resultset: Mongo ResultSet
         """
-        return self.db[collection].find(query, **kwargs)
-
-
-# def ReadMongo(object):
-#     def __init__(self, conn, dbs):
-#         self.conn = conn
-#         self.databses = dbs
-#
-#     def __iter__(self):
-#         for db in self.databases:
-#             self.conn.database = db
-#             for coll in self.conn.get_collection_names():
-#                 self.conn.collection = coll
-#
-#                 for doc in self.conn.retrieve_many_records(coll, {}, no_cursor_timeout = False):
-#                     if 'Posts' in coll:
-#                         if db == 'VoatDB':
-#                             tokenised = word_tokenize(doc['title'].lower())
-#                         else:
-#                             tokenised = word_tokenize(doc['selftext'].lower() +
-#                                                       ' ' +
-#                                                       doc['title'].lower())
-#                     else:
-#                         if db == 'VoatDB':
-#                             tokenised = word_tokenize(doc['text'].lower())
-#                         else:
-#                             tokenised = word_tokenize(doc['comment'].lower())
-#                     yield tokenised
+        self.iterator = self.db[collection].find(query, **kwargs)
+        return self.iterator
