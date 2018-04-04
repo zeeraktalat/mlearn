@@ -3,14 +3,16 @@
 import pymongo
 import logger
 from pymongo import MongoClient
+from typing import Generator
 
 
 class MongoDB(object):
     """MongoDB connector. Everything connnected to database side."""
 
-    def __init__(self, hostname, port):
+    def __init__(self, hostname: str = 'localhost', port: int = 27017): -> None
         """Initialise methods."""
         # Set up logging
+        # TODO Update logging to global + local log
         self.log = logger.initialise_loggers('mongodb', '../log/db.log')
 
         try:
@@ -30,25 +32,32 @@ class MongoDB(object):
             yield record
 
     @property
-    def database(self):
+    def database(self): -> pymongo.database.Database
         """Obtain and set the database used. Setter accepts a string."""
-        return self.db if self.db else None
+        return self.db
 
     @database.setter
-    def database(self, db):
+    def database(self, db: str):
         self.db = self.conn[db]
 
+    def drop_database(self, db: str):
+        """Drop Database.
+
+        :param db: Database to be dropped.
+        """
+        self.drop_database(db)
+
     @property
-    def collection(self):
+    def collection(self): -> pymongo.collection.Collection
         """Obtain and set the collection used. Setter accepts a string."""
-        return self.coll if self.coll else None
+        return self.coll
 
     @collection.setter
-    def collection(self, collection):
+    def collection(self, collection: str): -> None
         self.coll = self.db[collection]
 
     @property
-    def indices(self):
+    def indices(self): -> dict
         """Retrieve indices for a given collection.
 
         :returns indices: Dictionary of indices
@@ -56,7 +65,7 @@ class MongoDB(object):
         return self.coll.index_information()
 
     @indices.setter
-    def indices(self, indices):
+    def indices(self, indices: list): -> None
         """Create indices.
 
         :param indices: Fields to be used as indices, see pymongo API for format.
@@ -67,7 +76,18 @@ class MongoDB(object):
             self.logger.error("Could not create index:\n\t{0}".format(e))
             raise(e)
 
-    def retrieve_one_record(self, query, *args):
+    def drop_index(self, index: str): -> None
+        """Drop created index. Must be string or dict.
+
+        :param index: String or Dict with index information.
+        """
+        self.coll.drop_index(index)
+
+    def drop_all_indices(self): -> None
+        """Drop all indices for collection."""
+        self.coll.drop_indexes()
+
+    def retrieve_one_record(self, query: dict, *args): -> dict
         """Retrieve or store single record.
 
         :query: Query sought
@@ -75,7 +95,7 @@ class MongoDB(object):
         """
         return self.coll.find_one(query, *args)
 
-    def store_one_record(self, record, collection):
+    def store_one_record(self, record: dict, collection: str): -> bool
         """Insert a recording into collection. Only writes if _id does not exist already.
 
         :param record: Record to insert
@@ -94,15 +114,15 @@ class MongoDB(object):
             self.db[collection].insert_one(record)
         except pymongo.errors.DuplicateKeyError as e:
             self.log.warning("Duplicate Key found {0}".format(e))
-            return -1
+            return False 
         except pymongo.errors.WriteError as e:
             self.store_one_record(record, collection)
         except Exception as e:
             self.log.error("WriteError (collection: {}): {}".format(collection, e))
-            return 0
-        return 1
+            return False
+        return True
 
-    def update_one_record(self, _id, updates, collection, *args, **kwargs):
+    def update_one_record(self, _id: str, updates: dict, collection: str, *args, **kwargs): -> bool
         """Update one document in DB.
 
         :param _id: ID to filter by
@@ -122,7 +142,7 @@ class MongoDB(object):
             return False
         return True
 
-    def retrieve_many_records(self, collection, query, **kwargs):
+    def retrieve_many_records(self, query: dict, collection: str, **kwargs): -> Generator
         """Return all records that satisfy query.
 
         :param query: Filtering query

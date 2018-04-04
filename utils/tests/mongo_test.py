@@ -1,5 +1,5 @@
 import unittest
-from readers import MongoDB
+from mlapi.utils.readers import MongoDB
 
 class MongoTest(unittest.TestCase):
     """Tests MongoDB methods."""
@@ -13,7 +13,7 @@ class MongoTest(unittest.TestCase):
 
     def test_no_created_database(self):
         """Test that database does not exist unless specified."""
-        self.assertEqual(self.conn.database, None)
+        self.assertRaise(AttributeError, self.conn.database)
 
     def test_created_database(self)
         """Test that database exists once specified."""
@@ -22,7 +22,7 @@ class MongoTest(unittest.TestCase):
 
     def test_no_created_collection(self):
         """Test that collection does not exist unless specified."""
-        self.assertEqual(self.conn.collection, None)
+        self.assertRaise(AttributeError, self.conn.collection)
 
     def test_created_collection(self)
         """Test that collection exists once specified."""
@@ -32,11 +32,18 @@ class MongoTest(unittest.TestCase):
 
     def test_no_created_indices(self):
         """Test that indices do not exist prior to creation."""
-        self.assertEqual(self.conn.indices, None)
+        self.assertRaises(AttributeError, self.conn.indices)
+
+        self.conn.database = 'TestDB'
+        self.conn.collection = 'testCollection'
+        self.assertEqual(self.conn.indices, {})
 
     def test_created_indices(self):
         """Test that indices exist once created."""
-        pass
+        self.conn.database = 'TestDB'
+        self.conn.collection = 'testCollection'
+        self.conn.indices = ('id', pymongo.DESCENDING)
+        self.assertEqual(self.conn.indices['id_-1']['key'], [('id', -1)])
 
     def test_create_record(self):
         """Test that insertion of record works."""
