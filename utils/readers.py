@@ -32,7 +32,7 @@ class MongoDB(object):
     @property
     def database(self):
         """Obtain and set the database used. Setter accepts a string."""
-        return self.db
+        return self.db if self.db else None
 
     @database.setter
     def database(self, db):
@@ -41,7 +41,7 @@ class MongoDB(object):
     @property
     def collection(self):
         """Obtain and set the collection used. Setter accepts a string."""
-        return self.coll
+        return self.coll if self.coll else None
 
     @collection.setter
     def collection(self, collection):
