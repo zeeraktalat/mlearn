@@ -95,7 +95,7 @@ class MongoDB(object):
         """
         return self.coll.find_one(query, *args)
 
-    def store_one_record(self, record: dict, collection: str): -> bool
+    def store_one_record(self, record: dict, collection: str = None): -> bool
         """Insert a recording into collection. Only writes if _id does not exist already.
 
         :param record: Record to insert
@@ -104,6 +104,8 @@ class MongoDB(object):
         :param **kwargs: **kwargs additional keyword arguments to specify
         :returns boolean: True if write suceeds, False if not.
         """
+        if not collection:
+            collection = self.coll
         try:
             assert(isinstance(record, dict))
         except AssertionError as e:
@@ -114,7 +116,7 @@ class MongoDB(object):
             self.db[collection].insert_one(record)
         except pymongo.errors.DuplicateKeyError as e:
             self.log.warning("Duplicate Key found {0}".format(e))
-            return False 
+            return False
         except pymongo.errors.WriteError as e:
             self.store_one_record(record, collection)
         except Exception as e:
@@ -122,13 +124,16 @@ class MongoDB(object):
             return False
         return True
 
-    def update_one_record(self, _id: str, updates: dict, collection: str, *args, **kwargs): -> bool
+    def update_one_record(self, _id: str, updates: dict, collection: str = None,
+                          *args, **kwargs): -> bool
         """Update one document in DB.
 
         :param _id: ID to filter by
         :param updates: Dict containing information on which fields are updated and their values.
         :param collection: Collection to find document in.
         """
+        if not collection:
+            collection = self.coll
         try:
             assert(isinstance(updates, dict))
         except AssertionError as e:
