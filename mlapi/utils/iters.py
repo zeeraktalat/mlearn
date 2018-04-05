@@ -1,5 +1,6 @@
 """Module for overloading __iter__ to create reusable generators as needed."""
 
+
 class MongoRetrieveManyIter(object):
     """Iterates over many search results allowing for multiple iterations."""
 
@@ -19,5 +20,6 @@ class MongoRetrieveManyIter(object):
         self.collection = collection
 
     def __iter__(self):
+        """Overloads __iter__ to create reusable iterator."""
         for doc in self.conn.retrieve_many_records(self.query, self.collection, **self.kwargs):
             yield doc

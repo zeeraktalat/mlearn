@@ -3,11 +3,10 @@
 import pymongo
 from mlapi.utils import logger
 from pymongo import MongoClient
-from pymongo.errors import DuplicateKeyError, InvalidOperation, WriteError
+from pymongo.errors import DuplicateKeyError, WriteError
 from pymongo.collection import Collection
 from pymongo.database import Database
 from typing import Generator
-from mlapi.utils import iters
 
 
 class MongoDB(object):
@@ -163,7 +162,7 @@ class MongoDB(object):
         self.db[collection].delete_one(query)
         self.log.info("Record deleted: {}".format(query))
 
-    def retrieve_many_records(self, query: dict, collection: str = None, **kwargs) -> Generator:
+    def retrieve_many_records(cls, query: dict, collection: str = None, **kwargs) -> Generator:
         """Return all records that satisfy query.
 
         :param query: Filtering query
@@ -171,13 +170,9 @@ class MongoDB(object):
         :returns resultset: Mongo ResultSet
         """
         if not collection:
-            collection = self.col
+            collection = cls.col
         if isinstance(collection, Collection):
             collection = collection.name
 
-        for record in self.db[collection].find(query, **kwargs):
+        for record in cls.db[collection].find(query, **kwargs):
             yield record
-
-        # return self.db[collection].find(query, **kwargs)
-
-

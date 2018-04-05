@@ -3,6 +3,7 @@ import pymongo
 from mlapi.utils.readers import MongoDB
 from mlapi.utils.iters import MongoRetrieveManyIter
 
+
 class MongoTest(unittest.TestCase):
     """Tests MongoDB methods."""
 
@@ -68,7 +69,6 @@ class MongoTest(unittest.TestCase):
         self.setup_database()
         self.setup_fill_collection()
 
-        first = {'_id': 1, 'text': 'This is a test', 'id': 1}
         update = {'_id': 1, 'text': 'This is also not a test', 'id': 3}
 
         self.assertFalse(self.conn.update_one_record(1, 'id'))
@@ -91,15 +91,13 @@ class MongoTest(unittest.TestCase):
         first  = {'_id': 1, 'text': 'This is a test', 'id': 1}
         second = {'_id': 2, 'text': 'This is not a test', 'id': 2}
 
-        self.assertListEqual(list(self.conn.retrieve_many_records({}, 'testCollection')), [first, second])
+        self.assertListEqual(list(self.conn.retrieve_many_records({}, 'testCollection')),
+                                                                  [first, second])
 
     def test_reusable_iterator(self):
         """Test that iterator is in fact reusable."""
         self.setup_database()
         self.setup_fill_collection()
-
-        first  = {'_id': 1, 'text': 'This is a test', 'id': 1}
-        second = {'_id': 2, 'text': 'This is not a test', 'id': 2}
 
         res        = MongoRetrieveManyIter(self.conn, {})
         first_gen  = [record for record in res]
@@ -118,6 +116,7 @@ class MongoTest(unittest.TestCase):
     def test_delete_database(self):
         """Test that record is deleted."""
         self.assertIsNone(self.conn.drop_database('TestDB'))
+
 
 if __name__ == "__main__":
     unittest.main()
