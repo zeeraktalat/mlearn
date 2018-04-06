@@ -92,15 +92,15 @@ def initialise_loggers(logger, logfile):
     # Set up file logger
     unified = TqdmFileHandler(logdir + 'api.log')
     unified.setFormatter(colorlog.ColoredFormatter(
-                             strformat,
-                             datefmt = dateformat,
-                             log_colors = colorformat))
+                         strformat,
+                         datefmt = dateformat,
+                         log_colors = colorformat))
 
     individual = TqdmFileHandler(logdir + '{0}.log'.format(logfile))
     individual.setFormatter(colorlog.ColoredFormatter(
-                             strformat,
-                             datefmt = dateformat,
-                             log_colors = colorformat))
+                            strformat,
+                            datefmt = dateformat,
+                            log_colors = colorformat))
     logger.addHandler(streamhandler)
     logger.addHandler(unified)
     logger.addHandler(individual)
