@@ -1,8 +1,9 @@
 language: python
 
+services:
+  - mongodb
+
 python:
-  - "3.4"
-  - "3.5"
   - "3.6"
 
 cache: pip
@@ -13,7 +14,7 @@ install:
 
 before_script:
   - python -m spacy download en
-  - python -m nltk.downloader popular
+  - python -m nltk.downloader punkt stopwords
 
 script:
   - flake8
