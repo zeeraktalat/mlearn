@@ -13,7 +13,7 @@ install:
 
 before_script:
   - python -m spacy download en
-  - python -m nltk.downloader popular
+  - python -m nltk.downloader punkt stopwords
 
 script:
   - flake8
