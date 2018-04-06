@@ -16,7 +16,7 @@ class MongoDB(object):
         """Initialise methods."""
         # Set up logging
         # TODO Update logging to global + local log
-        self.log = logger.initialise_loggers('mongodb', '../log/db.log')
+        self.log = logger.initialise_loggers('MongoDB', 'MongoDB')
 
         try:
             # Connect to DB
