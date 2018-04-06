@@ -87,7 +87,7 @@ class LinguisticFeatures(object):
         :param kwargs: Keyword Args (must contain 'char-ngrams').
         :return: list[str]: Multi-token tokens joined by _.
         """
-        return ["_".join(toks) for toks in ngrams(" ".join(self.tokens), kwargs['char-ngrams'])]
+        return ["_".join(toks) for toks in ngrams(" ".join(self.tokens), kwargs['char_ngrams'])]
 
     def sentiment(self) -> None:
         """Compute sentiment and directly update features dictionary."""
