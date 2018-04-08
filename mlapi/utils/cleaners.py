@@ -1,6 +1,8 @@
 """File for document cleaners."""
 
 from nltk import word_tokenize
+from typing import List
+import spacy
 
 
 class DocumentCleaner(object):
@@ -40,14 +42,16 @@ class DocumentCleaner(object):
         self.document = document
 
     def nltk_tokenize(self):
-        if self.document
+        """Tokenise using NLTK word_tokenise. Updates self.tokens."""
+        if self.document:
             self.tokens = word_tokenize(self.document)
             self.dout = self.tokens[:]
         else:
             raise ValueError
 
     def spacy_tokenize(self):
-        if self.document
+        """Tokenise using spacy's tokenizer. Updates self.tokens."""
+        if self.document:
             self.tokens = word_tokenize(self.document)
         else:
             raise ValueError

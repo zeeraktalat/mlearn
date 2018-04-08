@@ -3,14 +3,15 @@ import spacy
 from nltk.util import skipgrams
 from nltk import ngrams
 from collections import Counter
-from typing import List, Callable
+from typing import List
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from mlapi.utils.cleaners import DocumentCleaner
 
 
 class LinguisticFeatures(object):
     """Linguistic feature generation class."""
 
-    def __init__(self, methods: List[str] = [], cleaner: Callable = None,
+    def __init__(self, methods: List[str] = None, cleaner: DocumentCleaner = None,
                  **kwargs):
         """Set initialisations so that loading only happens once."""
         # Initialise variables
@@ -46,7 +47,7 @@ class LinguisticFeatures(object):
     @doc.setter
     def doc(self, document):
         self.document             = document
-        self.tokens, self.stopped = self.cleaner(document)
+        self.dc(document)
 
     def generate(self):
         """Generate features, where each item is a callable function."""
@@ -89,8 +90,8 @@ class LinguisticFeatures(object):
         """
         return ["_".join(toks) for toks in ngrams(" ".join(self.tokens), kwargs['char_ngrams'])]
 
-    def sentiment(self) -> None:
-        """Compute sentiment and directly update features dictionary."""
+    def sentiment_aggregate(self) -> None:
+        """Compute sentiment aggregate and directly update features dictionary."""
         sent = self.sent.polarity_scores(self.document)
 
         if sent['compound'] >= 0.5:
@@ -100,20 +101,39 @@ class LinguisticFeatures(object):
         else:
             self.features.update({'SENTIMENT': 'neg'})
 
+        if self.kwargs['test']:
+            return sent
+
+    def sentiment_scores(self) -> None:
+        """Compute sentiment scores and directly update features dictionary."""
+        sent = self.sent.polarity_scores(self.document)
+        del sent['compound']
+        self.features.update(sent)
+        if self.kwargs['test']:
+            return sent
+
     def word_count(self, **kwargs) -> dict:
-        """Compute the number of words in the document.
+        """Compute the number of words in the document. Directly update feature dict.
 
         :param stopped: bool: Use stopword filtered text.
-        :return: dict: Contains token count.
         """
-        return {'TOK_COUNT': len(self.tokens)} if not kwargs['stopped']\
-                else {'TOK_COUNT': len(self.stopped)}
+        self.features.update({'TOK_COUNT': len(self.tokens)} if not kwargs['stopped']
+                             else {'TOK_COUNT': len(self.stopped)})
+
+        if self.kwargs['test']:
+            return {"TOK_COUNT": len(self.tokens)}
 
     def avg_word_length(self, **kwargs):
-        """Compute the average word length in the document.
+        """Compute the average word length in the document. Directly update feature dict.
 
         :param stopped: bool: Use stopword filtered text.
-        :return: dict: Contains token count.
         """
-        return {'AVG_TOK_LEN': sum(len(w) for w in self.tokens) / len(self.tokens)} if not\
-                kwargs['stopped'] else {'AVG_TOK_LEN': sum(len(w) for w in self.stopped)}
+        if kwargs['stopped']:
+            tok_len = sum(len(w) for w in self.stopped) / len(self.stopped)
+        else:
+            tok_len = sum(len(w) for w in self.tokens) / len(self.tokens)
+
+        self.features.update({'AVG_TOK_LEN': tok_len})
+
+        if self.kwargs['test']:
+            return {"AVG_TOK_LEN": round(tok_len,2)}
