@@ -13,7 +13,9 @@ class DocumentCleaner(object):
         # Initialise variables
         self.args       = kwargs
         self.method_map = {}
+        self.document   = None
         self.dout       = None
+        self.current    = None
 
         # Initialise imports
         self.tagger  = spacy.load('en')
@@ -41,17 +43,35 @@ class DocumentCleaner(object):
     def doc(self, document: str):
         self.document = document
 
-    def nltk_tokenize(self):
+    def generate(self):
+        """Generate features, where each item is a callable function."""
+        if self.method_map == {}:
+            self.str_to_method = self.methods
+
+        for m_str in self.method_map:
+            self.method_map[m_str](**self.kwargs)
+
+    def nltk_word_tokenize(self):
         """Tokenise using NLTK word_tokenise. Updates self.tokens."""
-        if self.document:
+        if self.current:
+            if isinstance(self.current, list):
+                self.current = " ".join(self.current)
+
+        elif self.document:
             self.tokens = word_tokenize(self.document)
-            self.dout = self.tokens[:]
         else:
-            raise ValueError
+            raise ValueError("Document not set.")
+        self.current = self.tokens[:]
+        self.dout = self.current
 
     def spacy_tokenize(self):
         """Tokenise using spacy's tokenizer. Updates self.tokens."""
+        if not self.spacy_parser:
+            self.spacy_parser = spacy.load('en')
+
         if self.document:
-            self.tokens = word_tokenize(self.document)
+            self.tokens = self.spacy_parser(self.document)
+            self.current = self.tokens[:]
+            self.dout = self.current
         else:
-            raise ValueError
+            raise ValueError("Document not set.")

@@ -21,12 +21,12 @@ class LinguisticFeatures(object):
         self.features   = {}
 
         # Initialise imports
-        self.tagger  = spacy.load('en')
-        self.cleaner = cleaner
-        self.sent    = SentimentIntensityAnalyzer()
+        self.tagger = spacy.load('en')
+        self.dc     = cleaner
+        self.sent   = SentimentIntensityAnalyzer()
 
     @property
-    def methods(self):
+    def methods(self) -> dict:
         """Handle method mapping."""
         return self.method_map
 
@@ -40,16 +40,16 @@ class LinguisticFeatures(object):
                 raise(e)
 
     @property
-    def doc(self):
+    def doc(self) -> str:
         """Document handler."""
-        return self.document
+        return self.dc.document
 
     @doc.setter
-    def doc(self, document):
-        self.document             = document
-        self.dc(document)
+    def doc(self, document) -> None:
+        self.dc.doc = document
+        self.dc.generate()
 
-    def generate(self):
+    def generate(self) -> dict:
         """Generate features, where each item is a callable function."""
         if self.method_map == {}:
             self.str_to_method = self.methods
@@ -62,7 +62,7 @@ class LinguisticFeatures(object):
 
     def unigrams(self) -> List[str]:
         """Return unigrams after removal of stopwords."""
-        return self.tokens
+        return self.dc.tokens
 
     def token_ngrams(self, **kwargs) -> List[str]:
         """Generate list of token n-grams, n given in kwargs['ngrams'].
@@ -71,7 +71,7 @@ class LinguisticFeatures(object):
         :return: list[str]: Multi-token tokens joined by _.
         e.g.: Outstanding blossom -> Outstanding_blossom
         """
-        return ["_".join(tok) for tok in ngrams(self.tokens, kwargs['ngrams'])]
+        return ["_".join(tok) for tok in ngrams(self.dc.dout, kwargs['ngrams'])]
 
     def skip_grams(self, **kwargs) -> List[str]:
         """Generate list of skip-grams.
@@ -79,7 +79,7 @@ class LinguisticFeatures(object):
         :param kwargs: Keyword Args (must contain 'ngrams' and 'skip_size').
         :return: list[str]: Multi-token tokens joined by _.
         """
-        return ["_".join(item) for item in skipgrams(self.tokens,
+        return ["_".join(item) for item in skipgrams(self.dc.dout,
                 kwargs['ngrams'], kwargs['skip_size'])]
 
     def char_ngrams(self, **kwargs) -> List[str]:
@@ -88,11 +88,11 @@ class LinguisticFeatures(object):
         :param kwargs: Keyword Args (must contain 'char-ngrams').
         :return: list[str]: Multi-token tokens joined by _.
         """
-        return ["_".join(toks) for toks in ngrams(" ".join(self.tokens), kwargs['char_ngrams'])]
+        return ["_".join(toks) for toks in ngrams(" ".join(self.dc.dout), kwargs['char_ngrams'])]
 
     def sentiment_aggregate(self) -> None:
         """Compute sentiment aggregate and directly update features dictionary."""
-        sent = self.sent.polarity_scores(self.document)
+        sent = self.sent.polarity_scores(self.dc.document)
 
         if sent['compound'] >= 0.5:
             self.features.update({'SENTIMENT': 'pos'})
@@ -106,7 +106,7 @@ class LinguisticFeatures(object):
 
     def sentiment_scores(self) -> None:
         """Compute sentiment scores and directly update features dictionary."""
-        sent = self.sent.polarity_scores(self.document)
+        sent = self.sent.polarity_scores(self.dc.document)
         del sent['compound']
         self.features.update(sent)
         if self.kwargs['test']:
@@ -117,23 +117,19 @@ class LinguisticFeatures(object):
 
         :param stopped: bool: Use stopword filtered text.
         """
-        self.features.update({'TOK_COUNT': len(self.tokens)} if not kwargs['stopped']
-                             else {'TOK_COUNT': len(self.stopped)})
+        self.features.update({'TOK_COUNT': len(self.dc.dout)})
 
         if self.kwargs['test']:
-            return {"TOK_COUNT": len(self.tokens)}
+            return {"TOK_COUNT": len(self.dc.dout)}
 
     def avg_word_length(self, **kwargs):
         """Compute the average word length in the document. Directly update feature dict.
 
         :param stopped: bool: Use stopword filtered text.
         """
-        if kwargs['stopped']:
-            tok_len = sum(len(w) for w in self.stopped) / len(self.stopped)
-        else:
-            tok_len = sum(len(w) for w in self.tokens) / len(self.tokens)
+        tok_len = sum(len(w) for w in self.dc.dout) / len(self.dc.dout)
 
-        self.features.update({'AVG_TOK_LEN': tok_len})
+        self.features.update({'AVG_TOK_LEN': round(tok_len,2)})
 
         if self.kwargs['test']:
             return {"AVG_TOK_LEN": round(tok_len,2)}

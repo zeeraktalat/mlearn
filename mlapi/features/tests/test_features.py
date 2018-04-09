@@ -1,3 +1,4 @@
+"""Implements document cleaners."""
 import unittest
 from mlapi.features.Features import LinguisticFeatures
 from mlapi.utils.cleaners import DocumentCleaner
@@ -18,12 +19,12 @@ class FeatureTest(unittest.TestCase):
                    "word_count",
                    "avg_word_length"
                    ]
-        kwargs = {"ngrams": 2,
+        cls.kwargs = {"ngrams": 2,
                   "char_ngrams": 3,
                   "skip_size": 2,
                   "stopped": False,
                   }
-        cls.fc = LinguisticFeatures(methods, dc, **kwargs)
+        cls.fc = LinguisticFeatures(methods, dc, **cls.kwargs)
         cls.documents = ["This is a document.",
                          "this is another doc",
                          "here 's a third one",  # space added so split will catch it.
