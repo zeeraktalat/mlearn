@@ -2,7 +2,7 @@
 import spacy
 from nltk.util import skipgrams
 from nltk import ngrams
-from collections import Counter
+from collections import Counter, OrderedDict
 from typing import List
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from z_api.utils.cleaners import DocumentCleaner
@@ -17,7 +17,7 @@ class LinguisticFeatures(object):
         # Initialise variables
         self.kwargs       = kwargs
         self.method     = methods
-        self.method_map = {}
+        self.method_map = OrderedDict()
         self.features   = {}
 
         # Initialise imports

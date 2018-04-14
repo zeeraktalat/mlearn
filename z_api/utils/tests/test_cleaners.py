@@ -36,7 +36,7 @@ class CleanerTest(unittest.TestCase):
             self.assertListEqual(exp, self.dc.current)
 
     def test_spacy_word_tokenizer(self):
-        """NLTK word_tokenizer."""
+        """Spacy word_tokenizer."""
         exp_out = [['This', 'is', 'a', 'document', '.'],
                    ['this', 'is', 'another', 'doc'],
                    ['here', "'s", 'a', 'third', 'one'],
@@ -47,3 +47,20 @@ class CleanerTest(unittest.TestCase):
             self.dc.spacy_tokenize()
             self.assertListEqual(exp, self.dc.tokens)
             self.assertListEqual(exp, self.dc.current)
+
+    def test_punctuation(self):
+        """Punctuation removel."""
+        documents = [['This is a document.'],
+                     ['this is another doc!'],
+                     ["here's a third! one"],
+                     ['and here is the last one$']]
+        exp_out = ['This is a document',
+                   'this is another doc',
+                   "heres a third one",
+                   'and here is the last one']
+
+        for doc, exp in zip(documents, exp_out):
+            self.dc.doc = doc
+            self.dc.punctuation()
+            self.assertEqual(exp, self.dc.current)
+

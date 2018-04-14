@@ -1,6 +1,8 @@
 """File for document cleaners."""
 
 from nltk import word_tokenize
+from collections import OrderedDict
+from string import punctuation
 from typing import List
 import spacy
 
@@ -12,7 +14,7 @@ class DocumentCleaner(object):
         """Set initialisations so that loading only happens once."""
         # Initialise variables
         self.kwargs     = kwargs
-        self.method_map = {}
+        self.method_map = OrderedDict()
         self.document   = None
         self.method     = methods
 
@@ -49,7 +51,7 @@ class DocumentCleaner(object):
         for m_str in self.method_map:
             self.method_map[m_str](**self.kwargs)
 
-    def nltk_word_tokenize(self):
+    def nltk_word_tokenize(self, **kwargs):
         """Tokenise using NLTK word_tokenise. Updates self.tokens."""
         if self.current:
             if isinstance(self.current, list):
@@ -60,8 +62,7 @@ class DocumentCleaner(object):
         else:
             raise ValueError("Document not set.")
 
-
-    def spacy_tokenize(self):
+    def spacy_tokenize(self, **kwargs):
         """Tokenise using spacy's tokenizer. Updates self.tokens."""
         try:
             self.spacy_parser(self.document)
@@ -77,3 +78,10 @@ class DocumentCleaner(object):
             self.current = self.tokens[:]
         else:
             raise ValueError("No document fed to module.")
+
+    def punctuation(self, **kwargs):
+        """Remove all punctation marks."""
+        if self.current:
+            if isinstance(self.current, list):
+                self.current = " ".join(self.current)
+            self.current = "".join([c for c in self.current if c not in punctuation])
