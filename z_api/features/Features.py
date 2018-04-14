@@ -5,7 +5,7 @@ from nltk import ngrams
 from collections import Counter
 from typing import List
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from mlapi.utils.cleaners import DocumentCleaner
+from z_api.utils.cleaners import DocumentCleaner
 
 
 class LinguisticFeatures(object):
@@ -15,7 +15,7 @@ class LinguisticFeatures(object):
                  **kwargs):
         """Set initialisations so that loading only happens once."""
         # Initialise variables
-        self.args       = kwargs
+        self.kwargs       = kwargs
         self.method     = methods
         self.method_map = {}
         self.features   = {}
@@ -52,7 +52,7 @@ class LinguisticFeatures(object):
     def generate(self) -> dict:
         """Generate features, where each item is a callable function."""
         if self.method_map == {}:
-            self.str_to_method = self.methods
+            self.methods = self.method
 
         for m_str in self.method_map:
             res = self.method_map[m_str](**self.kwargs)
@@ -60,7 +60,7 @@ class LinguisticFeatures(object):
                 self.features.update(Counter(res))
         return self.features
 
-    def unigrams(self) -> List[str]:
+    def unigrams(self, **kwargs) -> List[str]:
         """Return unigrams after removal of stopwords."""
         return self.dc.tokens
 
@@ -71,7 +71,7 @@ class LinguisticFeatures(object):
         :return: list[str]: Multi-token tokens joined by _.
         e.g.: Outstanding blossom -> Outstanding_blossom
         """
-        return ["_".join(tok) for tok in ngrams(self.dc.dout, kwargs['ngrams'])]
+        return ["_".join(tok) for tok in ngrams(self.dc.current, kwargs['ngrams'])]
 
     def skip_grams(self, **kwargs) -> List[str]:
         """Generate list of skip-grams.
@@ -79,7 +79,7 @@ class LinguisticFeatures(object):
         :param kwargs: Keyword Args (must contain 'ngrams' and 'skip_size').
         :return: list[str]: Multi-token tokens joined by _.
         """
-        return ["_".join(item) for item in skipgrams(self.dc.dout,
+        return ["_".join(item) for item in skipgrams(self.dc.current,
                 kwargs['ngrams'], kwargs['skip_size'])]
 
     def char_ngrams(self, **kwargs) -> List[str]:
@@ -88,28 +88,30 @@ class LinguisticFeatures(object):
         :param kwargs: Keyword Args (must contain 'char-ngrams').
         :return: list[str]: Multi-token tokens joined by _.
         """
-        return ["_".join(toks) for toks in ngrams(" ".join(self.dc.dout), kwargs['char_ngrams'])]
+        return ["_".join(toks) for toks in ngrams(" ".join(self.dc.current), kwargs['char_ngrams'])]
 
-    def sentiment_aggregate(self) -> None:
+    def sentiment_aggregate(self, **kwargs) -> None:
         """Compute sentiment aggregate and directly update features dictionary."""
         sent = self.sent.polarity_scores(self.dc.document)
 
         if sent['compound'] >= 0.5:
-            self.features.update({'SENTIMENT': 'pos'})
+            update = {'SENTIMENT': 'pos'}
         elif sent['compound'] > -0.5 and sent['compound'] < 0.5:
-            self.features.update({'SENTIMENT': 'neu'})
+            update = {'SENTIMENT': 'neu'}
         else:
-            self.features.update({'SENTIMENT': 'neg'})
+            update = {'SENTIMENT': 'neg'}
 
-        if self.kwargs['test']:
-            return sent
+        if 'test' in self.kwargs:
+            return update
+        else:
+            self.features.update(update)
 
-    def sentiment_scores(self) -> None:
+    def sentiment_scores(self, **kwargs) -> None:
         """Compute sentiment scores and directly update features dictionary."""
         sent = self.sent.polarity_scores(self.dc.document)
         del sent['compound']
         self.features.update(sent)
-        if self.kwargs['test']:
+        if 'test' in self.kwargs:
             return sent
 
     def word_count(self, **kwargs) -> dict:
@@ -117,19 +119,19 @@ class LinguisticFeatures(object):
 
         :param stopped: bool: Use stopword filtered text.
         """
-        self.features.update({'TOK_COUNT': len(self.dc.dout)})
+        self.features.update({'TOK_COUNT': len(self.dc.current)})
 
-        if self.kwargs['test']:
-            return {"TOK_COUNT": len(self.dc.dout)}
+        if 'test' in self.kwargs:
+            return {"TOK_COUNT": len(self.dc.current)}
 
     def avg_word_length(self, **kwargs):
         """Compute the average word length in the document. Directly update feature dict.
 
         :param stopped: bool: Use stopword filtered text.
         """
-        tok_len = sum(len(w) for w in self.dc.dout) / len(self.dc.dout)
+        tok_len = sum(len(w) for w in self.dc.current) / len(self.dc.current)
 
         self.features.update({'AVG_TOK_LEN': round(tok_len,2)})
 
-        if self.kwargs['test']:
+        if 'test' in self.kwargs:
             return {"AVG_TOK_LEN": round(tok_len,2)}

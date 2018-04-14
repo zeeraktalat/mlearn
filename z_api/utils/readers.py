@@ -1,7 +1,7 @@
 """Module for data reading."""
 
 import pymongo
-from mlapi.utils import logger
+from z_api.utils import logger
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError, WriteError
 from pymongo.collection import Collection

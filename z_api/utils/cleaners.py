@@ -11,14 +11,10 @@ class DocumentCleaner(object):
     def __init__(self, methods: List[str] = [], **kwargs):
         """Set initialisations so that loading only happens once."""
         # Initialise variables
-        self.args       = kwargs
+        self.kwargs     = kwargs
         self.method_map = {}
         self.document   = None
-        self.dout       = None
-        self.current    = None
-
-        # Initialise imports
-        self.tagger  = spacy.load('en')
+        self.method     = methods
 
     @property
     def methods(self):
@@ -42,11 +38,13 @@ class DocumentCleaner(object):
     @doc.setter
     def doc(self, document: str):
         self.document = document
+        self.current  = document
+        self.tokens   = None
 
     def generate(self):
         """Generate features, where each item is a callable function."""
         if self.method_map == {}:
-            self.str_to_method = self.methods
+            self.methods = self.method
 
         for m_str in self.method_map:
             self.method_map[m_str](**self.kwargs)
@@ -57,21 +55,25 @@ class DocumentCleaner(object):
             if isinstance(self.current, list):
                 self.current = " ".join(self.current)
 
-        elif self.document:
-            self.tokens = word_tokenize(self.document)
+            self.tokens = word_tokenize(self.current)
+            self.current = self.tokens[:]
         else:
             raise ValueError("Document not set.")
-        self.current = self.tokens[:]
-        self.dout = self.current
+
 
     def spacy_tokenize(self):
         """Tokenise using spacy's tokenizer. Updates self.tokens."""
-        if not self.spacy_parser:
+        try:
+            self.spacy_parser(self.document)
+        except AttributeError as e:
             self.spacy_parser = spacy.load('en')
 
-        if self.document:
-            self.tokens = self.spacy_parser(self.document)
+        if self.current:
+            if isinstance(self.current, list):
+                self.current = " ".join(self.current)
+
+            self.spacy_parsed = self.spacy_parser(self.current)
+            self.tokens = [str(tok) for tok in self.spacy_parsed]
             self.current = self.tokens[:]
-            self.dout = self.current
         else:
-            raise ValueError("Document not set.")
+            raise ValueError("No document fed to module.")
