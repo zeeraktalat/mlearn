@@ -20,11 +20,11 @@ class FeatureTest(unittest.TestCase):
                    "avg_word_length"
                    ]
         cls.kwargs = {"ngrams": 2,
-                  "char_ngrams": 3,
-                  "skip_size": 2,
-                  "stopped": False,
-                  'test': True
-                  }
+                      "char_ngrams": 3,
+                      "skip_size": 2,
+                      "stopped": False,
+                      'test': True
+                      }
         cls.fc = LinguisticFeatures(methods, dc, **cls.kwargs)
         cls.documents = ["This is a document.",
                          "this is another doc",
@@ -62,7 +62,6 @@ class FeatureTest(unittest.TestCase):
             act_out = self.fc.token_ngrams(**self.kwargs)
             self.assertListEqual(exp, act_out)
 
-
     def test_skip_grams(self):
         """Skip-gram Features."""
         exp_out = [['This_is',
@@ -89,18 +88,18 @@ class FeatureTest(unittest.TestCase):
                      'a_third',
                      'a_one',
                      'third_one'],
-                [   'and_here',
-                    'and_is',
-                    'and_the',
-                    'here_is',
-                    'here_the',
-                    'here_last',
-                    'is_the',
-                    'is_last',
-                    'is_one',
-                    'the_last',
-                    'the_one',
-                    'last_one']]
+                    ['and_here',
+                     'and_is',
+                     'and_the',
+                     'here_is',
+                     'here_the',
+                     'here_last',
+                     'is_the',
+                     'is_last',
+                     'is_one',
+                     'the_last',
+                     'the_one',
+                     'last_one']]
 
         for doc, exp in zip(self.documents, exp_out):
             self.fc.doc = doc
@@ -211,7 +210,6 @@ class FeatureTest(unittest.TestCase):
             act_out = self.fc.sentiment_scores(**self.kwargs)
             self.assertDictEqual(exp, act_out)
 
-
     def test_word_count(self):
         """Word Count Features."""
         exp_out = [{"TOK_COUNT": 5}, {"TOK_COUNT": 4}, {"TOK_COUNT": 5}, {"TOK_COUNT": 6}]
@@ -223,7 +221,8 @@ class FeatureTest(unittest.TestCase):
 
     def test_avg_word_length(self):
         """Average Word Length Features."""
-        exp_out = [{"AVG_TOK_LEN": 3.2}, {"AVG_TOK_LEN": 4.0}, {"AVG_TOK_LEN": 3.0}, {"AVG_TOK_LEN": 3.17}]
+        exp_out = [{"AVG_TOK_LEN": 3.2}, {"AVG_TOK_LEN": 4.0},
+                   {"AVG_TOK_LEN": 3.0}, {"AVG_TOK_LEN": 3.17}]
 
         for doc, exp in zip(self.documents, exp_out):
             self.fc.doc = doc

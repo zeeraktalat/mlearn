@@ -2,7 +2,6 @@
 
 import tqdm
 import logging
-import os
 import colorlog
 
 
@@ -62,7 +61,7 @@ class TqdmFileHandler(logging.FileHandler):
 
 def initialise_loggers(logger, logfile):
     """Initialise loggers."""
-    logdir = os.environ['PYLOGS']
+    logdir = 'logs/'
 
     # Set formatting
     strformat   = '%(log_color)s%(name)s | %(asctime)s | %(levelname)s | %(message)s'

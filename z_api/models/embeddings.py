@@ -4,7 +4,7 @@
 # from mlapi.utils.readers import MongoDB
 from gensim.models.word2vec import Word2Vec
 # from typing import Generator
-import base
+import api_z.models.base as base
 
 # TODO Add logging
 

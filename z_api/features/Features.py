@@ -131,7 +131,7 @@ class LinguisticFeatures(object):
         """
         tok_len = sum(len(w) for w in self.dc.current) / len(self.dc.current)
 
-        self.features.update({'AVG_TOK_LEN': round(tok_len,2)})
+        self.features.update({'AVG_TOK_LEN': round(tok_len, 2)})
 
         if 'test' in self.kwargs:
-            return {"AVG_TOK_LEN": round(tok_len,2)}
+            return {"AVG_TOK_LEN": round(tok_len, 2)}

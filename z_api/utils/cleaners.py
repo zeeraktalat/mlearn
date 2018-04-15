@@ -115,22 +115,22 @@ class DocumentCleaner(object):
         self.current = re.sub(pattern, "_USER_", self.current)
 
     def strip_ints(self, **kwargs):
-        """Remove all integers. ALWAYS AFTER FLOAT"""
+        """Remove all integers. ALWAYS AFTER FLOAT."""
         pattern = '[0-9]+'
         self.current = re.sub(pattern, "", self.current)
 
     def replace_ints(self, **kwargs):
-        """Replace all ints with an _INT_ token. ALWAYS AFTER FLOAT"""
+        """Replace all ints with an _INT_ token. ALWAYS AFTER FLOAT."""
         pattern = '[0-9]+'
         self.current = re.sub(pattern, "_INT_", self.current)
 
     def strip_float(self, **kwargs):
-        """Remove all floats. ALWAYS BEFORE INT"""
+        """Remove all floats. ALWAYS BEFORE INT."""
         pattern = '[-+]?\d*([,.])\d+'
         self.current = re.sub(pattern, "", self.current)
 
     def replace_float(self, **kwargs):
-        """Replace all floats with _FLOAT_ token. ALWAYS BEFORE INT"""
+        """Replace all floats with _FLOAT_ token. ALWAYS BEFORE INT."""
         pattern = '[-+]?\d*([,.])\d+'
         self.current = re.sub(pattern, "_FLOAT_", self.current)
 

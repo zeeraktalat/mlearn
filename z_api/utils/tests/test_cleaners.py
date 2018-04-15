@@ -1,5 +1,4 @@
 import unittest
-import re
 from z_api.utils.cleaners import DocumentCleaner
 
 
@@ -193,7 +192,6 @@ class CleanerTest(unittest.TestCase):
             self.dc.replace_float()
             self.assertEqual(exp, self.dc.current)
 
-
     def test_strip_hashtags(self):
         """Remove Hashtags."""
         documents = ["Here's a #hashtag: !#0testing",
@@ -208,7 +206,7 @@ class CleanerTest(unittest.TestCase):
             self.dc.strip_hashtag()
             self.assertEqual(exp, self.dc.current)
 
-    def test_strip_hashtags(self):
+    def test_replace_hashtags(self):
         """Replace Hashtags."""
         documents = ["Here's a #hashtag: !#0testing",
                      "And here's @zeerakw#awe20some another",
