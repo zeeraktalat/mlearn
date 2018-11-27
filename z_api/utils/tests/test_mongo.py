@@ -1,7 +1,7 @@
 import unittest
 import pymongo
-from z_api.utils.readers import MongoDB
-from z_api.utils.iters import MongoRetrieveManyIter
+from z_api.utils.mongo import MongoDB
+from z_api.utils.mongo import MongoRetrieveManyIter
 
 
 class MongoTest(unittest.TestCase):
