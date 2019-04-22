@@ -1,11 +1,12 @@
 """Creates features and handles feature generation."""
 import spacy
-from nltk.util import skipgrams
 from nltk import ngrams
-from collections import Counter, OrderedDict
-from typing import List
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+import numpy as np
+from typing import List, Union
+from nltk.util import skipgrams
 from z_api.utils.cleaners import DocumentCleaner
+from collections import Counter, OrderedDict, defaultdict
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 
 class LinguisticFeatures(object):
@@ -15,7 +16,7 @@ class LinguisticFeatures(object):
                  **kwargs):
         """Set initialisations so that loading only happens once."""
         # Initialise variables
-        self.kwargs       = kwargs
+        self.kwargs     = kwargs
         self.method     = methods
         self.method_map = OrderedDict()
         self.features   = {}
@@ -48,6 +49,21 @@ class LinguisticFeatures(object):
     def doc(self, document) -> None:
         self.dc.doc = document
         self.dc.generate()
+
+    @property
+    def liwc_dict(self):
+        return self.liwc_dictionary
+
+    @liwc_dict.setter
+    def liwc_dict(self, path):
+        with open(path, 'r', encoding = 'utf-8') as liwc:
+            self.liwc_dictionary = {}
+            for line in liwc:
+                k, v = line.split(',')
+                if k in self.liwc_dictionary:
+                    self.liwc_dictionary.append(v)
+                else:
+                    self.liwc_dictionary[k] = [v]
 
     def generate(self) -> dict:
         """Generate features, where each item is a callable function."""
@@ -135,3 +151,54 @@ class LinguisticFeatures(object):
 
         if 'test' in self.kwargs:
             return {"AVG_TOK_LEN": round(tok_len, 2)}
+
+    def liwc(self, **kwargs) -> None:
+        """Compute the LIWC count for the document."""
+        try:
+            liwc_vals = []
+            kleene_star = [k[:-1] for k in self.liwc_dictionary if k[-1] == '*']
+
+            for w in self.dc.current:
+                if w in self.liwc_dictionary:
+                    liwc_vals.append(self.liwc_dictionary[w])
+                else:
+                    candidates = [r for r in kleene_star if r in w]
+                    cand_len = len(candidates)
+                    if cand_len == 0:
+                        continue
+                    elif cand_len == 1:
+                        term = candidates[0]
+                    elif cand_len > 1:
+                        sorted_cands = sorted(candidates, key=len, reverse = True)
+                        if sorted_cands == candidates:
+                            term = candidates[0]
+                        else:
+                            term = sorted_cands[0]
+
+                    term = self.liwc_dictionary[term + '*']
+
+            vals = Counter(['LIWC_' + item for item in liwc_vals])
+            doc_length = len(self.dc.document)
+            counts = {k: vals[k] / doc_length for k in liwc_vals}
+            self.features.update(counts)
+
+        except AttributeError as e:
+            raise(AttributeError, "Dictionary has not been loaded.")
+
+    def feature_weights(self, vec: Union[np.ndarray, dict]) -> dict:
+        """Get feature weights for each class.
+        :param classes: list or numpy array of labels.
+        :param vect: Vectorizer or mapping.
+        :return coefs: Return coefficients
+        """
+        try:
+            coefs = defaultdict(Counter)
+            iterator = vec.keys() if isinstance(vec, dict) else np.unique(vec)
+
+            for i, c in enumerate(iterator):
+                coefs[i].update({vec.feature_names_[f]: self.model.coef_[i, f]
+                                 for f in np.argsort(self.model.coef_[i])})
+        except IndexError as e:
+            assert coefs != {}
+
+        return coefs

@@ -1,17 +1,17 @@
 """A module to create a layer over Sklearn methods."""
 
-from z_api.base.modelBase import baseModel
 from typing import Generator
+from z_api.base.modelBase import baseModel
 
 
-class sklearnClassifer(baseModel):
+class sklearnClassifier(baseModel):
     """A class to implement Sklearn classifiers."""
     def __init__(self, model, data: Generator, labels: list, **kwargs):
         self.data = data
         self.labels = labels
         self.model = model
         self.kwargs = kwargs
-        super(sklearnClassifer, self).__init__(data, labels)
+        super(sklearnClassifier, self).__init__(data, labels)
 
     @property
     def model_handler(self):
@@ -22,13 +22,23 @@ class sklearnClassifer(baseModel):
     def model_handler(self, model):
         self.model = model
 
-    def fit(self, X, y):
+    def fit(self, X, y) -> None:
         """Fit model.
 
         :param X: Training data, vectorised.
         :param y: Labels for training set.
         """
         self.model.fit(X, y)
+
+    def _ensure_attributes(self, key, value) -> None:
+        """Make sure all attributes that are commonly used are available.
+        :param key: Key for the attribute to be stored ind.
+        :param value: Value for the key.
+        """
+        try:
+            assert key in self.model.__dict__
+        except AssertionError as e:
+            setattr(self.model, key, value)
 
     def predict(self, test):
         """Predict using self.model.
@@ -53,5 +63,11 @@ class sklearnClassifer(baseModel):
         """Cross validate using a given number of folds.
 
         :param folds: int: The number of folds to use.
+        """
+        raise NotImplementedError
+
+    def reductions_fairness(self, criteria: str = 'DP'):
+        """Run Agarwal et al. a reductions approach to fairness.
+        :param criteria: Fairness criteria
         """
         raise NotImplementedError
