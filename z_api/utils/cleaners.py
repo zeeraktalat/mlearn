@@ -74,8 +74,8 @@ class DocumentCleaner(object):
             if isinstance(self.current, list):
                 self.current = " ".join(self.current)
 
-            self.spacy_parsed = self.spacy_parser(self.current)
-            self.tokens = [str(tok) for tok in self.spacy_parsed]
+            self.parsed = self.spacy_parser(self.current)
+            self.tokens = [str(tok) for tok in self.parsed]
             self.current = self.tokens[:]
         else:
             raise ValueError("No document fed to module.")

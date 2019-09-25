@@ -177,6 +177,49 @@ class MongoDB(object):
         for record in cls.db[collection].find(query, **kwargs):
             yield record
 
+    def retrieve_authentification_tokens(self, collection, query, **kwargs):
+        """Retrieve authentification tokens that aren't closed off.
+
+        :param collection: Collection in which keys are found.
+        :param query: Query to retrieve keys for each platform.
+        :return record: Return key that isn't currently being used.
+        """
+        if not collection:
+            collection = self.col
+        if isinstance(collection, Collection):
+            collection = collection.name
+
+        for record in self.db[collection].find(query, **kwargs):
+            if record['lock'] == 1:
+                continue
+            else:
+                updated = record
+                updated['lock'] = 1
+                self.db[collection].update_one({'_id': updated['_id']}, {'$set': updated},
+                                               upsert = False)
+                self.log.info("Record found. Remember to unset the lock.")
+                return record
+        self.log.warning("All tokens currently being used.")
+
+    def unset_authentification_lock(self, collection, record):
+        """Reset authentification token so it can be reused.
+
+        :param collection: Collection in which keys are found.
+        :param record: Record to be unset.
+        """
+        if not collection:
+            collection = self.col
+        if isinstance(collection, Collection):
+            collection = collection.name
+
+        record['lock'] = 0
+        res = self.db[collection].update_one({'_id': record['_id']}, {'$set': record},
+                                             upsert = False)
+        if res.modified_count == 1:
+            self.log.info("Lock for {0} was reset.".format(record['_id']))
+        else:
+            self.log.warning("Lock for {0} was not reset.".format(record['_id']))
+
 
 class MongoRetrieveManyIter(object):
     """Iterates over many search results allowing for multiple iterations."""
