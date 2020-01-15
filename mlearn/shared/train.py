@@ -4,8 +4,8 @@ import pandas as pd
 from . import base
 from tqdm import tqdm
 from collections import defaultdict
-import gen.shared.data as data
-from gen.shared.batching import Batch, BatchExtractor
+import mlearn.shared.data as data
+from mlearn.shared.batching import Batch, BatchExtractor
 
 
 def process_and_batch(dataset, data, batch_size):
