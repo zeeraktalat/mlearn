@@ -2,38 +2,6 @@ import torch
 from . import base
 
 
-class TorchTextOnehotBatchGenerator:
-    """A class to get the information from the batches."""
-
-    def __init__(self, dataloader: base.DataType, datafield: str, labelfield: str, vocab_size: int):
-        self.data, self.df, self.lf = dataloader, datafield, labelfield
-        self.VOCAB_SIZE = vocab_size
-
-    def __len__(self):
-        return len(self.data)
-
-    def __iter__(self):
-        for batch in self.data:
-            X = torch.nn.functional.one_hot(getattr(batch, self.df), self.VOCAB_SIZE)
-            y = getattr(batch, self.lf)
-            yield (X, y)
-
-
-class TorchTextDefaultExtractor:
-
-    def __init__(self, datafield: str, labelfield: str, dataloader: base.DataType):
-        self.data, self.df, self.lf = dataloader, datafield, labelfield
-
-    def __len__(self):
-        return len(self.data)
-
-    def __iter__(self):
-        for batch in self.data:
-            X = getattr(batch, self.df)
-            y = getattr(batch, self.lf)
-            yield (X, y)
-
-
 class BatchExtractor:
     """A class to get the information from the batches."""
 
