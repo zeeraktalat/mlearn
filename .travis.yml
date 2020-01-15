@@ -4,7 +4,7 @@ services:
   - mongodb
 
 python:
-  - "3.6"
+  - "3.7"
 
 cache: pip
 
@@ -24,6 +24,7 @@ script:
 branches:
   only:
     - staging
+    - master
 
 notifications:
     slack: usfd-nlp:79cXz6zwLt3ApzgjxKx7Yvdx
