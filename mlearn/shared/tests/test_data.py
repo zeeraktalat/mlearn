@@ -18,14 +18,14 @@ class TestDataSet(torchtestcase.TorchTestCase):
                                          ftype = 'csv', fields = fields, train = 'train.csv', dev = None,
                                          test = 'test.csv', train_labels = None, tokenizer = lambda x: x.split(),
                                          preprocessor = None, transformations = None,
-                                         label_processor = None, sep = ',')
+                                         label_processor = None, sep = ',', name = 'test')
         cls.csv_dataset.load('train')
         cls.train = cls.csv_dataset.data
         cls.json_dataset = GeneralDataset(data_dir = '~/PhD/projects/active/Generalisable_abuse/gen/shared/tests/',
                                           ftype = 'json', fields = fields, train = 'train.json', dev = None,
                                           test = 'test.json', train_labels = None, tokenizer = lambda x: x.split(),
                                           preprocessor = None, transformations = None,
-                                          label_processor = None, sep = ',')
+                                          label_processor = None, sep = ',', name = 'test')
 
     @classmethod
     def tearDownClass(cls):
@@ -312,7 +312,7 @@ class TestDataPoint(unittest.TestCase):
                                          ftype = 'csv', fields = fields, train = 'train.csv', dev = None,
                                          test = 'test.csv', train_labels = None, tokenizer = lambda x: x.split(),
                                          preprocessor = None, transformations = None,
-                                         label_processor = None, sep = ',')
+                                         label_processor = None, sep = ',', name = 'test')
         cls.dataset.load('train')
         cls.train = cls.dataset.data
 
@@ -356,7 +356,7 @@ class TestBatch(unittest.TestCase):
                                      ftype = 'csv', fields = fields, train = 'davidson_test.csv', dev = None,
                                      test = None, train_labels = None, tokenizer = lambda x: x.split(),
                                      preprocessor = None, transformations = None,
-                                     label_processor = None, sep = ',')
+                                     label_processor = None, sep = ',', name = 'test')
         cls.dataset.load('train')
         cls.train = cls.dataset.data
 
@@ -435,7 +435,7 @@ class TestBatchGenerator(unittest.TestCase):
                                      ftype = 'csv', fields = fields, train = 'davidson_test.csv', dev = None,
                                      test = None, train_labels = None, tokenizer = lambda x: x.split(),
                                      preprocessor = None, transformations = None,
-                                     label_processor = None, sep = ',')
+                                     label_processor = None, sep = ',', name = 'test')
         cls.dataset.load('train')
         cls.train = cls.dataset.data
         cls.dataset.build_token_vocab(cls.train)
