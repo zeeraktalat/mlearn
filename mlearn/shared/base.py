@@ -8,9 +8,11 @@ from sklearn.base import ClassifierMixin, TransformerMixin
 
 class Field(object):
     """A class to set different properties of the individual fields."""
+
     def __init__(self, name: str, train: bool = False, label: bool = False, ignore: bool = False, ix: int = None,
                  cname: str = None):
         """Initialize the field object. Each individual field is to hold information about that field only.
+
         :name (str): Name of the field.
         :train (bool, default = False): Use for training.
         :label (bool, default = False): Indicate if it is a label field.
@@ -30,6 +32,7 @@ class Field(object):
 
 class Datapoint(object):
     """A class for each datapoint to instantiated as an object, which can allow for getting and setting attributes."""
+
     def __init__(self):
         pass
 

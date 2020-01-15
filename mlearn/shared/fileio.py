@@ -6,6 +6,7 @@ from . import base
 
 def read_json(fh: str, enc, doc_key: str, label_key: str, **kwargs) -> base.Tuple[str, str, ...]:
     """Read JSON file containing entire document and label.
+
     To access keys in nested dictionaries, use the syntax <outer_key>.<inner_key>. Max depth 4.
     :param fh: Filename
     :param enc: Encoding of the file.
@@ -49,11 +50,13 @@ def read_json(fh: str, enc, doc_key: str, label_key: str, **kwargs) -> base.Tupl
 
 def write_results(performance: dict, parameters: dict, out_fh: str, mode: str) -> None:
     """Write results out to a tsv file.
+
     :param performance: Dictionary containing results of model.
     :param parameters: A dictionary containng the model parameters.
     :param out_fh: Filename of the output file.
     :param mode: Write mode of the file (options: ['a', 'w']).
     """
+
     fh = open('../../experiments/results/' + out_fh, mode = mode, encoding = 'utf-8')
     if mode == 'a':
         pass
@@ -70,6 +73,7 @@ def write_results(performance: dict, parameters: dict, out_fh: str, mode: str) -
 
 def print_results(performance: dict, parameters: dict, iter_info: dict = {}, first: bool = False) -> None:
     """Print results in a readable manner.
+
     :param performance: Classifier metrics.
     :param parameters: Parameters for this iteration.
     :param iter_info: Information about the iteration.

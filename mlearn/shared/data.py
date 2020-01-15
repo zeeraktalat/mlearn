@@ -12,6 +12,7 @@ from torch.utils.data import IterableDataset
 
 class GeneralDataset(IterableDataset):
     """A general dataset class, which loads a dataset, creates a vocabulary, pads, tensorizes, etc."""
+
     def __init__(self, data_dir: str, ftype: str, fields: base.FieldType, name: str, train: str,
                  dev: str = None, test: str = None, train_labels: str = None, dev_labels: str = None,
                  test_labels: str = None, sep: str = None, tokenizer: base.Union[base.Callable, str] = 'spacy',
@@ -19,6 +20,7 @@ class GeneralDataset(IterableDataset):
                  label_processor: base.Callable = None, label_preprocessor: base.Callable = None,
                  length: int = None, lower: bool = True) -> None:
         """Initialize the variables required for the dataset loading.
+
         :data_dir (str): Path of the directory containing the files.
         :ftype (str): ftype of the file ([C|T]SV and JSON accepted)
         :fields (base.List[base.Tuple[str, ...]]): Fields in the same order as they appear in the file.
@@ -37,6 +39,7 @@ class GeneralDataset(IterableDataset):
         :label_processor(base.Callable, default = None): Function to process labels with.
         :lower (bool, default = True): Lowercase the document.
         """
+
         self.data_dir = os.path.abspath(data_dir) if '~' not in data_dir else os.path.expanduser(data_dir)
         self.name = name
         super(GeneralDataset, self).__init__()
@@ -77,9 +80,11 @@ class GeneralDataset(IterableDataset):
 
     def load(self, dataset: str = 'train', skip_header = True) -> None:
         """Load the datasebase.
+
         :skip_header (bool, default = True): Skip the header.
         :dataset (str, default = 'train'): Dataset to load. Must exist as key in self.data_files.
         """
+
         fp = open(self.data_files[dataset])
 
         if skip_header:
@@ -127,6 +132,7 @@ class GeneralDataset(IterableDataset):
                     skip_header: bool = True, label_processor: base.Callable = None,
                     label_ix: base.Union[int, str] = None) -> None:
         """Load labels from external file.
+
         :path (str): Path to data files.
         :dataset (str): dataset labels belong to.
         :label_file (str): Filename of data file.
@@ -137,6 +143,7 @@ class GeneralDataset(IterableDataset):
         :label_ix (int, str): Index or name of column containing labels.
         :label_name (str): Name of the label column/field.
         """
+
         path = label_path if label_path is not None else self.path
         ftype = ftype if ftype is not None else self.ftype
         sep = sep if sep is not None else self.sep
@@ -165,6 +172,7 @@ class GeneralDataset(IterableDataset):
     @property
     def train_set(self) -> base.DataType:
         """Set or get the training set."""
+
         return self.data
 
     @train_set.setter
@@ -174,6 +182,7 @@ class GeneralDataset(IterableDataset):
     @property
     def dev_set(self) -> base.DataType:
         """Set or get the development set."""
+
         return self.data
 
     @dev_set.setter
@@ -183,6 +192,7 @@ class GeneralDataset(IterableDataset):
     @property
     def test_set(self) -> base.DataType:
         """Set or get the testelopment set."""
+
         return self.data
 
     @test_set.setter
@@ -191,11 +201,13 @@ class GeneralDataset(IterableDataset):
 
     def reader(self, fp, ftype: str = None, sep: str = None):
         """Instatiate the reader to be used.
+
         :fp: Opened file.
         :ftype (str, default = None): Filetype if loading external data.
         :sep (str, default = None): Separator to be used.
         :return reader: Iterable objecbase.
         """
+
         ftype = ftype if ftype is not None else self.ftype
         if ftype in ['CSV', 'TSV']:
             sep = sep if sep else self.sep
@@ -206,16 +218,20 @@ class GeneralDataset(IterableDataset):
 
     def json_reader(self, fp: str) -> base.Generator:
         """Create a JSON reading objecbase.
+
         :fp (str): Opened file objecbase.
-        :return: """
+        :return: Loaded line."""
+
         for line in fp:
             yield json.loads(line)
 
     def build_token_vocab(self, data: base.DataType, original: bool = True):
         """Build vocab over datasebase.
+
         :data (base.DataType): List of datapoints to process.
         :original (bool): Use the original document to generate vocab.
         """
+
         train_fields = self.train_fields
         self.token_counts = Counter()
 
@@ -234,8 +250,10 @@ class GeneralDataset(IterableDataset):
 
     def extend_vocab(self, data: base.DataType):
         """Extend the vocabulary.
+
         :data (base.DataType): List of datapoints to process.
         """
+
         for doc in data:
             start_ix = len(self.itos)
             for f in self.train_fields:
@@ -247,9 +265,11 @@ class GeneralDataset(IterableDataset):
 
     def limit_vocab(self, limiter: base.Callable, **kwargs) -> None:
         """Limit vocabulary using a function that returns a new vocabulary.
+
         :limiter (base.Callable): Function to limit the vocabulary.
         :kwargs: All arguments needed for the limiter function.
         """
+
         self.itos = limiter(self.token_counts, **kwargs)
         self.itos[len(self.itos)] = '<pad>'
         self.itos[len(self.itos)] = '<unk>'
@@ -257,13 +277,16 @@ class GeneralDataset(IterableDataset):
 
     def vocab_size(self) -> int:
         """Get the size of the vocabulary."""
+
         return len(self.itos)
 
     def vocab_token_lookup(self, tok: str) -> int:
         """Lookup a single token in the vocabulary.
+
         :tok (str): Token to look up.
         :return ix (int): Return the index of the vocabulary item.
         """
+
         try:
             ix = self.stoi[tok]
         except IndexError as e:
@@ -272,48 +295,61 @@ class GeneralDataset(IterableDataset):
 
     def vocab_ix_lookup(self, ix: int) -> str:
         """Lookup a single index in the vocabulary.
+
         :ix (int): Index to look up.
         :return tok (str): Returns token
         """
+
         return self.itos[ix]
 
     def build_label_vocab(self, labels: base.DataType) -> None:
         """Build label vocabulary.
+
         :labels (base.DataType): List of datapoints to process.
         """
+
         labels = set(getattr(l, getattr(f, 'name')) for l in labels for f in self.label_fields)
         self.itol = {ix: l for ix, l in enumerate(sorted(labels))}
         self.ltoi = {l: ix for ix, l in self.itol.items()}
 
     def label_name_lookup(self, label: str) -> int:
         """Look up label index from label.
+
         :label (str): Label to process.
         :returns (int): Return index value of label."""
+
         return self.ltoi[label]
 
     def label_ix_lookup(self, label: int) -> str:
         """Look up label index from label.
+
         :label (int): Label index to process.
         :returns (str): Return label."""
+
         return self.itol[label]
 
     def label_count(self) -> int:
         """Get the number of the labels."""
+
         return len(self.itol)
 
     def process_labels(self, data: base.DataType, processor: base.Callable = None):
         """Take a dataset of labels and process them.
+
         :data (base.DataType): Dataset of datapoints to process.
         :processor (base.Callable, optional): Custom processor to use.
         """
+
         for doc in data:
             label = self._process_label([getattr(doc, getattr(f, 'name')) for f in self.label_fields], processor)
             setattr(doc, 'label', label)
 
     def _process_label(self, label, processor: base.Callable = None) -> int:
         """Modify label using external function to process ibase.
+
         :label: Label to process.
         :processor: Function to process the label."""
+
         if not isinstance(label, list):
             label = [label]
         processor = processor if processor is not None else self.label_processor
@@ -321,8 +357,10 @@ class GeneralDataset(IterableDataset):
 
     def process_doc(self, doc: base.DocType) -> list:
         """Process a single documenbase.
+
         :doc (base.DocType): Document to be processed.
         :return doc (list): Return processed doc in tokenized list formabase."""
+
         if isinstance(doc, list):
             doc = " ".join(doc)
 
@@ -340,6 +378,7 @@ class GeneralDataset(IterableDataset):
 
     def pad(self, data: base.DataType, length: int = None) -> list:
         """Pad each document in the datasets in the dataset or trim documenbase.
+
         :data (base.DataType): List of datapoints to process.
         :length (int, optional): The sequence length to be applied.
         :return doc: Return list of padded datapoints."""
@@ -359,19 +398,23 @@ class GeneralDataset(IterableDataset):
 
     def _pad_doc(self, text, length):
         """Do the actual padding.
+
         :text: The extracted text to be padded or trimmed.
         :length: The length of the sequence length to be applied.
         :return padded: Return padded document as a lisbase.
         """
+
         delta = length - len(text)
         padded = text[:delta] if delta < 0 else text + ['<pad>'] * delta
         return padded
 
     def encode(self, data: base.DataType, onehot: bool = True):
         """Encode a documenbase.
+
         :data (base.DataType): List of datapoints to be encoded.
         :onehot (bool, default = True): Set to true to onehot encode the documenbase.
         """
+
         # TODO Names need to be the same for all datasets used.
         names = [getattr(f, 'name') for f in self.train_fields]
         encoding_func = self.onehot_encode_doc if onehot else self.encode_doc
@@ -382,6 +425,7 @@ class GeneralDataset(IterableDataset):
 
     def onehot_encode_doc(self, doc, names):
         """Onehot encode a single documenbase."""
+
         text = [tok for name in names for tok in getattr(doc, name)]
         encoded_doc = torch.zeros(1, self.length, len(self.stoi))
 
@@ -435,11 +479,13 @@ class GeneralDataset(IterableDataset):
     def split(self, data: base.DataType, splits: base.Union[int, base.List[int]],
               stratify: str = None) -> base.Tuple[base.DataType]:
         """Split the datasebase.
+
         :data (base.DataType): Dataset to splibase.
         :splits (int | base.List[int]]): Real valued splits.
         :stratify (str): The field to stratify the data along.
         :return data: Return splitted data.
         """
+
         if stratify is not None:
             data = self.stratify(data, )
 

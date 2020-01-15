@@ -5,9 +5,11 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_a
 
 def select_metrics(metrics: base.List[str]) -> base.Dict[str, base.Callable]:
     """Select metrics for computation based on a list of metric names.
+
     :metrics: List of metric names.
     :return out: Dictionary containing name and methods.
     """
+
     out = OrderedDict()
     if not isinstance(metrics, list):
         metrics = [metrics]

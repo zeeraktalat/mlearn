@@ -4,9 +4,11 @@ from .data import GeneralDataset
 
 def _loader(args: dict):
     """Loads the dataset.
+
     :args (dict): Dict containing arguments to load dataaset.
     :returns: Loaded and splitted dataset.
     """
+
     dataset = GeneralDataset(**args)
     dataset.load('train')
 
@@ -21,10 +23,12 @@ def _loader(args: dict):
 
 
 def davidson_to_binary(label: str) -> str:
-    """TODO: Docstring for davidson_to_binary.
+    """Convert davidson tags to binary tags.
+
     :label: Raw label as string
     :returns: label as int.
     """
+
     if label in ['0', '1']:
         return 'abuse'
     else:
@@ -33,10 +37,12 @@ def davidson_to_binary(label: str) -> str:
 
 def davidson(cleaners: base.Callable, preprocessor: base.Callable = None):
     """Function to load the davidson dataset.
+
     :cleaners (base.Callable): Initialized cleaner.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :returns: Loaded datasets.
     """
+
     args = {'data_dir': '~/PhD/projects/active/Generalisable_abuse/trial/',
             'ftype': 'csv',
             'fields': None,
@@ -62,9 +68,11 @@ def davidson(cleaners: base.Callable, preprocessor: base.Callable = None):
 
 def waseem_to_binary(label: str) -> str:
     """Turn Waseem labels into binary labels.
+
     :label: String as label.
     :returns: label
     """
+
     if label.lower() in ['sexism', 'racism', 'both']:
         return 'abuse'
     else:
@@ -73,10 +81,12 @@ def waseem_to_binary(label: str) -> str:
 
 def waseem(cleaners: base.Callable, preprocessor: base.Callable = None):
     """Load the Waseem dataset (expert annotations).
+
     :cleaners (base.Callable): Initialized cleaner.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :returns: Loaded datasets.
     """
+
     args = {'data_dir': '~/PhD/projects/active/Generalisable_abuse/trial/',
             'ftype': 'json',
             'fields': None,
@@ -99,10 +109,12 @@ def waseem(cleaners: base.Callable, preprocessor: base.Callable = None):
 
 def waseem_hovy(cleaners: base.Callable, preprocessor: base.Callable = None):
     """Load the Waseem-Hovy dataset.
+
     :cleaners (base.Callable): Initialized cleaner.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :returns: Loaded datasets.
     """
+
     args = {'data_dir': '~/PhD/projects/active/Generalisable_abuse/trial/',
             'ftype': 'json',
             'fields': None,
@@ -125,8 +137,10 @@ def waseem_hovy(cleaners: base.Callable, preprocessor: base.Callable = None):
 
 def streamline_garcia(label: str):
     """Streamline Garcia labels with the other datasets.
+
     :returns: streamlined labels.
     """
+
     if label == 'hate':
         return 'abuse'
     else:
@@ -135,10 +149,12 @@ def streamline_garcia(label: str):
 
 def garcia(cleaners: base.Callable, preprocessor: base.Callable = None):
     """Load the Garcia et al. dataset.
+
     :cleaners (base.Callable): Initialized cleaner.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :returns: Loaded datasets.
     """
+
     args = {'data_dir': '~/PhD/projects/active/Generalisable_abuse/trial/',
             'ftype': 'tsv',
             'fields': None,
@@ -166,10 +182,12 @@ def garcia(cleaners: base.Callable, preprocessor: base.Callable = None):
 
 def wulczyn(cleaners: base.Callable, preprocessor: base.Callable = None):
     """Load the Wulczyn et al. dataset.
+
     :cleaners (base.Callable): Initialized cleaner.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :returns: Loaded datasets.
     """
+
     # Labelfield needs to be set to nothing, then fields need to be modified
     args = {'data_dir': '~/PhD/projects/active/Generalisable_abuse/trial/',
             'ftype': 'tsv',

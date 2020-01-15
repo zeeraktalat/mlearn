@@ -10,10 +10,12 @@ from mlearn.shared.batching import Batch, BatchExtractor
 
 def process_and_batch(dataset, data, batch_size):
     """Process a dataset and data.
+
     :dataset: A dataset object.
     :data: Data to be processed.
     :returns: Processed data.
     """
+
     # Process labels and encode data.
     dataset.process_labels(data)
     encoded = dataset.encode(data, onehot = True)
@@ -28,7 +30,8 @@ def process_and_batch(dataset, data, batch_size):
 
 def write_predictions(output_info: pd.DataFrame, main_dataset: data.GeneralDataset, preds: list, truths: list,
                       model_info: list, model_header: list, data_name: str, main_name: str):
-    """TODO: Docstring for write_predictions.
+    """Write predictions to file. TODO Unfinished.
+
     :output_info (pd.DataFrame): Dataframe containing information to be written including each doc.
     :main_dataset (data.GeneralDataset): dataset for main task.
     :preds (list): Predictions
@@ -39,14 +42,13 @@ def write_predictions(output_info: pd.DataFrame, main_dataset: data.GeneralDatas
     :returns: TODO
     """
 
+    raise NotImplementedError
+
     output_info['predictions'] = [main_dataset.label_name_lookup(p) for p in preds]
     output_info['true'] = [main_dataset.label_name_lookup(t) for t in truths]
 
     for head, info in zip(model_header, model_info):
         output_info[head] = info
-
-
-
 
     # TODO Figure out a way to get access to the original document after prediction
     # TODO Write all predictions out to a file.
@@ -57,6 +59,7 @@ def write_predictions(output_info: pd.DataFrame, main_dataset: data.GeneralDatas
 def write_results(writer: base.Callable, train_scores: dict, train_loss: list, dev_scores: dict, dev_loss: list,
                   epochs: int, model_info: list, metrics: list, exp_len: int, data_name: str, **kwargs) -> None:
     """Write results to file.
+
     :writer (base.Callable): Path to file.
     :train_scores (dict): Train scores.
     :train_loss (list): Train losses.
@@ -68,6 +71,7 @@ def write_results(writer: base.Callable, train_scores: dict, train_loss: list, d
     :exp_len (int): Expected length of each line.
     :data_name (str): Dataset object.
     """
+
     for i in range(epochs):
         try:
             out = [data_name] + [i] + model_info  # Base info
@@ -89,12 +93,14 @@ def write_results(writer: base.Callable, train_scores: dict, train_loss: list, d
 
 def run_model(library: str, train: bool, writer: base.Callable, model_info: list, head_len: int, **kwargs):
     """Train or evaluate model.
+
     :library (str): Library of the model.
     :train (bool): Whether it's a train or test run.
     :writer (csv.writer): File to output model performance to.
     :model_info (list): Information about the model to be added to each line of the output.
     :head_len (int): The length of the header.
     """
+
     if train:
         func = train_pytorch_model if library == 'pytorch' else train_sklearn_model
     else:
@@ -110,6 +116,7 @@ def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataTy
                         dev_batches: base.DataType = None,
                         display_metric: str = 'accuracy', **kwargs) -> base.Union[list, int, dict, dict]:
     """Train a machine learning model.
+
     :model (base.ModelType): Untrained model to be trained.
     :epochs (int): The number of epochs to run.
     :batches (base.DataType): Batched training set.
@@ -170,11 +177,13 @@ def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataTy
 def evaluate_pytorch_model(model: base.ModelType, iterator: base.DataType, loss_func: base.Callable,
                            metrics: base.Dict[str, base.Callable], **kwargs) -> base.List[float]:
     """Evaluate a machine learning model.
+
     :model (base.ModelType): Untrained model to be trained.
     :iterator (base.DataType): Test set to evaluate on.
     :loss_func (base.Callable): Loss function to use.
     :metrics (base.Dict[str, base.Callable])): Metrics to use.
     """
+
     model.train_mode = False
     loss = []
     eval_scores = defaultdict(list)
@@ -200,8 +209,8 @@ def train_sklearn_model(arg1):
 
     :arg1: TODO
     :returns: TODO
-
     """
+
     train_scores, dev_scores = None, None
     raise NotImplementedError
     return None, None, train_scores, dev_scores
@@ -212,8 +221,8 @@ def evaluate_sklearn_model(arg1):
 
     :arg1: TODO
     :returns: TODO
-
     """
+
     train_scores, dev_scores = None, None
     raise NotImplementedError
     return None, None, train_scores, dev_scores

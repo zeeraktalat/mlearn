@@ -8,8 +8,8 @@ from string import punctuation
 class Preprocessors(object):
 
     def __init__(self):
-        """Initialise cleaner class.
-        """
+        """Initialise cleaner class."""
+
         self.tagger = spacy.load('en', disable = ['ner', 'parser'])
         self.liwc_dict = None
         self.slurs = None
@@ -17,6 +17,7 @@ class Preprocessors(object):
 
     def word_length(self, doc: base.DocType):
         """Represent sentence as the length of each token.
+
         :doc (base.DocType): Document to be processed.
         :returns: Processed document.
         """
@@ -24,6 +25,7 @@ class Preprocessors(object):
 
     def syllable_count(self, doc: base.DocType) -> base.List[int]:
         """Represent sentence as the syllable count for each word.
+
         :doc (base.DocType): Document to be processed.
         :returns: Processed document.
         """
@@ -31,6 +33,7 @@ class Preprocessors(object):
 
     def _syllable_counter(self, tok: str) -> int:
         """Calculate syllables for each token.
+
         :tok (str): The token to be analyzed.
         :returns count (int): The number of syllables in the word.
         """
@@ -53,6 +56,7 @@ class Preprocessors(object):
 
     def slur_replacement(self, doc: base.DocType):
         """Produce documents where slurs are replaced.
+
         :doc (base.List[str]): Document to be processed.
         :returns doc: processed document
         """
@@ -72,6 +76,7 @@ class Preprocessors(object):
 
     def word_token(self, doc: base.List[str]):
         """Produce word tokens.
+
         :doc (base.List[str]): Document to be processed.
         :returns: processed document
         """
@@ -79,6 +84,7 @@ class Preprocessors(object):
 
     def ptb_tokenize(self, document: base.DocType, processes: base.List[str] = None):
         """Tokenize the document using SpaCy, get PTB tags and clean it as it is processed.
+
         :document: Document to be parsed.
         :processes: The cleaning processes to engage in.
         :returns toks: Document that has been passed through spacy's tagger.
@@ -130,6 +136,7 @@ class Preprocessors(object):
 
     def compute_unigram_liwc(self, doc: base.DocType):
         """Compute LIWC for each document document.
+
         :doc (base.DocType): Document to operate on.
         :returns liwc_doc (base.DocType): Document represented as LIWC categories.
         """
@@ -158,6 +165,7 @@ class Cleaner(object):
 
     def __init__(self, processes: base.List[str] = None):
         """Initialise cleaner class.
+
         :processes base.List[str]: Cleaning operations to be taken.
         """
         self.processes = processes
@@ -166,6 +174,7 @@ class Cleaner(object):
 
     def clean_document(self, text: base.DocType, processes: base.List[str] = None):
         """Data cleaning method.
+
         :text (types.DocType): The document to be cleaned.
         :processes (List[str]): The cleaning processes to be undertaken.
         :returns cleaned: Return the cleaned text.
@@ -186,6 +195,7 @@ class Cleaner(object):
 
     def tokenize(self, document: base.DocType, processes: base.List[str] = None):
         """Tokenize the document using SpaCy and clean it as it is processed.
+
         :document: Document to be parsed.
         :processes: The cleaning processes to engage in.
         :returns toks: Document that has been passed through spacy's tagger.
@@ -198,6 +208,7 @@ class Cleaner(object):
 
     def ptb_tokenize(self, document: base.DocType, processes: base.List[str] = None):
         """Tokenize the document using SpaCy, get PTB tags and clean it as it is processed.
+
         :document: Document to be parsed.
         :processes: The cleaning processes to engage in.
         :returns toks: Document that has been passed through spacy's tagger.
@@ -208,6 +219,7 @@ class Cleaner(object):
 
     def sentiment_tokenize(self, document: base.DocType, processes: base.List[str] = None):
         """Tokenize the document using SpaCy, get sentiment and clean it as it is processed.
+
         :document: Document to be parsed.
         :processes: The cleaning processes to engage in.
         :returns toks: Document that has been passed through spacy's tagger.
