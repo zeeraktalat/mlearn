@@ -51,9 +51,9 @@ def write_predictions(output_info: pd.DataFrame, main_dataset: data.GeneralDatas
 
 
 def write_results(writer: base.Callable, train_scores: dict, train_loss: list, dev_scores: dict, dev_loss: list,
-                  epochs: int, model_info: list, metrics: list, exp_len: int, data_name: str, **kwargs) -> None:
+                  epochs: int, model_info: list, metrics: list, exp_len: int, data_name: str, main_name: str,
+                  **kwargs) -> None:
     """Write results to file.
-
     :writer (base.Callable): Path to file.
     :train_scores (dict): Train scores.
     :train_loss (list): Train losses.
@@ -63,14 +63,13 @@ def write_results(writer: base.Callable, train_scores: dict, train_loss: list, d
     :model_info (list): Model info.
     :metrics (list): Model info.
     :exp_len (int): Expected length of each line.
-    :data_name (str): Dataset object.
+    :data_name (str): Name of the dataset that's being run on.
+    :main_name (str): Name of the dataset the model is trained/being trained on.
     """
-
     for i in range(epochs):
         try:
-            out = [data_name] + [i] + model_info  # Base info
+            out = [data_name, main_name] + [i] + model_info  # Base info
             out += [train_scores[m][i] for m in metrics] + [train_loss[i]]  # Train info
-
             if dev_scores:
                 out += [dev_scores[m][i] for m in metrics] + [dev_loss[i]]  # Dev info
         except IndexError as e:
