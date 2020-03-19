@@ -30,8 +30,7 @@ def _loader(args: dict):
 
 
 def davidson_to_binary(label: str) -> str:
-    """Convert davidson tags to binary tags.
-
+    """TODO: Docstring for davidson_to_binary.
     :label: Raw label as string
     :returns: label as int.
     """
@@ -43,13 +42,11 @@ def davidson_to_binary(label: str) -> str:
 
 def davidson(cleaners: base.Callable, preprocessor: base.Callable = None):
     """Function to load the davidson dataset.
-
     :cleaners (base.Callable): Initialized cleaner.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :returns: Loaded datasets.
     """
-
-    args = {'data_dir': '~/PhD/projects/active/Generalisable_abuse/trial/',
+    args = {'data_dir': '/home/zeerakw/projects/Generalise/data/',
             'ftype': 'csv',
             'fields': None,
             'train': 'davidson_offensive.csv', 'dev': None, 'test': None,
@@ -85,13 +82,11 @@ def waseem_to_binary(label: str) -> str:
 
 def waseem(cleaners: base.Callable, preprocessor: base.Callable = None):
     """Load the Waseem dataset (expert annotations).
-
     :cleaners (base.Callable): Initialized cleaner.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :returns: Loaded datasets.
     """
-
-    args = {'data_dir': '~/PhD/projects/active/Generalisable_abuse/trial/',
+    args = {'data_dir': '/home/zeerakw/projects/Generalise/data/',
             'ftype': 'json',
             'fields': None,
             'train': 'Wamateur_expert.json', 'dev': None, 'test': None,
@@ -113,13 +108,11 @@ def waseem(cleaners: base.Callable, preprocessor: base.Callable = None):
 
 def waseem_hovy(cleaners: base.Callable, preprocessor: base.Callable = None):
     """Load the Waseem-Hovy dataset.
-
     :cleaners (base.Callable): Initialized cleaner.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :returns: Loaded datasets.
     """
-
-    args = {'data_dir': '~/PhD/projects/active/Generalisable_abuse/trial/',
+    args = {'data_dir': '/home/zeerakw/projects/Generalise/data/',
             'ftype': 'json',
             'fields': None,
             'train': 'waseem_hovy.json', 'dev': None, 'test': None,
@@ -151,13 +144,11 @@ def streamline_garcia(label: str):
 
 def garcia(cleaners: base.Callable, preprocessor: base.Callable = None):
     """Load the Garcia et al. dataset.
-
     :cleaners (base.Callable): Initialized cleaner.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :returns: Loaded datasets.
     """
-
-    args = {'data_dir': '~/PhD/projects/active/Generalisable_abuse/trial/',
+    args = {'data_dir': '/home/zeerakw/projects/Generalise/data/',
             'ftype': 'tsv',
             'fields': None,
             'train': 'garcia_stormfront_train.tsv', 'dev': None, 'test': 'garcia_stormfront_test.tsv',
@@ -184,14 +175,12 @@ def garcia(cleaners: base.Callable, preprocessor: base.Callable = None):
 
 def wulczyn(cleaners: base.Callable, preprocessor: base.Callable = None):
     """Load the Wulczyn et al. dataset.
-
     :cleaners (base.Callable): Initialized cleaner.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :returns: Loaded datasets.
     """
-
     # Labelfield needs to be set to nothing, then fields need to be modified
-    args = {'data_dir': '~/PhD/projects/active/Generalisable_abuse/trial/',
+    args = {'data_dir': '/home/zeerakw/projects/Generalise/data/',
             'ftype': 'tsv',
             'fields': None,
             'train': 'wulczyn_train.tsv', 'dev': 'wulczyn_dev.tsv', 'test': 'wulczyn_test.tsv',
