@@ -445,8 +445,8 @@ class GeneralDataset(IterableDataset):
         :stratify (str): The field to stratify the data along.
         :return data: Return splitted data.
         """
-
-        if stratify is not None:
+        if stratify is not None:  # TODO
+            raise NotImplementedError
             data = self.stratify(data, )
 
         if isinstance(splits, float):
