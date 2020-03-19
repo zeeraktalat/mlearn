@@ -388,7 +388,7 @@ class GeneralDataset(IterableDataset):
     def onehot_encode_doc(self, doc, names):
         """Onehot encode a single documenbase."""
         text = [tok for name in names for tok in getattr(doc, name)]
-        encoded_doc = torch.zeros(1, self.length, len(self.stoi))
+        encoded_doc = torch.zeros(1, self.length, len(self.stoi), dtype = torch.long)
 
         if len(text) < self.length:  # For externally loaded datasets
             text = self._pad_doc(text, self.length)
