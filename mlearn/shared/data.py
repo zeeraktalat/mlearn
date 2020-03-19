@@ -90,12 +90,13 @@ class GeneralDataset(IterableDataset):
 
         data = []
         for line in tqdm(self.reader(fp), desc = f'loading {self.name} ({dataset})'):
+
             data_line, datapoint = {}, base.Datapoint()  # TODO Look at moving all of this to the datapoint class.
 
             for field in self.train_fields:
                 idx = field.index if self.ftype in ['CSV', 'TSV'] else field.cname
                 data_line[field.name] = self.process_doc(line[idx].rstrip())
-                data_line['original'] = self.process_doc(line[idx].rstrip())
+                data_line['original'] = line[idx].rstrip()
 
             for field in self.label_fields:
                 idx = field.index if self.ftype in ['CSV', 'TSV'] else field.cname
