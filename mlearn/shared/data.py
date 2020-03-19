@@ -473,7 +473,7 @@ class GeneralDataset(IterableDataset):
             out = (self.data, self.test)
         elif num_splits == 3:
             self.data = data[:splits[0]]
-            self.dev = data[splits[0]:splits[1]]
+            self.dev = data[splits[0]:splits[0] + splits[1]]
             self.test = data[-splits[2]:]
             out = (self.data, self.dev, self.test)
         return out
