@@ -7,20 +7,18 @@ from tqdm import tqdm
 from math import floor
 from . import base
 from collections import Counter, defaultdict
-from torch.utils.data import IterableDataset
+from torch.utils.data import Dataset as IterableDataset
 
 
 class GeneralDataset(IterableDataset):
     """A general dataset class, which loads a dataset, creates a vocabulary, pads, tensorizes, etc."""
-
     def __init__(self, data_dir: str, ftype: str, fields: base.FieldType, name: str, train: str,
                  dev: str = None, test: str = None, train_labels: str = None, dev_labels: str = None,
                  test_labels: str = None, sep: str = None, tokenizer: base.Union[base.Callable, str] = 'spacy',
                  preprocessor: base.Callable = None, transformations: base.Callable = None,
                  label_processor: base.Callable = None, label_preprocessor: base.Callable = None,
-                 length: int = None, lower: bool = True) -> None:
+                 length: int = None, lower: bool = True, gpu: bool = True) -> None:
         """Initialize the variables required for the dataset loading.
-
         :data_dir (str): Path of the directory containing the files.
         :ftype (str): ftype of the file ([C|T]SV and JSON accepted)
         :fields (base.List[base.Tuple[str, ...]]): Fields in the same order as they appear in the file.
@@ -38,8 +36,9 @@ class GeneralDataset(IterableDataset):
         :transformations (base.Callable, default = None): Method changing from one representation to another.
         :label_processor(base.Callable, default = None): Function to process labels with.
         :lower (bool, default = True): Lowercase the document.
+        :gpu (bool, default = True): Run on GPU.
+        :length (int, default = None): Max length of documents.
         """
-
         self.data_dir = os.path.abspath(data_dir) if '~' not in data_dir else os.path.expanduser(data_dir)
         self.name = name
         super(GeneralDataset, self).__init__()
@@ -77,14 +76,13 @@ class GeneralDataset(IterableDataset):
         self.label_preprocessor = label_preprocessor
         self.length = length
         self.lower = lower
+        self.gpu = gpu
 
     def load(self, dataset: str = 'train', skip_header = True) -> None:
         """Load the datasebase.
-
         :skip_header (bool, default = True): Skip the header.
         :dataset (str, default = 'train'): Dataset to load. Must exist as key in self.data_files.
         """
-
         fp = open(self.data_files[dataset])
 
         if skip_header:
