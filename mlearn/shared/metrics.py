@@ -1,15 +1,13 @@
 from . import base
 from collections import OrderedDict
-from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score, confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score, confusion_matrix, f1_score
 
 
 def select_metrics(metrics: base.List[str]) -> base.Dict[str, base.Callable]:
     """Select metrics for computation based on a list of metric names.
-
     :metrics: List of metric names.
     :return out: Dictionary containing name and methods.
     """
-
     out = OrderedDict()
     if not isinstance(metrics, list):
         metrics = [metrics]
@@ -26,5 +24,8 @@ def select_metrics(metrics: base.List[str]) -> base.Dict[str, base.Callable]:
             out['auc'] = roc_auc_score
         elif 'confusion' in m and 'confusion' not in out:
             out['confusion'] = confusion_matrix
+        elif 'f1-score' in m and 'f1-score' not in out:
+            out['f1-score'] = f1_score
+
 
     return out
