@@ -27,8 +27,7 @@ def process_and_batch(dataset, data, batch_size):
 
 def write_predictions(output_info: pd.DataFrame, main_dataset: data.GeneralDataset, preds: list, truths: list,
                       model_info: list, model_header: list, data_name: str, main_name: str):
-    """Write predictions to file. TODO Unfinished.
-
+    """TODO: Docstring for write_predictions.
     :output_info (pd.DataFrame): Dataframe containing information to be written including each doc.
     :main_dataset (data.GeneralDataset): dataset for main task.
     :preds (list): Predictions
@@ -38,8 +37,6 @@ def write_predictions(output_info: pd.DataFrame, main_dataset: data.GeneralDatas
     :main_name (str): Main task dataset.
     :returns: TODO
     """
-
-    raise NotImplementedError
 
     output_info['predictions'] = [main_dataset.label_name_lookup(p) for p in preds]
     output_info['true'] = [main_dataset.label_name_lookup(t) for t in truths]
