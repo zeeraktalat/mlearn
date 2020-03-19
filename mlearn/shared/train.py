@@ -4,26 +4,23 @@ import pandas as pd
 from . import base
 from tqdm import tqdm
 from collections import defaultdict
-import mlearn.shared.data as data
-from mlearn.shared.batching import Batch, BatchExtractor
+import gen.shared.data as data
+from gen.shared.batching import Batch, BatchExtractor
 
 
 def process_and_batch(dataset, data, batch_size):
     """Process a dataset and data.
-
     :dataset: A dataset object.
     :data: Data to be processed.
     :returns: Processed data.
     """
-
     # Process labels and encode data.
     dataset.process_labels(data)
-    encoded = dataset.encode(data, onehot = True)
 
     # Batch data
-    batch = Batch(batch_size, encoded)
+    batch = Batch(batch_size, data)
     batch.create_batches()
-    batches = BatchExtractor('encoded', 'label', batch)
+    batches = BatchExtractor('encoded', 'label', batch, dataset)
 
     return batches
 
@@ -93,14 +90,12 @@ def write_results(writer: base.Callable, train_scores: dict, train_loss: list, d
 
 def run_model(library: str, train: bool, writer: base.Callable, model_info: list, head_len: int, **kwargs):
     """Train or evaluate model.
-
     :library (str): Library of the model.
     :train (bool): Whether it's a train or test run.
     :writer (csv.writer): File to output model performance to.
     :model_info (list): Information about the model to be added to each line of the output.
     :head_len (int): The length of the header.
     """
-
     if train:
         func = train_pytorch_model if library == 'pytorch' else train_sklearn_model
     else:
@@ -209,8 +204,8 @@ def train_sklearn_model(arg1):
 
     :arg1: TODO
     :returns: TODO
-    """
 
+    """
     train_scores, dev_scores = None, None
     raise NotImplementedError
     return None, None, train_scores, dev_scores
@@ -221,8 +216,8 @@ def evaluate_sklearn_model(arg1):
 
     :arg1: TODO
     :returns: TODO
-    """
 
+    """
     train_scores, dev_scores = None, None
     raise NotImplementedError
     return None, None, train_scores, dev_scores
