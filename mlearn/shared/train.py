@@ -105,10 +105,9 @@ def run_model(library: str, train: bool, writer: base.Callable, model_info: list
 
 def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataType, loss_func: base.Callable,
                         optimizer: base.Callable, metrics: base.Dict[str, base.Callable],
-                        dev_batches: base.DataType = None,
+                        dev_batches: base.DataType = None, gpu: bool = True, shuffle: bool = True,
                         display_metric: str = 'accuracy', **kwargs) -> base.Union[list, int, dict, dict]:
     """Train a machine learning model.
-
     :model (base.ModelType): Untrained model to be trained.
     :epochs (int): The number of epochs to run.
     :batches (base.DataType): Batched training set.
@@ -116,9 +115,9 @@ def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataTy
     :optimizer (bas.Callable): Optimizer function.
     :metrics (base.Dict[str, base.Callable])): Metrics to use.
     :dev_batches (base.DataType, optional): Batched dev set.
+    :gpu (bool, default = True): Run on GPU
     :display_metric (str): Metric to be diplayed in TQDM iterator
     """
-
     model.train_mode = True
 
     train_loss = []
@@ -127,17 +126,25 @@ def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataTy
     dev_losses = []
     dev_scores = defaultdict(list)
 
-    for epoch in tqdm(range(epochs)):  # TODO Get TQDM to show the scores for each epoch
+    for epoch in tqdm(range(epochs), desc = "Training model"):  # TODO Get TQDM to show the scores for each epoch
 
         model.zero_grad()  # Zero out gradients
         epoch_loss = []
         epoch_scores = defaultdict(list)
 
-        for X, y in batches:
+        if shuffle:
+            batches.shuffle()
+
+        for X, y in tqdm(batches, desc = "Iterating over batches", leave = False):
+
+            if gpu:  # Make sure it's GPU runnable
+                X = X.cuda()
+                y = y.cuda()
+
             scores = model(X)
 
             loss = loss_func(scores, y)
-            epoch_loss.append(float(loss.item()))
+            epoch_loss.append(float(loss.data.item()))
 
             # Update steps
             loss.backward()
@@ -145,17 +152,17 @@ def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataTy
 
             scores = torch.argmax(scores, 1)
             for metric, scorer in metrics.items():
+                scores, y = scores.cpu(), y.cpu()
                 performance = scorer(scores, y)
                 epoch_scores[metric].append(performance)
 
         # epoch_performance = np.mean(epoch_scores[display_metric])  TODO
-
         train_loss.append(sum(epoch_loss))
 
         for metric in metrics:
             train_scores[metric].append(np.mean(epoch_scores[metric]))
 
-        if dev_batches:
+        if dev_batches is not None:
             dev_loss, _, dev_score, _ = evaluate_pytorch_model(model, dev_batches, loss_func, metrics)
             dev_losses.extend(dev_loss)
 
@@ -167,31 +174,37 @@ def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataTy
 
 
 def evaluate_pytorch_model(model: base.ModelType, iterator: base.DataType, loss_func: base.Callable,
-                           metrics: base.Dict[str, base.Callable], **kwargs) -> base.List[float]:
+                           metrics: base.Dict[str, base.Callable], gpu: bool = True, **kwargs) -> base.List[float]:
     """Evaluate a machine learning model.
-
     :model (base.ModelType): Untrained model to be trained.
     :iterator (base.DataType): Test set to evaluate on.
     :loss_func (base.Callable): Loss function to use.
     :metrics (base.Dict[str, base.Callable])): Metrics to use.
+    :gpu (bool, default = True): Run on GPU
     """
-
     model.train_mode = False
     loss = []
     eval_scores = defaultdict(list)
-
+    all_scores, labels = [], []
     with torch.no_grad():
         for X, y in iterator:
+
+            if gpu:
+                X = X.cuda()
+                y = y.cuda()
+
             scores = model(X)
 
             loss_f = loss_func(scores, y)
 
-            scores = torch.argmax(scores, 1)
-            for metric, scorer in metrics.items():
-                performance = scorer(scores, y)
-                eval_scores[metric].append(performance)
+            all_scores.extend(torch.argmax(scores, 1).cpu().tolist())
+            labels.extend(y.cpu().tolist())
 
-            loss.append(loss_f.item())
+            loss.append(loss_f.data.item())
+
+    for metric, scorer in metrics.items():
+        performance = scorer(all_scores, labels)
+        eval_scores[metric].append(performance)
 
     return [np.mean(loss)], None, {m: [np.mean(vals)] for m, vals in eval_scores.items()}, None
 
