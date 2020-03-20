@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.com/ZeerakW/MachineLearningAPI.svg?token=5q8ipi37nhoPMz7eekph&branch=staging)](https://travis-ci.com/ZeerakW/MachineLearningAPI)
 ------------
 
-# MachineLearningAPI
+# MLearn: A machine learning API for my personal NLP experiments
 
-ML API in which model building will be streamlined
+This project will develop on basic data processing and experiment pipelines to prevent reproducing them moving forward.
