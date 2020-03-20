@@ -162,7 +162,7 @@ def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataTy
             train_scores[metric].append(np.mean(epoch_scores[metric]))
 
         if dev_batches is not None:
-            dev_loss, _, dev_score, _ = evaluate_pytorch_model(model, dev_batches, loss_func, metrics)
+            dev_loss, _, dev_score, _ = evaluate_pytorch_model(model, dev_batches, loss_func, metrics, gpu = gpu)
             dev_losses.extend(dev_loss)
 
             for score in dev_score:

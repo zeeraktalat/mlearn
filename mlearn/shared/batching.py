@@ -49,8 +49,7 @@ class BatchExtractor:
 
     def __iter__(self):
         for batch in self.batcher:
-            batch = self.data.encode(batch, onehot = self.onehot)
-            X = torch.cat([getattr(doc, self.df) for doc in batch], dim = 0)
+            X = torch.cat([doc for doc in self.data.encode(batch, onehot = self.onehot)], dim = 0)
             y = torch.tensor([getattr(doc, self.lf) for doc in batch]).flatten()
             yield (X, y)
 
