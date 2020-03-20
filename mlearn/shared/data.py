@@ -35,6 +35,7 @@ class GeneralDataset(IterableDataset):
         :preprocessor (base.Callable, default = None): Preprocessing step to apply.
         :transformations (base.Callable, default = None): Method changing from one representation to another.
         :label_processor(base.Callable, default = None): Function to process labels with.
+        :label_preprocessor(base.Callable, default = None): Function to preprocess labels.
         :lower (bool, default = True): Lowercase the document.
         :gpu (bool, default = True): Run on GPU.
         :length (int, default = None): Max length of documents.
@@ -211,12 +212,11 @@ class GeneralDataset(IterableDataset):
     def json_reader(self, fp: str) -> base.Generator:
         """Create a JSON reading objecbase.
         :fp (str): Opened file objecbase.
-        :return: Loaded line.
-        """
+        :return: """
         for line in fp:
             yield json.loads(line)
 
-    def build_token_vocab(self, data: base.DataType, original: bool = True):
+    def build_token_vocab(self, data: base.DataType, original: bool = False):
         """Build vocab over datasebase.
         :data (base.DataType): List of datapoints to process.
         :original (bool): Use the original document to generate vocab.
@@ -287,7 +287,7 @@ class GeneralDataset(IterableDataset):
         :labels (base.DataType): List of datapoints to process.
         """
         labels = set(getattr(l, getattr(f, 'name')) for l in labels for f in self.label_fields)
-        self.itol = {ix: l for ix, l in enumerate(sorted(labels))}
+        self.itol = {ix: l for ix, l in enumerate(sorted(labels, reverse = True))}
         self.ltoi = {l: ix for ix, l in self.itol.items()}
 
     def label_name_lookup(self, label: str) -> int:
@@ -316,7 +316,7 @@ class GeneralDataset(IterableDataset):
             setattr(doc, 'label', label)
 
     def _process_label(self, label, processor: base.Callable = None) -> int:
-        """Modify label using external function to process ibase.
+        """Modify label using external function to process labels.
         :label: Label to process.
         :processor: Function to process the label."""
         if not isinstance(label, list):
