@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from .shared import base
+from . import base
 import torch.nn.functional as F
 
 

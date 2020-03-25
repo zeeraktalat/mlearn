@@ -4,8 +4,8 @@ from shared.fileio import write_results, print_results
 from shared.metrics import select_metrics
 from sklearn.preprocessing import LabelEncoder
 from sklearn.feature_extraction import DictVectorizer
-from gen.shared.custom_types import NPData, ModelType, VectType
-from slearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, HashingVectorizer
+from mlearn.custom_types import NPData, ModelType, VectType
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, HashingVectorizer
 
 
 def select_vectorizer(vectorizer: str) -> VectType:

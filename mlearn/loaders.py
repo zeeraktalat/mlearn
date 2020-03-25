@@ -1,5 +1,5 @@
-from shared import base
-from shared.data import GeneralDataset
+from . import base
+from data import GeneralDataset
 
 
 def _loader(args: dict):
