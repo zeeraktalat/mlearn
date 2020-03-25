@@ -25,7 +25,8 @@ setuptools.setup(
         "torchtext",
         "tqdm",
         "spacy",
+        "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.5/en_core_web_sm-2.2.5.tar.gz"
         "scikit-learn",
         "torchtestcase"
-    ]
+    ],
 )
