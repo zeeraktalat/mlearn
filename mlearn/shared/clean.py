@@ -10,7 +10,7 @@ class Preprocessors(object):
     def __init__(self, liwc_path: str = None):
         """Initialise cleaner class.
         """
-        self.tagger = spacy.load('en', disable = ['ner', 'parser'])
+        self.tagger = spacy.load('en_web_core_sm', disable = ['ner', 'parser'])
         self.liwc_dict = None
         self.slurs = None
         self.slur_window = None
