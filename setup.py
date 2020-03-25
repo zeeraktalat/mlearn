@@ -19,4 +19,13 @@ setuptools.setup(
         "Operating System :: Unix"
     ],
     python_requires='>3.6',
+    install_requires=[
+        "numpy",
+        "torch",
+        "torchtext",
+        "tqdm",
+        "spacy",
+        "scikit-learn",
+        "torchtestcase"
+    ]
 )
