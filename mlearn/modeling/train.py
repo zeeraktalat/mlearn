@@ -186,7 +186,7 @@ def evaluate_pytorch_model(model: base.ModelType, iterator: base.DataType, loss_
     eval_scores = defaultdict(list)
     all_scores, labels = [], []
     with torch.no_grad():
-        for X, y in iterator:
+        for X, y in tqdm(iterator, desc = "Evaluating model", leave = False):
 
             if gpu:
                 X = X.cuda()
