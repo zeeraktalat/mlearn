@@ -175,15 +175,15 @@ class Cleaner(object):
         :processes (List[str]): The cleaning processes to be undertaken.
         :returns cleaned: Return the cleaned text.
         """
-        self.processes = self.processes if self.processes else processes
+        process = processes if processes is not None else self.processes
         cleaned = str(text)
-        if 'lower' in self.processes or 'lower' in processes:
+        if 'lower' in process:
             cleaned = cleaned.lower()
-        if 'url' in self.processes or 'url' in processes:
+        if 'url' in process:
             cleaned = re.sub(r'https?:/\/\S+', 'URL', cleaned)
-        if 'hashtag' in self.processes or 'hashtag' in processes:
+        if 'hashtag' in process:
             cleaned = re.sub(r'#[a-zA-Z0-9]*\b', 'HASHTAG', cleaned)
-        if 'username' in self.processes or 'username' in processes:
+        if 'username' in process:
             cleaned = re.sub(r'@\S+', 'AT_USER', cleaned)
         cleaned = re.sub("'", ' ', cleaned)
 
@@ -195,10 +195,7 @@ class Cleaner(object):
         :processes: The cleaning processes to engage in.
         :returns toks: Document that has been passed through spacy's tagger.
         """
-        if processes:
-            toks = [tok.text for tok in self.tagger(self.clean_document(document, processes = processes))]
-        else:
-            toks = [tok.text for tok in self.tagger(self.clean_document(document))]
+        toks = [tok.text for tok in self.tagger(self.clean_document(document, processes = processes))]
         return toks
 
     def ptb_tokenize(self, document: base.DocType, processes: base.List[str] = None):
@@ -207,8 +204,7 @@ class Cleaner(object):
         :processes: The cleaning processes to engage in.
         :returns toks: Document that has been passed through spacy's tagger.
         """
-        self.processes = processes if processes else self.processes
-        toks = [tok.tag_ for tok in self.tagger(self.clean_document(document))]
+        toks = [tok.tag_ for tok in self.tagger(self.clean_document(document, processes = processes))]
         return " ".join(toks)
 
     def sentiment_tokenize(self, document: base.DocType, processes: base.List[str] = None):
