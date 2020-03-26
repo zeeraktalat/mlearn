@@ -232,9 +232,12 @@ class GeneralDataset(IterableDataset):
 
         self.token_counts.update({'<unk>': int(np.mean(list(self.token_counts.values())))})
         self.token_counts.update({'<pad>': int(np.mean(list(self.token_counts.values())))})
+        self.itos, self.stoi = {}, {}
 
-        self.itos = {ix: tok for ix, (tok, _) in enumerate(self.token_counts.most_common())}
-        self.stoi = {tok: ix for ix, tok in self.itos.items()}
+        for ix, (tok, _) in enumerate(tqdm(self.token_counts.most_common(), desc = "Encoding vocabulary")):
+            self.itos[ix] = tok
+            self.stoi[tok] = ix
+
         self.unk_tok = self.stoi['<unk>']
         self.pad_tok = self.stoi['<pad>']
 
@@ -288,8 +291,11 @@ class GeneralDataset(IterableDataset):
         :labels (base.DataType): List of datapoints to process.
         """
         labels = set(getattr(l, getattr(f, 'name')) for l in labels for f in self.label_fields)
-        self.itol = {ix: l for ix, l in enumerate(sorted(labels, reverse = True))}
-        self.ltoi = {l: ix for ix, l in self.itol.items()}
+        self.itol, self.ltoi = {}, {}
+
+        for ix, l in enumerate(tqdm(sorted(labels, reverse = True), desc = "Encode label vocab")):
+            self.itol[ix] = l
+            self.ltoi[l] = ix
 
     def label_name_lookup(self, label: str) -> int:
         """Look up label index from label.
@@ -411,6 +417,7 @@ class GeneralDataset(IterableDataset):
     def stratify(self, data, strata_field):
         # TODO Rewrite this code to make sense with this implementation.
         # TODO This doesn't make sense to me.
+        raise NotImplementedError
         strata_maps = defaultdict(list)
         for doc in data:
             strata_maps[getattr(doc, strata_field)].append(doc)
