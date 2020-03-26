@@ -1,7 +1,7 @@
 import sys
 import ast
 import json
-from . import base
+from mlearn import base
 
 
 def read_json(fh: str, enc, doc_key: str, label_key: str, **kwargs) -> base.Tuple[str, str, ...]:

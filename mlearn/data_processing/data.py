@@ -5,7 +5,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from math import floor
-from . import base
+from mlearn import base
 from collections import Counter, defaultdict
 from torch.utils.data import Dataset as IterableDataset
 from torch.nn.functional import one_hot

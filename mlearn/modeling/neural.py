@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from . import base
+from mlearn import base
 import torch.nn.functional as F
 
 

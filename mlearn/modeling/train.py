@@ -1,11 +1,11 @@
 import torch
 import numpy as np
 import pandas as pd
-from . import base
 from tqdm import tqdm
+from mlearn import base
 from collections import defaultdict
-import mlearn.data as data
-from mlearn.batching import Batch, BatchExtractor
+import mlearn.data_processing.data as data
+from mlearn.data_processing.batching import Batch, BatchExtractor
 
 
 def process_and_batch(dataset, data, batch_size):

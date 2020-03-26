@@ -1,5 +1,5 @@
 import torch
-from . import base
+from mlearn import base
 
 
 class TorchTextOnehotBatchGenerator:

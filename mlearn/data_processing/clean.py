@@ -1,7 +1,7 @@
 import re
 import pdb
 import spacy
-from . import base
+from mlearn import base
 from string import punctuation
 
 

@@ -1,4 +1,4 @@
-from . import base
+from mlearn import base
 from collections import OrderedDict
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score, confusion_matrix, f1_score
 
@@ -26,6 +26,5 @@ def select_metrics(metrics: base.List[str]) -> base.Dict[str, base.Callable]:
             out['confusion'] = confusion_matrix
         elif 'f1-score' in m and 'f1-score' not in out:
             out['f1-score'] = f1_score
-
 
     return out
