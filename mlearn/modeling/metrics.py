@@ -24,7 +24,8 @@ def select_metrics(metrics: base.List[str]) -> base.Dict[str, base.Callable]:
             out['auc'] = roc_auc_score
         elif 'confusion' in m and 'confusion' not in out:
             out['confusion'] = confusion_matrix
-        elif 'f1-score' in m and 'f1-score' not in out:
+        elif 'f1' in m and 'f1-score' not in out:
             out['f1-score'] = f1_score
+
 
     return out
