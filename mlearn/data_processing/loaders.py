@@ -40,23 +40,34 @@ def davidson_to_binary(label: str) -> str:
         return 'not-abuse'
 
 
-def davidson(cleaners: base.Callable, preprocessor: base.Callable = None):
+def davidson(cleaners: base.Callable, data_path: str, train: str, dev: str = None, test: str = None,
+             train_l: str = None, dev_l: str = None, test_l: str = None, length: int = None,
+             preprocessor: base.Callable = None, label_preprocessor: base.Callable = None):
     """Function to load the davidson dataset.
     :cleaners (base.Callable): Initialized cleaner.
+    :data_path (str): Path to data files.
+    :train (str): Filename containting the train set.
+    :dev (str, default = None): Filename containing the dev set.
+    :test (str, default = None): Filename containing the test set.
+    :train_l (str, default = None): Filename of the file containing the labels for the train set.
+    :dev_l (str, default = None): Filename of the file containing the labels for the dev set.
+    :test_l (str, default = None): Filename of the file containing the labels for the test set.
+    :length (int, default = None): Maximum length of sequence.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
+    :label_preprocessor (base.Callable, default = None): Label preprocessing, allowing for modifying the labelset.
     :returns: Loaded datasets.
     """
-    args = {'data_dir': '/home/zeerakw/projects/Generalise/data/',
+    args = {'data_dir': data_path,
             'ftype': 'csv',
             'fields': None,
-            'train': 'davidson_offensive.csv', 'dev': None, 'test': None,
-            'train_labels': None, 'dev_labels': None, 'test_labels': None,
+            'train': train, 'dev': dev, 'test': test,
+            'train_labels': train_l, 'dev_labels': dev_l, 'test_labels': test_l,
             'sep': ',',
             'tokenizer': cleaners.tokenize,
             'preprocessor': preprocessor,
             'transformations': None,
-            'length': None,
-            'label_preprocessor': davidson_to_binary,
+            'length': length,
+            'label_preprocessor': label_preprocessor,
             'name': 'Davidson et al.'
             }
 
