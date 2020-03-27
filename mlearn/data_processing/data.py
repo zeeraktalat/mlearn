@@ -193,6 +193,14 @@ class GeneralDataset(IterableDataset):
     def train_set(self, test: base.DataType) -> None:
         self.test = test
 
+    @property
+    def modify_length(self):
+        return self.length
+
+    @modify_length.setter
+    def modify_length(self, x: int):
+        self.length = x
+
     def reader(self, fp, ftype: str = None, sep: str = None):
         """Instatiate the reader to be used.
         :fp: Opened file.
