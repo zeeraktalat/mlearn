@@ -20,7 +20,7 @@ def process_and_batch(dataset, data, batch_size):
     # Batch data
     batch = Batch(batch_size, data)
     batch.create_batches()
-    batches = BatchExtractor('encoded', 'label', batch, dataset)
+    batches = BatchExtractor('label', batch, dataset)
 
     return batches
 

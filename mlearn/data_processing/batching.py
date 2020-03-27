@@ -37,12 +37,12 @@ class TorchTextDefaultExtractor:
 class BatchExtractor:
     """A class to get the information from the batches."""
 
-    def __init__(self, datafield: str, labelfield: str, batcher: base.DataType, dataset: base.DataType,
+    def __init__(self, labelfield: str, batcher: base.DataType, dataset: base.DataType,
                  onehot: bool = True):
         self.batcher = batcher
         self.data = dataset
         self.onehot = onehot
-        self.df, self.lf = datafield, labelfield
+        self.lf = labelfield
 
     def __len__(self):
         return len(self.batcher)
