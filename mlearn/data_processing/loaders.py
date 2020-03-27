@@ -40,34 +40,29 @@ def davidson_to_binary(label: str) -> str:
         return 'not-abuse'
 
 
-def davidson(cleaners: base.Callable, data_path: str, train: str, dev: str = None, test: str = None,
-             train_l: str = None, dev_l: str = None, test_l: str = None, length: int = None,
-             preprocessor: base.Callable = None, label_preprocessor: base.Callable = None):
+def davidson(cleaners: base.Callable, data_path: str, length: int = None,
+             preprocessor: base.Callable = None, transformer: base.Callable = None,
+             label_processor: base.Callable = None):
     """Function to load the davidson dataset.
     :cleaners (base.Callable): Initialized cleaner.
     :data_path (str): Path to data files.
-    :train (str): Filename containting the train set.
-    :dev (str, default = None): Filename containing the dev set.
-    :test (str, default = None): Filename containing the test set.
-    :train_l (str, default = None): Filename of the file containing the labels for the train set.
-    :dev_l (str, default = None): Filename of the file containing the labels for the dev set.
-    :test_l (str, default = None): Filename of the file containing the labels for the test set.
     :length (int, default = None): Maximum length of sequence.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
+    :transformer (base.Callable, default = None): Document processing, if additional processing is required.
     :label_preprocessor (base.Callable, default = None): Label preprocessing, allowing for modifying the labelset.
     :returns: Loaded datasets.
     """
     args = {'data_dir': data_path,
             'ftype': 'csv',
             'fields': None,
-            'train': train, 'dev': dev, 'test': test,
-            'train_labels': train_l, 'dev_labels': dev_l, 'test_labels': test_l,
+            'train': 'davidson_offensive.csv', 'dev': None, 'test': None,
+            'train_labels': None, 'dev_labels': None, 'test_labels': None,
             'sep': ',',
             'tokenizer': cleaners.tokenize,
             'preprocessor': preprocessor,
-            'transformations': None,
+            'transformations': transformer,
             'length': length,
-            'label_preprocessor': label_preprocessor,
+            'label_preprocessor': label_processor,
             'name': 'Davidson et al.'
             }
 
@@ -91,13 +86,18 @@ def waseem_to_binary(label: str) -> str:
         return 'not-abuse'
 
 
-def waseem(cleaners: base.Callable, preprocessor: base.Callable = None):
+def waseem(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
+           transformer: base.Callable = None, label_processor: base.Callable = None):
     """Load the Waseem dataset (expert annotations).
     :cleaners (base.Callable): Initialized cleaner.
+    :data_path (str): Path to data directory.
+    :length (int), default = None): Maximum length of sequence.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
+    :transformer (base.Callable, default = None): Additional document processing, if required.
+    :label_processor (base.callable, default = None): Label preprocessing, allowing for modifying labelset.
     :returns: Loaded datasets.
     """
-    args = {'data_dir': '/home/zeerakw/projects/Generalise/data/',
+    args = {'data_dir': data_path,
             'ftype': 'json',
             'fields': None,
             'train': 'Wamateur_expert.json', 'dev': None, 'test': None,
@@ -105,11 +105,12 @@ def waseem(cleaners: base.Callable, preprocessor: base.Callable = None):
             'sep': None,
             'tokenizer': cleaners.tokenize,
             'preprocessor': preprocessor,
-            'transformations': None,
-            'length': None,
-            'label_preprocessor': waseem_to_binary,
+            'transformations': transformer,
+            'length': length,
+            'label_preprocessor': label_processor,
             'name': 'Waseem'
             }
+
     text_field = base.Field('text', train = True, label = False, ignore = False, cname = 'text')
     label_field = base.Field('label', train = False, label = True, ignore = False, cname = 'Annotation')
     args['fields'] = [text_field, label_field]
@@ -117,13 +118,18 @@ def waseem(cleaners: base.Callable, preprocessor: base.Callable = None):
     return _loader(args)
 
 
-def waseem_hovy(cleaners: base.Callable, preprocessor: base.Callable = None):
+def waseem_hovy(cleaners: base.Callable, data_path: str, train: str, length: int = None,
+                preprocessor: base.Callable = None, transformer: base.Callable = None,
+                label_processor: base.Callable = None):
     """Load the Waseem-Hovy dataset.
     :cleaners (base.Callable): Initialized cleaner.
+    :data_path (str): Path to data directory.
+    :length (int), default = None): Maximum length of sequence.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
+    :transformer (base.Callable, default = None): Additional document processing, if required.
     :returns: Loaded datasets.
     """
-    args = {'data_dir': '/home/zeerakw/projects/Generalise/data/',
+    args = {'data_dir': data_path,
             'ftype': 'json',
             'fields': None,
             'train': 'waseem_hovy.json', 'dev': None, 'test': None,
@@ -131,11 +137,12 @@ def waseem_hovy(cleaners: base.Callable, preprocessor: base.Callable = None):
             'sep': None,
             'tokenizer': cleaners.tokenize,
             'preprocessor': preprocessor,
-            'transformations': None,
-            'length': None,
-            'label_preprocessor': waseem_to_binary,
+            'transformations': transformer,
+            'length': length,
+            'label_preprocessor': label_processor,
             'name': 'Waseem-Hovy'
             }
+
     text_field = base.Field('text', train = True, label = False, ignore = False, cname = 'text')
     label_field = base.Field('label', train = False, label = True, ignore = False, cname = 'Annotation')
     args['fields'] = [text_field, label_field]
@@ -143,7 +150,7 @@ def waseem_hovy(cleaners: base.Callable, preprocessor: base.Callable = None):
     return _loader(args)
 
 
-def streamline_garcia(label: str):
+def binarize_garcia(label: str):
     """Streamline Garcia labels with the other datasets.
     :returns: streamlined labels.
     """
@@ -153,13 +160,19 @@ def streamline_garcia(label: str):
         return 'not-abuse'
 
 
-def garcia(cleaners: base.Callable, preprocessor: base.Callable = None):
+def garcia(cleaners: base.Callable, data_path: str, length: int = None,
+           preprocessor: base.Callable = None, transformer: base.Callable = None,
+           label_processor: base.Callable = None):
     """Load the Garcia et al. dataset.
     :cleaners (base.Callable): Initialized cleaner.
+    :data_path (str): Path to data directory.
+    :length (int), default = None): Maximum length of sequence.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
+    :transformer (base.Callable, default = None): Additional document processing, if required.
+    :label_processor (base.callable, default = None): Label preprocessing, allowing for modifying labelset.
     :returns: Loaded datasets.
     """
-    args = {'data_dir': '/home/zeerakw/projects/Generalise/data/',
+    args = {'data_dir': data_path,
             'ftype': 'tsv',
             'fields': None,
             'train': 'garcia_stormfront_train.tsv', 'dev': None, 'test': 'garcia_stormfront_test.tsv',
@@ -167,9 +180,9 @@ def garcia(cleaners: base.Callable, preprocessor: base.Callable = None):
             'sep': '\t',
             'tokenizer': cleaners.tokenize,
             'preprocessor': preprocessor,
-            'transformations': None,
-            'length': None,
-            'label_preprocessor': streamline_garcia,
+            'transformations': transformer,
+            'length': length,
+            'label_preprocessor': label_processor,
             'name': 'Garcia et al.'
             }
 
@@ -184,14 +197,20 @@ def garcia(cleaners: base.Callable, preprocessor: base.Callable = None):
     return _loader(args)
 
 
-def wulczyn(cleaners: base.Callable, preprocessor: base.Callable = None):
+def wulczyn(cleaners: base.Callable, data_path: str, length: int = None,
+            preprocessor: base.Callable = None, transformer: base.Callable = None,
+            label_processor: base.Callable = None):
     """Load the Wulczyn et al. dataset.
     :cleaners (base.Callable): Initialized cleaner.
+    :data_path (str): Path to data directory.
+    :length (int), default = None): Maximum length of sequence.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
+    :transformer (base.Callable, default = None): Additional document processing, if required.
+    :label_processor (base.callable, default = None): Label preprocessing, allowing for modifying labelset.
     :returns: Loaded datasets.
     """
     # Labelfield needs to be set to nothing, then fields need to be modified
-    args = {'data_dir': '/home/zeerakw/projects/Generalise/data/',
+    args = {'data_dir': data_path,
             'ftype': 'tsv',
             'fields': None,
             'train': 'wulczyn_train.tsv', 'dev': 'wulczyn_dev.tsv', 'test': 'wulczyn_test.tsv',
@@ -199,9 +218,9 @@ def wulczyn(cleaners: base.Callable, preprocessor: base.Callable = None):
             'sep': '\t',
             'tokenizer': cleaners.tokenize,
             'preprocessor': preprocessor,
-            'transformations': None,
-            'length': None,
-            'label_preprocessor': None,
+            'transformations': transformer,
+            'length': length,
+            'label_preprocessor': label_processor,
             'name': 'Wulczyn et al.'
             }
 
