@@ -57,6 +57,7 @@ class GeneralDataset(IterableDataset):
         self.sep = sep
         self.fields = fields
         self.fields_dict = defaultdict(list)
+        self.label_counts = defaultdict(int)
 
         for field in self.fields:
             for key in field.__dict__:
@@ -106,6 +107,8 @@ class GeneralDataset(IterableDataset):
                     data_line[field.name] = self.label_preprocessor(line[idx].rstrip())
                 else:
                     data_line[field.name] = line[idx].rstrip()
+
+                self.label_counts[data_line[field.name]] += 1
 
             for key, val in data_line.items():
                 setattr(datapoint, key, val)
@@ -409,7 +412,7 @@ class GeneralDataset(IterableDataset):
         """
         encoded = torch.zeros(1, self.length, len(self.stoi), dtype = torch.long)
 
-        indices = torch.tensor([self.stoi.get(text[ix], self.unk_tok) for ix in range(len(text))], dtype = torch.long)
+        indices = self.encode_doc(text)
         encoded[0] = one_hot(indices, len(self.stoi)).type(torch.long)
 
         return encoded
@@ -422,34 +425,64 @@ class GeneralDataset(IterableDataset):
 
         return encoded
 
-    def stratify(self, data, strata_field):
-        # TODO Rewrite this code to make sense with this implementation.
-        # TODO This doesn't make sense to me.
-        raise NotImplementedError
-        strata_maps = defaultdict(list)
-        for doc in data:
-            strata_maps[getattr(doc, strata_field)].append(doc)
-        return list(strata_maps.values())
-
     def split(self, data: base.DataType, splits: base.Union[int, base.List[int]],
-              stratify: str = None) -> base.Tuple[base.DataType]:
+              stratify: str = None, **kwargs) -> base.Tuple[base.DataType]:
         """Split the datasebase.
-        :data (base.DataType): Dataset to splibase.
+        :data (base.DataType): Dataset to split
         :splits (int | base.List[int]]): Real valued splits.
         :stratify (str): The field to stratify the data along.
         :return data: Return splitted data.
         """
-        if stratify is not None:  # TODO
-            raise NotImplementedError
-            data = self.stratify(data, )
 
         if isinstance(splits, float):
             splits = [splits]
 
         num_splits = len(splits)
         num_datapoints = len(data)
-        splits = list(map(lambda x: floor(num_datapoints * x), splits))
+        split_sizes = list(map(lambda x: floor(num_datapoints * x), splits))  # Get the actual sizes of the splits.
 
+        if stratify is not None:  # TODO
+            raise NotImplementedError
+            out = self._stratify_split(data, split_sizes, **kwargs)
+            return out
+        else:
+            return self._split(data, num_splits, split_sizes)
+
+    def _stratify_split(self, data: base.DataType, num_splits: int, split_sizes: base.Union[int, base.List[int]],
+                        strata_field: str):
+        """Stratify and split the data.
+        :data (base.DataType): dataset to split.
+        :num_splits (int): The number of splits in data.
+        :split_sizes (int | base.List[int]): Real valued splits.
+        :strata_field (str): Name of label field.
+        """
+        raise NotImplementedError
+        # TODO Get data splits
+        # TODO Get the number of ducments in the (train/dev/test) set
+        # TODO select with the probability of each class!
+
+        # Get the ratios of the labels in the overall dataset.
+        label_counts = Counter([getattr(doc, strata_field) for doc in data])
+
+        # Get labels and probabilities ordered
+        labels, label_probs = zip(*{label: label_counts[label] / len(data) for label in label_counts}.items())
+
+        if num_splits == 1:
+            data = np.random.choice(labels, split_sizes[0], p = label_probs)
+            self.data = np.random.choice(labels, )
+
+        self.train = np.random.choice()
+
+        # for doc in data:
+        #     strata_maps[getattr(doc, strata_field)].append(doc)
+        # return list(strata_maps.values())
+
+    def _split(self, data, num_splits: int, splits: base.Union[int, base.List[int]]):
+        """Split the dataset without stratification.
+        :data (base.DataType): dataset to split.
+        :num_splits (int): The number of splits in data.
+        :splits (int | base.List[int]): Real valued splits.
+        """
         for ix, split in enumerate(splits):
             if split == 0:
                 if 1 < splits[ix - 1] and ix + 1 != len(splits):
