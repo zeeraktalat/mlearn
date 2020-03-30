@@ -10,7 +10,7 @@ class Preprocessors(object):
     def __init__(self, liwc_path: str = None):
         """Initialise cleaner class.
         """
-        self.tagger = spacy.load('en_web_core_sm', disable = ['ner', 'parser'])
+        self.tagger = spacy.load('en_core_web_sm', disable = ['ner', 'parser'])
         self.liwc_dict = None
         self.slurs = None
         self.slur_window = None
@@ -166,7 +166,7 @@ class Cleaner(object):
         :processes base.List[str]: Cleaning operations to be taken.
         """
         self.processes = processes
-        self.tagger = spacy.load('en_web_core_sm', disable = ['ner', 'parser', 'textcats'])
+        self.tagger = spacy.load('en_core_web_sm', disable = ['ner', 'parser', 'textcats'])
         self.liwc_dict = None
 
     def clean_document(self, text: base.DocType, processes: base.List[str] = None):
