@@ -173,7 +173,7 @@ class MTLLSTMClassifier(nn.Module):
     def __init(self, input_dims: base.List[int], shared_dim: int, hidden_dims: base.List[int],
                output_dims: base.List[int], no_layers: int = 1, dropout: int = 0.2):
         """Initialise the LSTM.
-        :param input_dim: The dimensionality of the inpubase.
+        :param input_dims: The dimensionality of the input.
         :param shared_dim: The dimensionality of the shared layers.
         :param hidden_dim (base.List[int]): The dimensionality of the hidden dimensions for each task.
         :param embedding_dim: The dimensionality of the the produced embeddings.
@@ -186,7 +186,7 @@ class MTLLSTMClassifier(nn.Module):
         # Initialise the hidden dim
         self.all_parameters = nn.ParameterList()
 
-        assert len(input_dims) != len(hidden_dims)
+        assert len(input_dims) == len(hidden_dims) == len(output_dims)
 
         # Input layer (not shared) [Linear]
         # hidden to hidden layer (shared) [Linear]
