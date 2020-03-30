@@ -11,9 +11,9 @@ def majority_voted(annotations):
     return c.most_common(1)[0][0]
 
 
-def clean_mftc():
-    fin = open('~/Desktop/Datasets/MFTC_V4_text.json', 'r', encoding = 'utf-8')
-    fout = open('MFTC_V4_text_parsed.tsv', 'w', encoding = 'utf-8')
+def clean_mftc(read_path, write_path):
+    fin = open(read_path, 'r', encoding = 'utf-8')
+    fout = open(write_path, 'w', encoding = 'utf-8')
     tweet_data = []
     annotations = []
     annotators = []
@@ -70,7 +70,3 @@ def clean_mftc():
                     if 'annotation' in line:
                         annotations.append(line.strip().split(':')[1].strip().replace('\n', '').replace('"', ''))
                 continue
-
-
-if __name__ == "__main__":
-    clean_mftc()
