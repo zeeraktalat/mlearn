@@ -40,9 +40,8 @@ def davidson_to_binary(label: str) -> str:
         return 'not-abuse'
 
 
-def davidson(cleaners: base.Callable, data_path: str, length: int = None,
-             preprocessor: base.Callable = None, transformer: base.Callable = None,
-             label_processor: base.Callable = None):
+def davidson(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
+             transformer: base.Callable = None, label_processor: base.Callable = None):
     """Function to load the davidson dataset.
     :cleaners (base.Callable): Initialized cleaner.
     :data_path (str): Path to data files.
