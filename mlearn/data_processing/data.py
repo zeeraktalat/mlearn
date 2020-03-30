@@ -330,7 +330,7 @@ class GeneralDataset(IterableDataset):
             label = self._process_label([getattr(doc, getattr(f, 'name')) for f in self.label_fields], processor)
             if len(label) > 1:
                 setattr(doc, 'label', label)
-            else:
+            elif isinstance(label, list):
                 setattr(doc, 'label', label[0])
 
     def _process_label(self, label, processor: base.Callable = None) -> int:
