@@ -208,7 +208,7 @@ class MTLLSTMClassifier(nn.Module):
             self.all_parameters.append(layer.bias)
 
         self.lstm = {}
-        for task_id, input_dim in range(len(hidden_dims) - 1):
+        for task_id in range(len(hidden_dims) - 1):
             all_layers, layer = nn.LSTM(hidden_dims[i], hidden_dims[i + 1])
             self.lstm[task_id][layer]
             self.all_parameters.append(layer.weight)
