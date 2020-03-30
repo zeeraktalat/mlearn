@@ -170,8 +170,8 @@ class RNNClassifier(nn.Module):
 
 class MTLLSTMClassifier(nn.Module):
 
-    def __init(self, input_dims: base.List[int], shared_dim: int, hidden_dims: base.List[int],
-               output_dims: base.List[int], no_layers: int = 1, dropout: int = 0.2):
+    def __init__(self, input_dims: base.List[int], shared_dim: int, hidden_dims: base.List[int],
+                 output_dims: base.List[int], no_layers: int = 1, dropout: int = 0.2):
         """Initialise the LSTM.
         :param input_dims: The dimensionality of the input.
         :param shared_dim: The dimensionality of the shared layers.
