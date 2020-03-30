@@ -166,7 +166,7 @@ class Cleaner(object):
         :processes base.List[str]: Cleaning operations to be taken.
         """
         self.processes = processes
-        self.tagger = spacy.load('en', disable = ['ner', 'parser', 'textcats'])
+        self.tagger = spacy.load('en_web_core_sm', disable = ['ner', 'parser', 'textcats'])
         self.liwc_dict = None
 
     def clean_document(self, text: base.DocType, processes: base.List[str] = None):
