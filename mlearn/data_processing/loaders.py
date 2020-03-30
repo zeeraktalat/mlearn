@@ -10,6 +10,8 @@ def _loader(args: dict):
     dataset = GeneralDataset(**args)
     dataset.load('train')
 
+    # TODO Update conditionals to not require keywords to be in the args dict.
+
     if (args['dev'], args['test']) == (None, None):  # Only train set is given.
         dataset.split(dataset.data, [0.8, 0.1, 0.1])
 
@@ -246,7 +248,7 @@ def hoover(cleaners: base.Callable, data_path: str, length: int = None, preproce
     args = {'data_dir': data_path,
             'ftype': 'tsv',
             'fields': None,
-            'train': 'MFTC_V4_text_parsed.tsv',
+            'train': 'MFTC_V4_text_parsed.tsv', 'dev': None, 'test': None,
             'sep': '\t',
             'tokenizer': cleaners.tokenize,
             'preprocessor': preprocessor,
