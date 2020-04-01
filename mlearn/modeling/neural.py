@@ -216,7 +216,7 @@ class MTLLSTMClassifier(nn.Module):
             layer = nn.LSTM(hdim, hdim, batch_first = batch_first)  # Will go out of index.
             self.lstm[task_ix] = layer
 
-            # Add parameters.
+            # Add parameters
             self.all_parameters.append(layer.weight_ih_l0)
             self.all_parameters.append(layer.weight_hh_l0)
             self.all_parameters.append(layer.bias_ih_l0)

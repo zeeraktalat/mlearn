@@ -8,7 +8,7 @@ import mlearn.data_processing.data as data
 from mlearn.data_processing.batching import Batch, BatchExtractor
 
 
-def process_and_batch(dataset, data, batch_size):
+def process_and_batch(dataset, data, batch_size, label_field):
     """Process a dataset and data.
     :dataset: A dataset object.
     :data: Data to be processed.
@@ -20,7 +20,7 @@ def process_and_batch(dataset, data, batch_size):
     # Batch data
     batch = Batch(batch_size, data)
     batch.create_batches()
-    batches = BatchExtractor('label', batch, dataset)
+    batches = BatchExtractor(label_field, batch, dataset)
 
     return batches
 
