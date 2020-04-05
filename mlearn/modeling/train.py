@@ -245,20 +245,28 @@ def train_mtl_model(model, training_datasets, save_path, optimizer, metrics: bas
     :shuffle_data: Whether to shuffle data at training.
     :loss_weights (base.DataType): Determines relative task importance When using multiple input/output functions.
     """
-    model.train_mode = False
-    loss = []
-    eval_scores = defaultdict(list)
-    all_scores, labels = [], []
-    with torch.no_grad():
-        for X, y in tqdm(iterator, desc = "Evaluating model", leave = False):
+    if loss_weights is None:
+        loss_weights = np.ones(len(training_datasets))
 
-            if gpu:
-                X = X.cuda()
-                y = y.cuda()
+    if dataset_weights is None:
+        dataset_weights = loss_weights / len(training_datasets)
 
-            scores = model(X)
+    if batches_per_epoch is None:
+        batches_per_epoch = sum([len(dataset) * batch_size for dataset
+                                 in training_datasets]) // batch_size
+    if patience > 0:
+        early_stopping = EarlyStopping(save_path, patience,
+                                       low_is_good=False)
 
-            loss_f = loss_func(scores, y)
+    batchers = []
+
+    for train_data in training_datasets:
+        batches = process_and_batch(train_data, train_data.data, batch_size, 'label')
+
+        if shuffle_data:
+            batches.shuffle()
+
+        batchers.append(batches)
 
     for epoch in tqdm(range(epochs), desc = "Training model"):
         epoch_loss = _train_mtl_epoch(model, loss_func, loss_weights, optimizer, batchers, batches_per_epoch,
