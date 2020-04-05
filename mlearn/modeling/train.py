@@ -98,14 +98,14 @@ def run_model(library: str, train: bool, writer: base.Callable, model_info: list
     if train:
         func = train_pytorch_model if library == 'pytorch' else train_sklearn_model
     else:
-        func = eval_pytorch_model if library == 'pytorch' else evaluate_sklearn_model
+        func = eval_torch_model if library == 'pytorch' else evaluate_sklearn_model
 
     train_loss, dev_loss, train_scores, dev_scores = func(**kwargs)
     write_results(writer, train_scores, train_loss, dev_scores, dev_loss, model_info = model_info, exp_len = head_len,
                   **kwargs)
 
 
-def train_model(model: base.ModelType, optimizer: base.Callable, loss_func: base.Callable, batches: base.DataType,
+def train_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base.Callable, batches: base.DataType,
                 gpu: bool = True, **kwargs):
     """Basic training procedure for pytorch models.
 
@@ -170,7 +170,7 @@ def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataTy
         if shuffle:
             batches.shuffle()
 
-        epoch_preds, epoch_labels, epoch_loss = train_model(model, optimizer, loss_func, batches, gpu)
+        epoch_preds, epoch_labels, epoch_loss = train_epoch(model, optimizer, loss_func, batches, gpu)
 
         epoch_scores = compute(metrics, epoch_labels, epoch_preds)
         train_loss.append(sum(epoch_loss))
