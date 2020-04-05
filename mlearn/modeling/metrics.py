@@ -30,10 +30,11 @@ def select_metrics(metrics: base.List[str]) -> base.Dict[str, base.Callable]:
     return out
 
 
-def compute(metrics: base.Dict[str, base.Callable], labels: base.DataType, preds: base.DataType):
+def compute(metrics: base.Dict[str, base.Callable], labels: base.DataType,
+            preds: base.DataType) -> base.Dict[str, float]:
     """Compute scores for the model.
     :metrics (base.Dict[str, base.Callable]): Metrics dictionary.
     :labels (base.DataType): True labels.
     :preds (base.DataType): Predicted labels.
     """
-    return {name: metric(preds, labels) for name, metric in metrics.items()}
+    return {name: float(metric(preds, labels)) for name, metric in metrics.items()}
