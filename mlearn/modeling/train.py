@@ -5,6 +5,9 @@ from tqdm import tqdm
 from mlearn import base
 from collections import defaultdict
 import mlearn.data_processing.data as data
+from mlearn.modeling.metrics import compute
+from mlearn.modeling.evaluate import eval_torch_model
+from mlearn.modeling.early_stopping import EarlyStopping
 from mlearn.data_processing.batching import Batch, BatchExtractor
 
 
@@ -95,11 +98,45 @@ def run_model(library: str, train: bool, writer: base.Callable, model_info: list
     if train:
         func = train_pytorch_model if library == 'pytorch' else train_sklearn_model
     else:
-        func = evaluate_pytorch_model if library == 'pytorch' else evaluate_sklearn_model
+        func = eval_pytorch_model if library == 'pytorch' else evaluate_sklearn_model
 
     train_loss, dev_loss, train_scores, dev_scores = func(**kwargs)
     write_results(writer, train_scores, train_loss, dev_scores, dev_loss, model_info = model_info, exp_len = head_len,
                   **kwargs)
+
+
+def train_model(model: base.ModelType, optimizer: base.Callable, loss_func: base.Callable, batches: base.DataType,
+                gpu: bool = True, **kwargs):
+    """Basic training procedure for pytorch models.
+
+    :model (base.ModelType): Untrained model to be trained.
+    :optimizer (bas.Callable): Optimizer function.
+    :loss_func (base.Callable): Loss function to use.
+    :batches (base.DataType): Batched training set.
+    :gpu (bool, default = True): Run on GPU
+    :returns: TODO
+    """
+    predictions, labels = [], []
+    epoch_loss = []
+    for X, y in tqdm(batches, desc = "iterating over batches", leave = False):
+
+        if gpu:  # make sure it's gpu runnable
+            X = X.cuda()
+            y = y.cuda()
+
+        scores = model(X, **kwargs)
+
+        loss = loss_func(scores, y)
+        epoch_loss.append(float(loss.data.item()))
+
+        # update steps
+        loss.backward()
+        optimizer.step()
+
+        predictions.extend(torch.argmax(scores, 1).cpu().tolist())
+        labels.extend(y.cpu().tolist())
+
+    return predictions, labels, loss
 
 
 def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataType, loss_func: base.Callable,
