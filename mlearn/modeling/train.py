@@ -154,7 +154,7 @@ def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataTy
     :gpu (bool, default = True): Run on GPU
     :display_metric (str): Metric to be diplayed in TQDM iterator
     """
-    model.train_mode = True
+    model.train()
 
     train_loss = []
     train_scores = defaultdict(list)
@@ -164,50 +164,30 @@ def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataTy
 
     for epoch in tqdm(range(epochs), desc = "Training model"):  # TODO Get TQDM to show the scores for each epoch
 
-        model.zero_grad()  # Zero out gradients
+        optimizer.zero_grad()  # Zero out gradients
         epoch_loss = []
-        epoch_scores = defaultdict(list)
 
         if shuffle:
             batches.shuffle()
 
-        for X, y in tqdm(batches, desc = "Iterating over batches", leave = False):
+        epoch_preds, epoch_labels, epoch_loss = train_model(model, optimizer, loss_func, batches, gpu)
 
-            if gpu:  # Make sure it's GPU runnable
-                X = X.cuda()
-                y = y.cuda()
-
-            scores = model(X)
-
-            loss = loss_func(scores, y)
-            epoch_loss.append(float(loss.data.item()))
-
-            # Update steps
-            loss.backward()
-            optimizer.step()
-
-            scores = torch.argmax(scores, 1)
-            for metric, scorer in metrics.items():
-                scores, y = scores.cpu(), y.cpu()
-                performance = scorer(scores, y)
-                epoch_scores[metric].append(performance)
-
-        # epoch_performance = np.mean(epoch_scores[display_metric])  TODO
+        epoch_scores = compute(metrics, epoch_labels, epoch_preds)
         train_loss.append(sum(epoch_loss))
+        # epoch_performance = epoch_scores[display_metric]  TODO
 
         for metric in metrics:
-            train_scores[metric].append(np.mean(epoch_scores[metric]))
+            train_scores[metrics].append(epoch_scores[metric])
 
         if dev_batches is not None:
-            dev_loss, _, dev_score, _ = evaluate_pytorch_model(model, dev_batches, loss_func, metrics, gpu = gpu)
-            dev_losses.extend(dev_loss)
+            dev_loss, _, dev_score, _ = eval_torch_model(model, dev_batches, loss_func, metrics)
+            dev_losses.append(dev_loss)
 
             for score in dev_score:
-                dev_scores[score].extend(dev_score[score])
+                dev_scores[score].append(dev_score[score])
             # dev_performance = dev_performance[display_metric]  TODO
 
     return train_loss, dev_losses, train_scores, dev_scores
-
 
 def evaluate_pytorch_model(model: base.ModelType, iterator: base.DataType, loss_func: base.Callable,
                            metrics: base.Dict[str, base.Callable], gpu: bool = True, **kwargs) -> base.List[float]:
