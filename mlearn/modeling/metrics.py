@@ -27,5 +27,13 @@ def select_metrics(metrics: base.List[str]) -> base.Dict[str, base.Callable]:
         elif 'f1' in m and 'f1-score' not in out:
             out['f1-score'] = f1_score
 
-
     return out
+
+
+def compute(metrics: base.Dict[str, base.Callable], labels: base.DataType, preds: base.DataType):
+    """Compute scores for the model.
+    :metrics (base.Dict[str, base.Callable]): Metrics dictionary.
+    :labels (base.DataType): True labels.
+    :preds (base.DataType): Predicted labels.
+    """
+    return {name: metric(preds, labels) for name, metric in metrics.items()}
