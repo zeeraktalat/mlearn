@@ -180,7 +180,7 @@ def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataTy
             train_scores[metrics].append(epoch_scores[metric])
 
         if dev_batches is not None:
-            dev_loss, _, dev_score, _ = eval_torch_model(model, dev_batches, loss_func, metrics)
+            dev_loss, _, dev_score, _ = eval_torch_model(model, dev_batches, loss_func, metrics, **kwargs)
             dev_losses.append(dev_loss)
 
             for score in dev_score:
