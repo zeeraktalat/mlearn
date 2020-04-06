@@ -520,29 +520,40 @@ class GeneralDataset(IterableDataset):
         """Split the dataset without stratification.
         :data (base.DataType): dataset to split.
         :num_splits (int): The number of splits in data.
-        :splits (int | base.List[int]): Real valued splits.
+        :splits (base.List[int]): The sizes of each split.
+        :returns out (base.Tuple[list, base.Union[list, None], list]): Tuple containing filled data splits.
         """
-        for ix, split in enumerate(splits):
-            if split == 0:
-                if 1 < splits[ix - 1] and ix + 1 != len(splits):
-                    splits[ix] = splits[ix - 1] + 1
-                else:
-                    splits[ix] = 1
-
+        indices = list(range(len(data)))
+        num_splits = len(splits)
         if num_splits == 1:
-            self.data = data[:splits[0]]
-            self.test = data[splits[0]:]
-            out = (self.data, self.test)
+            train, indices = self._split_helper(data, splits[0], indices)
+            test, indices = self._split_helper(data, len(data) - splits[0], indices)
+            out = (train, None, test)
+
         elif num_splits == 2:
-            self.data = data[:splits[0]]
-            self.test = data[-splits[1]:]
-            out = (self.data, self.test)
+            train, indices = self._split_helper(data, splits[0], indices)
+            test, indices = self._split_helper(data, splits[1], indices)
+            out = (train, None, test)
+
         elif num_splits == 3:
-            self.data = data[:splits[0]]
-            self.dev = data[splits[0]:splits[0] + splits[1]]
-            self.test = data[-splits[2]:]
-            out = (self.data, self.dev, self.test)
+            train, indices = self._split_helper(data, splits[0], indices)
+            dev, indices = self._split_helper(data, splits[1], indices)
+            test, indices = self._split_helper(data, splits[2], indices)
+            out = (data, dev, test)
         return out
+
+    def _split_helper(self, data: base.DataType, size: int, indices: base.List[int]) -> base.Tuple[list, list]:
+        """Helper function for splitting dataset.
+        :data (base.DataType): Dataset to split.
+        :size: (int): Size of the sample.
+        :indices (base.List[int]): Indices for the entire dataset.
+        :returns sampled, indices (base.Tuple[list, list]): Return the sampled data and unused indices.
+        """
+        sample = np.random.sample(indices, size)
+        sampled = [data[ix] for ix in sample]
+        indices = [ix for ix in indices if ix not in sample]
+
+        return sampled, indices
 
     def __getitem__(self, i):
         return self.data[i]
