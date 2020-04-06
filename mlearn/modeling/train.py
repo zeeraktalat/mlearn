@@ -11,10 +11,11 @@ from mlearn.modeling.early_stopping import EarlyStopping
 from mlearn.data_processing.batching import Batch, BatchExtractor
 
 
-def process_and_batch(dataset, data, batch_size, label_field):
+def process_and_batch(dataset, data, batch_size: int, onehot: bool = True):
     """Process a dataset and data.
     :dataset: A dataset object.
     :data: Data to be processed.
+    :batch_size (int): Size of batches to create.
     :returns: Processed data.
     """
     # Process labels and encode data.
@@ -23,8 +24,7 @@ def process_and_batch(dataset, data, batch_size, label_field):
     # Batch data
     batch = Batch(batch_size, data)
     batch.create_batches()
-    batches = BatchExtractor(label_field, batch, dataset)
-
+    batches = BatchExtractor('label', batch, dataset, onehot)
     return batches
 
 
