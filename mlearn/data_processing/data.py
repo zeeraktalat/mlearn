@@ -425,28 +425,32 @@ class GeneralDataset(IterableDataset):
 
         return encoded
 
-    def split(self, data: base.DataType, splits: base.Union[int, base.List[int]],
-              stratify: str = None, **kwargs) -> base.Tuple[base.DataType]:
+    def split(self, data: base.DataType = None, splits: base.List[float] = [0.8, 0.1, 0.1],
+              store: bool = True, stratify: str = None, **kwargs) -> base.Tuple[base.DataType]:
         """Split the datasebase.
-        :data (base.DataType): Dataset to split
-        :splits (int | base.List[int]]): Real valued splits.
+        :data (base.DataType, default = None): Dataset to split. If None, use self.data.
+        :splits (int | base.List[int]], default = [0.8, 0.1, 0.1]): Size of each split.
+        :store (bool, default = True): Store the splitted data in the object.
         :stratify (str): The field to stratify the data along.
         :return data: Return splitted data.
         """
-
-        if isinstance(splits, float):
-            splits = [splits]
+        data = self.data if data is None else data
 
         num_splits = len(splits)
-        num_datapoints = len(data)
-        split_sizes = list(map(lambda x: floor(num_datapoints * x), splits))  # Get the actual sizes of the splits.
+        split_sizes = list(map(lambda x: floor(len(data) * x), splits))  # Get the actual sizes of the splits.
 
         if stratify is not None:  # TODO
-            raise NotImplementedError
-            out = self._stratify_split(data, split_sizes, **kwargs)
-            return out
+            out = self._stratify_split(data, stratify, split_sizes, **kwargs)
         else:
-            return self._split(data, num_splits, split_sizes)
+            out = self._split(data, num_splits, split_sizes)
+
+        if store:
+            self.data = out[0]
+            self.test = out[-1]
+
+            if num_splits == 3:
+                self.dev = out[1]
+        return out
 
     def _stratify_split(self, data: base.DataType, num_splits: int, split_sizes: base.Union[int, base.List[int]],
                         strata_field: str):
