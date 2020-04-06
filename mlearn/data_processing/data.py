@@ -452,36 +452,71 @@ class GeneralDataset(IterableDataset):
                 self.dev = out[1]
         return out
 
-    def _stratify_split(self, data: base.DataType, num_splits: int, split_sizes: base.Union[int, base.List[int]],
-                        strata_field: str):
+    def _stratify_split(self, data: base.DataType, strata_field: str, split_sizes: base.List[int]
+                        ) -> base.Tuple[list, base.Union[list, None], list]:
         """Stratify and split the data.
         :data (base.DataType): dataset to split.
-        :num_splits (int): The number of splits in data.
-        :split_sizes (int | base.List[int]): Real valued splits.
+        :split_sizes (int | base.List[int]): The number of documents in each split.
         :strata_field (str): Name of label field.
+        :returns train, dev, test (base.Tuple[list, base.Union[list, None], list]): Return stratified splits.
         """
-        raise NotImplementedError
-        # TODO Get data splits
-        # TODO Get the number of ducments in the (train/dev/test) set
-        # TODO select with the probability of each class!
+        train_size = split_sizes[0]
 
-        # Get the ratios of the labels in the overall dataset.
-        label_counts = Counter([getattr(doc, strata_field) for doc in data])
+        num_splits = len(split_sizes)
+        if num_splits == 1:
+            test_size = len(data) - split_sizes[0]
+        elif num_splits == 2:
+            test_size = split_sizes[-1]
+        elif num_splits == 3:
+            dev_size = split_sizes[1]
+            test_size = split_sizes[2]
+
+        dev, test = None, None
+        idx_maps = defaultdict(list)
+
+        # Create lists of each label.
+        for i, doc in enumerate(data):
+            idx_maps[getattr(doc, strata_field)].append(i)
 
         # Get labels and probabilities ordered
-        labels, label_probs = zip(*{label: label_counts[label] / len(data) for label in label_counts}.items())
+        labels, label_probs = zip(*{label: len(idx_maps[label]) / len(data) for label in idx_maps}.items())
 
-        if num_splits == 1:
-            data = np.random.choice(labels, split_sizes[0], p = label_probs)
-            self.data = np.random.choice(labels, )
+        train = self._stratify_helper(data, labels, train_size, label_probs, idx_maps)
 
-        self.train = np.random.choice()
+        if dev_size is not None:
+            dev = self._stratify_helper(data, labels, dev_size, label_probs, idx_maps)
 
-        # for doc in data:
-        #     strata_maps[getattr(doc, strata_field)].append(doc)
-        # return list(strata_maps.values())
+        if test_size is None:
+            if dev_size is not None:
+                test_size = len(data) - (train_size + dev_size)
+            else:
+                test_size = len(data) - train_size
 
-    def _split(self, data, num_splits: int, splits: base.Union[int, base.List[int]]):
+        test = self._stratify_helper(data, labels, test_size, label_probs, idx_maps)
+
+        return train, dev, test
+
+    def _stratify_helper(self, data: base.DataType, labels: tuple, sample_size: int, probs: tuple,
+                         idx_map: dict) -> base.DataType:
+        """Helper function for stratifying the data splits.
+        :data (base.DataType): Data to be split.
+        :labels (tuple): The labels to choose from.
+        :sample_size (int): Number of documents in the split.
+        :probs (tuple): Probability for each label.
+        :idx_map (dict): label to index (of documents with said label) map.
+        :returns sampled (base.DataType): Returns the stratified split.
+        """
+        train_dist = np.random.choice(labels, sample_size, replace = False, p = probs)  # Get samples for distribution
+        label_count = Counter(train_dist)  # Get the number for each.
+
+        sampled = []
+        for label, count in label_count.items():
+            indices = np.random.choice(idx_map[label], count, replace = False)  # Get indices for label
+            sampled.extend([data[ix] for ix in indices])
+            idx_map[label] = [ix for ix in idx_map[label] if ix not in indices]  # Delete all used indices
+        return sampled
+
+    def _split(self, data, splits: base.Union[int, base.List[int]]) -> base.Tuple[list, base.Union[list, None], list]:
         """Split the dataset without stratification.
         :data (base.DataType): dataset to split.
         :num_splits (int): The number of splits in data.
