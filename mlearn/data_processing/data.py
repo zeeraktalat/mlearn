@@ -20,6 +20,7 @@ class GeneralDataset(IterableDataset):
                  label_processor: base.Callable = None, label_preprocessor: base.Callable = None,
                  length: int = None, lower: bool = True, gpu: bool = True) -> None:
         """Initialize the variables required for the dataset loading.
+
         :data_dir (str): Path of the directory containing the files.
         :ftype (str): ftype of the file ([C|T]SV and JSON accepted)
         :fields (base.List[base.Tuple[str, ...]]): Fields in the same order as they appear in the file.
@@ -49,7 +50,7 @@ class GeneralDataset(IterableDataset):
             ftype = ftype.upper()
             assert ftype in ['JSON', 'CSV', 'TSV']
             self.ftype = ftype
-        except AssertionError as e:
+        except AssertionError:
             raise AssertionError("Input the correct file ftype: CSV/TSV or JSON")
 
         assert([getattr(f, 'label') is not None for f in fields])
@@ -83,6 +84,7 @@ class GeneralDataset(IterableDataset):
 
     def load(self, dataset: str = 'train', skip_header = True) -> None:
         """Load the datasebase.
+
         :skip_header (bool, default = True): Skip the header.
         :dataset (str, default = 'train'): Dataset to load. Must exist as key in self.data_files.
         """
@@ -134,6 +136,7 @@ class GeneralDataset(IterableDataset):
                     skip_header: bool = True, label_processor: base.Callable = None,
                     label_ix: base.Union[int, str] = None) -> None:
         """Load labels from external file.
+
         :path (str): Path to data files.
         :dataset (str): dataset labels belong to.
         :label_file (str): Filename of data file.
@@ -206,6 +209,7 @@ class GeneralDataset(IterableDataset):
 
     def reader(self, fp, ftype: str = None, sep: str = None):
         """Instatiate the reader to be used.
+
         :fp: Opened file.
         :ftype (str, default = None): Filetype if loading external data.
         :sep (str, default = None): Separator to be used.
@@ -221,6 +225,7 @@ class GeneralDataset(IterableDataset):
 
     def json_reader(self, fp: str) -> base.Generator:
         """Create a JSON reading objecbase.
+
         :fp (str): Opened file objecbase.
         :return: """
         for line in fp:
@@ -228,6 +233,7 @@ class GeneralDataset(IterableDataset):
 
     def build_token_vocab(self, data: base.DataType, original: bool = False):
         """Build vocab over datasebase.
+
         :data (base.DataType): List of datapoints to process.
         :original (bool): Use the original document to generate vocab.
         """
@@ -254,6 +260,7 @@ class GeneralDataset(IterableDataset):
 
     def extend_vocab(self, data: base.DataType):
         """Extend the vocabulary.
+
         :data (base.DataType): List of datapoints to process.
         """
         for doc in data:
@@ -267,6 +274,7 @@ class GeneralDataset(IterableDataset):
 
     def limit_vocab(self, limiter: base.Callable, **kwargs) -> None:
         """Limit vocabulary using a function that returns a new vocabulary.
+
         :limiter (base.Callable): Function to limit the vocabulary.
         :kwargs: All arguments needed for the limiter function.
         """
@@ -281,17 +289,19 @@ class GeneralDataset(IterableDataset):
 
     def vocab_token_lookup(self, tok: str) -> int:
         """Lookup a single token in the vocabulary.
+
         :tok (str): Token to look up.
         :return ix (int): Return the index of the vocabulary item.
         """
         try:
             ix = self.stoi[tok]
-        except IndexError as e:
+        except IndexError:
             ix = self.stoi['<unk>']
         return ix
 
     def vocab_ix_lookup(self, ix: int) -> str:
         """Lookup a single index in the vocabulary.
+
         :ix (int): Index to look up.
         :return tok (str): Returns token
         """
@@ -299,6 +309,7 @@ class GeneralDataset(IterableDataset):
 
     def build_label_vocab(self, labels: base.DataType) -> None:
         """Build label vocabulary.
+
         :labels (base.DataType): List of datapoints to process.
         """
         labels = set(getattr(l, getattr(f, 'name')) for l in labels for f in self.label_fields)
@@ -310,12 +321,14 @@ class GeneralDataset(IterableDataset):
 
     def label_name_lookup(self, label: str) -> int:
         """Look up label index from label.
+
         :label (str): Label to process.
         :returns (int): Return index value of label."""
         return self.ltoi[label]
 
     def label_ix_lookup(self, label: int) -> str:
         """Look up label index from label.
+
         :label (int): Label index to process.
         :returns (str): Return label."""
         return self.itol[label]
@@ -326,6 +339,7 @@ class GeneralDataset(IterableDataset):
 
     def process_labels(self, data: base.DataType, processor: base.Callable = None):
         """Take a dataset of labels and process them.
+
         :data (base.DataType): Dataset of datapoints to process.
         :processor (base.Callable, optional): Custom processor to use.
         """
@@ -338,6 +352,7 @@ class GeneralDataset(IterableDataset):
 
     def _process_label(self, label, processor: base.Callable = None) -> int:
         """Modify label using external function to process labels.
+
         :label: Label to process.
         :processor: Function to process the label."""
         if not isinstance(label, list):
@@ -347,6 +362,7 @@ class GeneralDataset(IterableDataset):
 
     def process_doc(self, doc: base.DocType) -> list:
         """Process a single documenbase.
+
         :doc (base.DocType): Document to be processed.
         :return doc (list): Return processed doc in tokenized list formabase."""
         if isinstance(doc, list):
@@ -366,6 +382,7 @@ class GeneralDataset(IterableDataset):
 
     def pad(self, data: base.DataType, length: int = None) -> list:
         """Pad each document in the datasets in the dataset or trim documenbase.
+
         :data (base.DataType): List of datapoints to process.
         :length (int, optional): The sequence length to be applied.
         :return doc: Return list of padded datapoints."""
@@ -385,6 +402,7 @@ class GeneralDataset(IterableDataset):
 
     def _pad_doc(self, text, length):
         """Do the actual padding.
+
         :text: The extracted text to be padded or trimmed.
         :length: The length of the sequence length to be applied.
         :return padded: Return padded document as a lisbase.
@@ -395,6 +413,7 @@ class GeneralDataset(IterableDataset):
 
     def encode(self, data: base.DataType, onehot: bool = True):
         """Encode a documenbase.
+
         :data (base.DataType): List of datapoints to be encoded.
         :onehot (bool, default = True): Set to true to onehot encode the documenbase.
         """
@@ -411,6 +430,7 @@ class GeneralDataset(IterableDataset):
 
     def onehot_encode_doc(self, text: base.DataType) -> base.DataType:
         """Onehot encode a single document.
+
         :text (base.DataType): The document represented as a tokens.
         """
         encoded = torch.zeros(1, self.length, len(self.stoi), dtype = torch.long)
@@ -422,6 +442,7 @@ class GeneralDataset(IterableDataset):
 
     def encode_doc(self, text: base.DataType) -> base.DataType:
         """Encode documents using just the index of the tokens that are present in the document.
+
         :text (base.DataType): The document represented as a tokens.
         """
         encoded = torch.tensor([self.stoi.get(text[ix], self.unk_tok) for ix in range(len(text))], dtype = torch.long)
@@ -431,6 +452,7 @@ class GeneralDataset(IterableDataset):
     def split(self, data: base.DataType = None, splits: base.List[float] = [0.8, 0.1, 0.1],
               store: bool = True, stratify: str = None, **kwargs) -> base.Tuple[base.DataType]:
         """Split the datasebase.
+
         :data (base.DataType, default = None): Dataset to split. If None, use self.data.
         :splits (int | base.List[int]], default = [0.8, 0.1, 0.1]): Size of each split.
         :store (bool, default = True): Store the splitted data in the object.
@@ -458,6 +480,7 @@ class GeneralDataset(IterableDataset):
     def _stratify_split(self, data: base.DataType, strata_field: str, split_sizes: base.List[int]
                         ) -> base.Tuple[list, base.Union[list, None], list]:
         """Stratify and split the data.
+
         :data (base.DataType): dataset to split.
         :split_sizes (int | base.List[int]): The number of documents in each split.
         :strata_field (str): Name of label field.
@@ -484,10 +507,10 @@ class GeneralDataset(IterableDataset):
         # Get labels and probabilities ordered
         labels, label_probs = zip(*{label: len(idx_maps[label]) / len(data) for label in idx_maps}.items())
 
-        train = self._stratify_helper(data, labels, train_size, label_probs, idx_maps)
+        train = self._stratify_sampler(data, labels, train_size, label_probs, idx_maps)
 
         if dev_size is not None:
-            dev = self._stratify_helper(data, labels, dev_size, label_probs, idx_maps)
+            dev = self._stratify_sampler(data, labels, dev_size, label_probs, idx_maps)
 
         if test_size is None:
             if dev_size is not None:
@@ -495,13 +518,14 @@ class GeneralDataset(IterableDataset):
             else:
                 test_size = len(data) - train_size
 
-        test = self._stratify_helper(data, labels, test_size, label_probs, idx_maps)
+        test = self._stratify_sampler(data, labels, test_size, label_probs, idx_maps)
 
         return train, dev, test
 
-    def _stratify_helper(self, data: base.DataType, labels: tuple, sample_size: int, probs: tuple,
-                         idx_map: dict) -> base.DataType:
-        """Helper function for stratifying the data splits.
+    def _stratify_sampler(self, data: base.DataType, labels: tuple, sample_size: int, probs: tuple,
+                          idx_map: dict) -> base.DataType:
+        """Sample for stratified data splits.
+
         :data (base.DataType): Data to be split.
         :labels (tuple): The labels to choose from.
         :sample_size (int): Number of documents in the split.
@@ -522,6 +546,7 @@ class GeneralDataset(IterableDataset):
     def _split(self, data: base.DataType, splits: base.Union[int, base.List[int]]
                ) -> base.Tuple[list, base.Union[list, None], list]:
         """Split the dataset without stratification.
+
         :data (base.DataType): dataset to split.
         :num_splits (int): The number of splits in data.
         :splits (base.List[int]): The sizes of each split.
@@ -530,24 +555,25 @@ class GeneralDataset(IterableDataset):
         indices = list(range(len(data)))
         num_splits = len(splits)
         if num_splits == 1:
-            train, indices = self._split_helper(data, splits[0], indices)
-            test, indices = self._split_helper(data, len(data) - splits[0], indices)
+            train, indices = self._split_sampler(data, splits[0], indices)
+            test, indices = self._split_sampler(data, len(data) - splits[0], indices)
             out = (train, None, test)
 
         elif num_splits == 2:
-            train, indices = self._split_helper(data, splits[0], indices)
-            test, indices = self._split_helper(data, splits[1], indices)
+            train, indices = self._split_sampler(data, splits[0], indices)
+            test, indices = self._split_sampler(data, splits[1], indices)
             out = (train, None, test)
 
         elif num_splits == 3:
-            train, indices = self._split_helper(data, splits[0], indices)
-            dev, indices = self._split_helper(data, splits[1], indices)
-            test, indices = self._split_helper(data, splits[2], indices)
+            train, indices = self._split_sampler(data, splits[0], indices)
+            dev, indices = self._split_sampler(data, splits[1], indices)
+            test, indices = self._split_sampler(data, splits[2], indices)
             out = (data, dev, test)
         return out
 
-    def _split_helper(self, data: base.DataType, size: int, indices: base.List[int]) -> base.Tuple[list, list]:
-        """Helper function for splitting dataset.
+    def _split_sampler(self, data: base.DataType, size: int, indices: base.List[int]) -> base.Tuple[list, list]:
+        """Sample data to split dataset.
+
         :data (base.DataType): Dataset to split.
         :size: (int): Size of the sample.
         :indices (base.List[int]): Indices for the entire dataset.

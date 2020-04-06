@@ -74,7 +74,9 @@ class Batch(base.Batch):
 
     def create_batches(self, data = None):
         """Go over the data and create batches.
-        :data (optional): Add a dataset to have batches created on."""
+
+        :data (optional): Add a dataset to have batches created on.
+        """
 
         data = self.data if not data else data
 

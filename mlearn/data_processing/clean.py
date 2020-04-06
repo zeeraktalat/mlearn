@@ -8,8 +8,7 @@ from string import punctuation
 class Preprocessors(object):
 
     def __init__(self, liwc_path: str = None):
-        """Initialise cleaner class.
-        """
+        """Initialise cleaner class."""
         self.tagger = spacy.load('en_core_web_sm', disable = ['ner', 'parser'])
         self.liwc_dict = None
         self.slurs = None
@@ -18,6 +17,7 @@ class Preprocessors(object):
 
     def word_length(self, doc: base.DocType):
         """Represent sentence as the length of each token.
+
         :doc (base.DocType): Document to be processed.
         :returns: Processed document.
         """
@@ -25,6 +25,7 @@ class Preprocessors(object):
 
     def syllable_count(self, doc: base.DocType) -> base.List[int]:
         """Represent sentence as the syllable count for each word.
+
         :doc (base.DocType): Document to be processed.
         :returns: Processed document.
         """
@@ -32,6 +33,7 @@ class Preprocessors(object):
 
     def _syllable_counter(self, tok: str) -> int:
         """Calculate syllables for each token.
+
         :tok (str): The token to be analyzed.
         :returns count (int): The number of syllables in the word.
         """
@@ -54,6 +56,7 @@ class Preprocessors(object):
 
     def slur_replacement(self, doc: base.DocType):
         """Produce documents where slurs are replaced.
+
         :doc (base.List[str]): Document to be processed.
         :returns doc: processed document
         """
@@ -73,6 +76,7 @@ class Preprocessors(object):
 
     def word_token(self, doc: base.List[str]):
         """Produce word tokens.
+
         :doc (base.List[str]): Document to be processed.
         :returns: processed document
         """

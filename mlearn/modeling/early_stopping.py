@@ -27,7 +27,7 @@ class EarlyStopping:
             self.best_epoch = self.epoch
             return False
 
-        elif self.epoch > self.best_epoch+self.patience:
+        elif self.epoch > self.best_epoch + self.patience:
             print("Early stopping: Terminate")
             return True
         if self.verbose:

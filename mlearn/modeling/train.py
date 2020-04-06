@@ -13,6 +13,7 @@ from mlearn.data_processing.batching import Batch, BatchExtractor
 
 def process_and_batch(dataset, data, batch_size: int, onehot: bool = True):
     """Process a dataset and data.
+
     :dataset: A dataset object.
     :data: Data to be processed.
     :batch_size (int): Size of batches to create.
@@ -30,7 +31,8 @@ def process_and_batch(dataset, data, batch_size: int, onehot: bool = True):
 
 def write_predictions(output_info: pd.DataFrame, main_dataset: data.GeneralDataset, preds: list, truths: list,
                       model_info: list, model_header: list, data_name: str, main_name: str):
-    """TODO: Docstring for write_predictions.
+    """Write predictions out to file.
+
     :output_info (pd.DataFrame): Dataframe containing information to be written including each doc.
     :main_dataset (data.GeneralDataset): dataset for main task.
     :preds (list): Predictions
@@ -57,6 +59,7 @@ def write_results(writer: base.Callable, train_scores: dict, train_loss: list, d
                   epochs: int, model_info: list, metrics: list, exp_len: int, data_name: str, main_name: str,
                   **kwargs) -> None:
     """Write results to file.
+
     :writer (base.Callable): Path to file.
     :train_scores (dict): Train scores.
     :train_loss (list): Train losses.
@@ -75,7 +78,7 @@ def write_results(writer: base.Callable, train_scores: dict, train_loss: list, d
             out += [train_scores[m][i] for m in metrics] + [train_loss[i]]  # Train info
             if dev_scores:
                 out += [dev_scores[m][i] for m in metrics] + [dev_loss[i]]  # Dev info
-        except IndexError as e:
+        except IndexError:
             __import__('pdb').set_trace()
 
         row_len = len(out)
@@ -89,6 +92,7 @@ def write_results(writer: base.Callable, train_scores: dict, train_loss: list, d
 
 def run_model(library: str, train: bool, writer: base.Callable, model_info: list, head_len: int, **kwargs):
     """Train or evaluate model.
+
     :library (str): Library of the model.
     :train (bool): Whether it's a train or test run.
     :writer (csv.writer): File to output model performance to.
@@ -144,6 +148,7 @@ def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataTy
                         dev_batches: base.DataType = None, gpu: bool = True, shuffle: bool = True,
                         display_metric: str = 'accuracy', **kwargs) -> base.Union[list, int, dict, dict]:
     """Train a machine learning model.
+
     :model (base.ModelType): Untrained model to be trained.
     :epochs (int): The number of epochs to run.
     :batches (base.DataType): Batched training set.
@@ -194,6 +199,7 @@ def _train_mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weigh
                      batchers: base.List[base.Batch], batch_count: int, dataset_weights: base.List[float],
                      clip: base.Union[int, float] = None, **kwargs):
     """Train one epoch of an MTL training loop.
+
     :model (base.ModelType): Model in the process of being trained.
     :loss_func (base.Callable): The loss function being used.
     :loss_weights (base.DataType): Determines relative task importance When using multiple input/output functions.
@@ -231,6 +237,7 @@ def train_mtl_model(model, training_datasets, save_path, optimizer, metrics: bas
                     dataset_weights = None, patience = 10, batches_per_epoch = None, shuffle_data = True,
                     loss_weights = None, loss_func = None):
     """Trains a multi-task learning model.
+
     :model: Untrained model.
     :training_datasets: List of tuples containing dense matrices.
     :save_path: Path to save trained model to.
