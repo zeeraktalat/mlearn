@@ -516,7 +516,8 @@ class GeneralDataset(IterableDataset):
             idx_map[label] = [ix for ix in idx_map[label] if ix not in indices]  # Delete all used indices
         return sampled
 
-    def _split(self, data, splits: base.Union[int, base.List[int]]) -> base.Tuple[list, base.Union[list, None], list]:
+    def _split(self, data: base.DataType, splits: base.Union[int, base.List[int]]
+               ) -> base.Tuple[list, base.Union[list, None], list]:
         """Split the dataset without stratification.
         :data (base.DataType): dataset to split.
         :num_splits (int): The number of splits in data.
