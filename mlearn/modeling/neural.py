@@ -170,11 +170,11 @@ class RNNClassifier(nn.Module):
 
 class MTLLSTMClassifier(nn.Module):
 
-    def __init(self, input_dims: base.List[int], shared_dim: int, hidden_dims: base.List[int],
-               output_dims: base.List[int], no_layers: int = 1, dropout: int = 0.2):
+    def __init__(self, input_dims: base.List[int], shared_dim: int, hidden_dims: base.List[int],
+                 output_dims: base.List[int], no_layers: int = 1, dropout: int = 0.2, batch_first = True):
         """Initialise the LSTM.
-        :param input_dim: The dimensionality of the inpubase.
-        :param shared_dim: The dimensionality of the shared layers.
+        :param input_dims (base.List[int]): The dimensionality of the input.
+        :param shared_dim (int): The dimensionality of the shared layers.
         :param hidden_dim (base.List[int]): The dimensionality of the hidden dimensions for each task.
         :param embedding_dim: The dimensionality of the the produced embeddings.
         :param no_classes: Number of classes for to predict on.
@@ -186,7 +186,7 @@ class MTLLSTMClassifier(nn.Module):
         # Initialise the hidden dim
         self.all_parameters = nn.ParameterList()
 
-        assert len(input_dims) != len(hidden_dims)
+        assert len(input_dims) == len(hidden_dims) == len(output_dims)
 
         # Input layer (not shared) [Linear]
         # hidden to hidden layer (shared) [Linear]
@@ -195,29 +195,39 @@ class MTLLSTMClassifier(nn.Module):
 
         self.inputs = {}  # Define task inputs
         for task_id, input_dim in enumerate(input_dims):
-            layer = nn.Linear(input_dim, shared_dim)
+            layer = nn.Linear(input_dim, hidden_dims[0])
             self.inputs[task_id] = layer
+
+            # Add parameters
             self.all_parameters.append(layer.weight)
             self.all_parameters.append(layer.bias)
 
         self.shared = []
         for i in range(len(hidden_dims) - 1):
-            all_layers, layer = nn.Linear(hidden_dims[i], hidden_dims[i + 1])
-            self.lstm.append(layer)
+            layer = nn.Linear(hidden_dims[i], hidden_dims[i + 1])
+            self.shared.append(layer)
+
+            # Add parameters
             self.all_parameters.append(layer.weight)
             self.all_parameters.append(layer.bias)
 
         self.lstm = {}
-        for task_id, input_dim in range(len(hidden_dims) - 1):
-            all_layers, layer = nn.LSTM(hidden_dims[i], hidden_dims[i + 1])
-            self.lstm[task_id][layer]
-            self.all_parameters.append(layer.weight)
-            self.all_parameters.append(layer.bias)
+        for task_ix, hdim in enumerate(hidden_dims):
+            layer = nn.LSTM(hdim, hdim, batch_first = batch_first)  # Will go out of index.
+            self.lstm[task_ix] = layer
+
+            # Add parameters
+            self.all_parameters.append(layer.weight_ih_l0)
+            self.all_parameters.append(layer.weight_hh_l0)
+            self.all_parameters.append(layer.bias_ih_l0)
+            self.all_parameters.append(layer.bias_hh_l0)
 
         self.outputs = {}
-        for task_id, hidden_dim in enumerate(hidden_dims):
-            layer = nn.Linear(hidden_dim, output_dims[task_id])
+        for task_id, _ in enumerate(hidden_dims):
+            layer = nn.Linear(hidden_dims[task_id], output_dims[task_id])
             self.outputs[task_id] = layer
+
+            # Add parameters
             self.all_parameters.append(layer.weight)
             self.all_parameters.append(layer.bias)
 
@@ -235,17 +245,16 @@ class MTLLSTMClassifier(nn.Module):
         :param task_id: The task on which to perform forward pass.
         :return scores: The "probability" distribution for the classes.
         """
-
-        res = self.inputs[task_id](sequence)
+        res = self.inputs[task_id](sequence.float())
         res = self.dropout(res)
 
         for layer in self.shared:
             res = self.dropout(layer(res))
 
-        lstm_out, _ = self.lstm[task_id](res)
+        lstm_out, (lstm_hidden, _) = self.lstm[task_id](res)
 
-        output = self.outputs[task_id](lstm_out.view(len(sequence), -1))
+        output = self.outputs[task_id](lstm_hidden)
 
         prob_dist = self.softmax(output)  # The probability distribution
 
-        return prob_dist
+        return prob_dist.squeeze(0)

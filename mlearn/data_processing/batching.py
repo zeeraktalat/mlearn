@@ -34,7 +34,7 @@ class TorchTextDefaultExtractor:
             yield (X, y)
 
 
-class BatchExtractor:
+class BatchExtractor(base.Batch):
     """A class to get the information from the batches."""
 
     def __init__(self, labelfield: str, batcher: base.DataType, dataset: base.DataType,
@@ -65,7 +65,7 @@ class BatchExtractor:
         self.batcher = self.batcher.shuffle_batches()
 
 
-class Batch(object):
+class Batch(base.Batch):
     """Create batches."""
 
     def __init__(self, batch_size: int, data: base.DataType):

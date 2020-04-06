@@ -34,6 +34,11 @@ class Datapoint(object):
         pass
 
 
+class Batch(object):
+    """A base class for batching procedures."""
+    pass
+
+
 # Data types
 FieldType = Field
 DataType = Union[list, np.ndarray, torch.LongTensor, List[Datapoint]]

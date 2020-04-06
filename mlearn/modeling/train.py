@@ -5,6 +5,9 @@ from tqdm import tqdm
 from mlearn import base
 from collections import defaultdict
 import mlearn.data_processing.data as data
+from mlearn.modeling.metrics import compute
+from mlearn.modeling.evaluate import eval_torch_model
+from mlearn.modeling.early_stopping import EarlyStopping
 from mlearn.data_processing.batching import Batch, BatchExtractor
 
 
@@ -22,7 +25,6 @@ def process_and_batch(dataset, data, batch_size: int, onehot: bool = True):
     batch = Batch(batch_size, data)
     batch.create_batches()
     batches = BatchExtractor('label', batch, dataset, onehot)
-
     return batches
 
 
@@ -96,11 +98,45 @@ def run_model(library: str, train: bool, writer: base.Callable, model_info: list
     if train:
         func = train_pytorch_model if library == 'pytorch' else train_sklearn_model
     else:
-        func = evaluate_pytorch_model if library == 'pytorch' else evaluate_sklearn_model
+        func = eval_torch_model if library == 'pytorch' else evaluate_sklearn_model
 
     train_loss, dev_loss, train_scores, dev_scores = func(**kwargs)
     write_results(writer, train_scores, train_loss, dev_scores, dev_loss, model_info = model_info, exp_len = head_len,
                   **kwargs)
+
+
+def train_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base.Callable, batches: base.DataType,
+                gpu: bool = True, **kwargs):
+    """Basic training procedure for pytorch models.
+
+    :model (base.ModelType): Untrained model to be trained.
+    :optimizer (bas.Callable): Optimizer function.
+    :loss_func (base.Callable): Loss function to use.
+    :batches (base.DataType): Batched training set.
+    :gpu (bool, default = True): Run on GPU
+    :returns: TODO
+    """
+    predictions, labels = [], []
+    epoch_loss = []
+    for X, y in tqdm(batches, desc = "iterating over batches", leave = False):
+
+        if gpu:  # make sure it's gpu runnable
+            X = X.cuda()
+            y = y.cuda()
+
+        scores = model(X, **kwargs)
+
+        loss = loss_func(scores, y)
+        epoch_loss.append(float(loss.data.item()))
+
+        # update steps
+        loss.backward()
+        optimizer.step()
+
+        predictions.extend(torch.argmax(scores, 1).cpu().tolist())
+        labels.extend(y.cpu().tolist())
+
+    return predictions, labels, loss
 
 
 def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataType, loss_func: base.Callable,
@@ -118,7 +154,7 @@ def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataTy
     :gpu (bool, default = True): Run on GPU
     :display_metric (str): Metric to be diplayed in TQDM iterator
     """
-    model.train_mode = True
+    model.train()
 
     train_loss = []
     train_scores = defaultdict(list)
@@ -128,85 +164,125 @@ def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataTy
 
     for epoch in tqdm(range(epochs), desc = "Training model"):  # TODO Get TQDM to show the scores for each epoch
 
-        model.zero_grad()  # Zero out gradients
+        optimizer.zero_grad()  # Zero out gradients
         epoch_loss = []
-        epoch_scores = defaultdict(list)
 
         if shuffle:
             batches.shuffle()
 
-        for X, y in tqdm(batches, desc = "Iterating over batches", leave = False):
+        epoch_preds, epoch_labels, epoch_loss = train_epoch(model, optimizer, loss_func, batches, gpu)
 
-            if gpu:  # Make sure it's GPU runnable
-                X = X.cuda()
-                y = y.cuda()
-
-            scores = model(X)
-
-            loss = loss_func(scores, y)
-            epoch_loss.append(float(loss.data.item()))
-
-            # Update steps
-            loss.backward()
-            optimizer.step()
-
-            scores = torch.argmax(scores, 1)
-            for metric, scorer in metrics.items():
-                scores, y = scores.cpu(), y.cpu()
-                performance = scorer(scores, y)
-                epoch_scores[metric].append(performance)
-
-        # epoch_performance = np.mean(epoch_scores[display_metric])  TODO
+        epoch_scores = compute(metrics, epoch_labels, epoch_preds)
         train_loss.append(sum(epoch_loss))
+        # epoch_performance = epoch_scores[display_metric]  TODO
 
         for metric in metrics:
-            train_scores[metric].append(np.mean(epoch_scores[metric]))
+            train_scores[metrics].append(epoch_scores[metric])
 
         if dev_batches is not None:
-            dev_loss, _, dev_score, _ = evaluate_pytorch_model(model, dev_batches, loss_func, metrics, gpu = gpu)
-            dev_losses.extend(dev_loss)
+            dev_loss, _, dev_score, _ = eval_torch_model(model, dev_batches, loss_func, metrics, **kwargs)
+            dev_losses.append(dev_loss)
 
             for score in dev_score:
-                dev_scores[score].extend(dev_score[score])
+                dev_scores[score].append(dev_score[score])
             # dev_performance = dev_performance[display_metric]  TODO
 
     return train_loss, dev_losses, train_scores, dev_scores
 
 
-def evaluate_pytorch_model(model: base.ModelType, iterator: base.DataType, loss_func: base.Callable,
-                           metrics: base.Dict[str, base.Callable], gpu: bool = True, **kwargs) -> base.List[float]:
-    """Evaluate a machine learning model.
-    :model (base.ModelType): Untrained model to be trained.
-    :iterator (base.DataType): Test set to evaluate on.
-    :loss_func (base.Callable): Loss function to use.
-    :metrics (base.Dict[str, base.Callable])): Metrics to use.
-    :gpu (bool, default = True): Run on GPU
+def _train_mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: base.DataType, opt: base.Callable,
+                     batchers: base.List[base.Batch], batch_count: int, dataset_weights: base.List[float],
+                     clip: base.Union[int, float] = None, **kwargs):
+    """Train one epoch of an MTL training loop.
+    :model (base.ModelType): Model in the process of being trained.
+    :loss_func (base.Callable): The loss function being used.
+    :loss_weights (base.DataType): Determines relative task importance When using multiple input/output functions.
+    :opt (base.Callable): The optimizer function used.
+    :batchers (base.List[base.Batch]): A list of batched objects.
+    :batch_count (int): The number of batches to go through in each epoch.
+    :dataset_weights (base.List[float]): The probability with which each dataset is chosen to be trained on.
+    :clip (base.Union[int, float], default = None): Use gradient clipping.
     """
-    model.train_mode = False
-    loss = []
-    eval_scores = defaultdict(list)
-    all_scores, labels = [], []
-    with torch.no_grad():
-        for X, y in tqdm(iterator, desc = "Evaluating model", leave = False):
+    epoch_loss = []
 
-            if gpu:
-                X = X.cuda()
-                y = y.cuda()
+    for b in tqdm(range(batch_count), desc = "Iterating over batches"):
+        task_id = np.random.choice(range(len(batchers)), p = dataset_weights)  # set probability for each task
+        batcher = batchers[task_id]
+        X, y = next(iter(batcher))
 
-            scores = model(X)
+        # Do model training
+        model.train()
+        opt.zero_grad()
 
-            loss_f = loss_func(scores, y)
+        preds = model(X, task_id, **kwargs)
+        loss = loss_func(preds, y) * loss_weights[task_id]
+        loss.backwards()
 
-            all_scores.extend(torch.argmax(scores, 1).cpu().tolist())
-            labels.extend(y.cpu().tolist())
+        if clip is not None:
+            torch.nn.utils.clip_grad_norm(model.parameters(), clip)  # Prevent exploding gradients
 
-            loss.append(loss_f.data.item())
+        opt.step()
 
-    for metric, scorer in metrics.items():
-        performance = scorer(all_scores, labels)
-        eval_scores[metric].append(performance)
+        epoch_loss.append(loss.data.item().cpu())
 
-    return [np.mean(loss)], None, {m: [np.mean(vals)] for m, vals in eval_scores.items()}, None
+
+def train_mtl_model(model, training_datasets, save_path, optimizer, metrics: base.Dict[str, base.Callable],
+                    dev_metric: str, batch_size = 64, epochs = 2, clip = None, dev = None, dev_task_id = 0,
+                    dataset_weights = None, patience = 10, batches_per_epoch = None, shuffle_data = True,
+                    loss_weights = None, loss_func = None):
+    """Trains a multi-task learning model.
+    :model: Untrained model.
+    :training_datasets: List of tuples containing dense matrices.
+    :save_path: Path to save trained model to.
+    :optimizer: Pytorch optimizer to train model.
+    :batch_size: Training batch size.
+    :patience: Number of epochs to observe non-improving dev performance before early stopping.
+    :epochs: Maximum number of epochs (if no early stopping).
+    :dev: Dev dataset object.
+    :dev_task_id: Task ID for task to use for early stopping, in case of multitask learning.
+    :clip: Use gradient clipping.
+    :batches_per_epoch: Set fixed number of batches per epoch. If None, an epoch consists of all training examples.
+    :shuffle_data: Whether to shuffle data at training.
+    :loss_weights (base.DataType): Determines relative task importance When using multiple input/output functions.
+    """
+    if loss_weights is None:
+        loss_weights = np.ones(len(training_datasets))
+
+    if dataset_weights is None:
+        dataset_weights = loss_weights / len(training_datasets)
+
+    if batches_per_epoch is None:
+        batches_per_epoch = sum([len(dataset) * batch_size for dataset
+                                 in training_datasets]) // batch_size
+    if patience > 0:
+        early_stopping = EarlyStopping(save_path, patience,
+                                       low_is_good=False)
+
+    batchers = []
+
+    for train_data in training_datasets:
+        batches = process_and_batch(train_data, train_data.data, batch_size, 'label')
+
+        if shuffle_data:
+            batches.shuffle()
+
+        batchers.append(batches)
+
+    for epoch in tqdm(range(epochs), desc = "Training model"):
+        epoch_loss = _train_mtl_epoch(model, loss_func, loss_weights, optimizer, batchers, batches_per_epoch,
+                                      dataset_weights, clip)
+
+        print("Epoch train loss:", np.array(epoch_loss).mean())
+
+        if dev is not None:
+            dev_batches = process_and_batch(dev, dev.dev, len(dev.dev))
+            dev_loss, _, dev_scores, _ = eval_torch_model(model, dev_batches, loss_func,
+                                                          metrics, mtl = True,
+                                                          task_id = dev_task_id)
+
+            if early_stopping is not None and early_stopping(model, dev_scores[dev_metric]):
+                early_stopping.set_best_state(model)
+                break
 
 
 def train_sklearn_model(arg1):

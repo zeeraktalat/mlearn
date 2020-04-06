@@ -10,6 +10,8 @@ def _loader(args: dict):
     dataset = GeneralDataset(**args)
     dataset.load('train')
 
+    # TODO Update conditionals to not require keywords to be in the args dict.
+
     if (args['dev'], args['test']) == (None, None):  # Only train set is given.
         dataset.split(dataset.data, [0.8, 0.1, 0.1])
 
@@ -40,9 +42,8 @@ def davidson_to_binary(label: str) -> str:
         return 'not-abuse'
 
 
-def davidson(cleaners: base.Callable, data_path: str, length: int = None,
-             preprocessor: base.Callable = None, transformer: base.Callable = None,
-             label_processor: base.Callable = None):
+def davidson(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
+             transformer: base.Callable = None, label_processor: base.Callable = None):
     """Function to load the davidson dataset.
     :cleaners (base.Callable): Initialized cleaner.
     :data_path (str): Path to data files.
@@ -197,9 +198,8 @@ def garcia(cleaners: base.Callable, data_path: str, length: int = None,
     return _loader(args)
 
 
-def wulczyn(cleaners: base.Callable, data_path: str, length: int = None,
-            preprocessor: base.Callable = None, transformer: base.Callable = None,
-            label_processor: base.Callable = None):
+def wulczyn(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
+            transformer: base.Callable = None, label_processor: base.Callable = None):
     """Load the Wulczyn et al. dataset.
     :cleaners (base.Callable): Initialized cleaner.
     :data_path (str): Path to data directory.
@@ -230,5 +230,37 @@ def wulczyn(cleaners: base.Callable, data_path: str, length: int = None,
     ignore = base.Field('ignore', train = False, label = False, ignore = True)
 
     args['fields'] = [idx, text, label, ignore]
+
+    return _loader(args)
+
+
+def hoover(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
+           transformer: base.Callable = None, label_processor: base.Callable = None):
+    """Load the Hoover et al. dataset.
+    :cleaners (base.Callable): Initialized cleaner.
+    :data_path (str): Path to data directory.
+    :length (int), default = None): Maximum length of sequence.
+    :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
+    :transformer (base.Callable, default = None): Additional document processing, if required.
+    :label_processor (base.callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :returns: Loaded datasets.
+    """
+    args = {'data_dir': data_path,
+            'ftype': 'tsv',
+            'fields': None,
+            'train': 'MFTC_V4_text_parsed.tsv', 'dev': None, 'test': None,
+            'sep': '\t',
+            'tokenizer': cleaners.tokenize,
+            'preprocessor': preprocessor,
+            'transformations': transformer,
+            'length': length,
+            'label_preprocessor': label_processor,
+            'name': 'Hoover et al.'}
+
+    text = base.Field('text', train = True, label = False, cname = 'text', ix = 1)
+    label = base.Field('label', train = False, label = True, cname = 'label', ix = 18)
+    ignore = base.Field('ignore', train = False, label = False, cname = 'ignore', ignore = True)
+
+    args['fields'] = [ignore, text] + 16 * [ignore] + [label, ignore]
 
     return _loader(args)
