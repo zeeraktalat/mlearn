@@ -82,7 +82,7 @@ class GeneralDataset(IterableDataset):
         self.lower = lower
         self.gpu = gpu
 
-    def load(self, dataset: str = 'train', skip_header = True) -> None:
+    def load(self, dataset: str = 'train', skip_header = True, **kwargs) -> None:
         """Load the datasebase.
 
         :skip_header (bool, default = True): Skip the header.
@@ -134,7 +134,7 @@ class GeneralDataset(IterableDataset):
 
     def load_labels(self, dataset: str, label_name: str, label_path: str = None, ftype: str = None, sep: str = None,
                     skip_header: bool = True, label_processor: base.Callable = None,
-                    label_ix: base.Union[int, str] = None) -> None:
+                    label_ix: base.Union[int, str] = None, **kwargs) -> None:
         """Load labels from external file.
 
         :path (str): Path to data files.
@@ -345,10 +345,16 @@ class GeneralDataset(IterableDataset):
         """
         for doc in data:
             label = self._process_label([getattr(doc, getattr(f, 'name')) for f in self.label_fields], processor)
-            if len(label) > 1:
-                setattr(doc, 'label', label)
-            elif isinstance(label, list):
-                setattr(doc, 'label', label[0])
+            if isinstance(label, list):
+                if len(label) > 1:
+                    label = label
+                else:
+                    label = label[0]
+            setattr(doc, 'label', label)
+            # if len(label) > 1:
+            #     setattr(doc, 'label', label)
+            # elif isinstance(label, list):
+            #     setattr(doc, 'label', label[0])
 
     def _process_label(self, label, processor: base.Callable = None) -> int:
         """Modify label using external function to process labels.
@@ -470,14 +476,14 @@ class GeneralDataset(IterableDataset):
             out = self._split(data, num_splits, split_sizes)
 
         if store:
-            self.data = out[0]
+            self.train = out[0]
             self.test = out[-1]
 
             if num_splits == 3:
                 self.dev = out[1]
         return out
 
-    def _stratify_split(self, data: base.DataType, strata_field: str, split_sizes: base.List[int]
+    def _stratify_split(self, data: base.DataType, strata_field: str, split_sizes: base.List[int], **kwargs
                         ) -> base.Tuple[list, base.Union[list, None], list]:
         """Stratify and split the data.
 
@@ -517,8 +523,16 @@ class GeneralDataset(IterableDataset):
                 test_size = len(data) - (train_size + dev_size)
             else:
                 test_size = len(data) - train_size
+        else:  # Make sure that all datapoints are used.
+            if dev_size is not None:
+                test_size = len(data) - (train_size + dev_size + test_size)
+            else:
+                test_size = len(data) - (train_size + dev_size + test_size)
 
-        test = self._stratify_sampler(data, labels, test_size, label_probs, idx_maps)
+        indices = []
+        for label in idx_maps:
+            indices.extend(idx_maps[label])
+        test = [data[ix] for ix in np.random.choice(indices, test_size, replace = False)]
 
         return train, dev, test
 
@@ -533,8 +547,8 @@ class GeneralDataset(IterableDataset):
         :idx_map (dict): label to index (of documents with said label) map.
         :returns sampled (base.DataType): Returns the stratified split.
         """
-        train_dist = np.random.choice(labels, sample_size, replace = False, p = probs)  # Get samples for distribution
-        label_count = Counter(train_dist)  # Get the number for each.
+        label_dist = np.random.choice(labels, sample_size, replace = True, p = probs)  # Get samples for distribution
+        label_count = Counter(label_dist)  # Get the number for each.
 
         sampled = []
         for label, count in label_count.items():
@@ -543,7 +557,7 @@ class GeneralDataset(IterableDataset):
             idx_map[label] = [ix for ix in idx_map[label] if ix not in indices]  # Delete all used indices
         return sampled
 
-    def _split(self, data: base.DataType, splits: base.Union[int, base.List[int]]
+    def _split(self, data: base.DataType, splits: base.Union[int, base.List[int]], **kwargs
                ) -> base.Tuple[list, base.Union[list, None], list]:
         """Split the dataset without stratification.
 
@@ -568,7 +582,7 @@ class GeneralDataset(IterableDataset):
             train, indices = self._split_sampler(data, splits[0], indices)
             dev, indices = self._split_sampler(data, splits[1], indices)
             test, indices = self._split_sampler(data, splits[2], indices)
-            out = (data, dev, test)
+            out = (train, dev, test)
         return out
 
     def _split_sampler(self, data: base.DataType, size: int, indices: base.List[int]) -> base.Tuple[list, list]:
@@ -579,7 +593,7 @@ class GeneralDataset(IterableDataset):
         :indices (base.List[int]): Indices for the entire dataset.
         :returns sampled, indices (base.Tuple[list, list]): Return the sampled data and unused indices.
         """
-        sample = np.random.sample(indices, size)
+        sample = np.random.choice(indices, size, replace = False)
         sampled = [data[ix] for ix in sample]
         indices = [ix for ix in indices if ix not in sample]
 
