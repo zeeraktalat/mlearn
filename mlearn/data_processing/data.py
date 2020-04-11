@@ -458,7 +458,6 @@ class GeneralDataset(IterableDataset):
     def split(self, data: base.DataType = None, splits: base.List[float] = [0.8, 0.1, 0.1],
               store: bool = True, stratify: str = None, **kwargs) -> base.Tuple[base.DataType]:
         """Split the datasebase.
-
         :data (base.DataType, default = None): Dataset to split. If None, use self.data.
         :splits (int | base.List[int]], default = [0.8, 0.1, 0.1]): Size of each split.
         :store (bool, default = True): Store the splitted data in the object.
@@ -466,27 +465,24 @@ class GeneralDataset(IterableDataset):
         :return data: Return splitted data.
         """
         data = self.data if data is None else data
-
-        num_splits = len(splits)
         split_sizes = list(map(lambda x: floor(len(data) * x), splits))  # Get the actual sizes of the splits.
 
         if stratify is not None:  # TODO
             out = self._stratify_split(data, stratify, split_sizes, **kwargs)
         else:
-            out = self._split(data, num_splits, split_sizes)
+            out = self._split(data, split_sizes)
 
         if store:
-            self.train = out[0]
+            self.data = out[0]
             self.test = out[-1]
 
-            if num_splits == 3:
+            if len(splits) == 3:
                 self.dev = out[1]
         return out
 
     def _stratify_split(self, data: base.DataType, strata_field: str, split_sizes: base.List[int], **kwargs
                         ) -> base.Tuple[list, base.Union[list, None], list]:
         """Stratify and split the data.
-
         :data (base.DataType): dataset to split.
         :split_sizes (int | base.List[int]): The number of documents in each split.
         :strata_field (str): Name of label field.
@@ -513,21 +509,21 @@ class GeneralDataset(IterableDataset):
         # Get labels and probabilities ordered
         labels, label_probs = zip(*{label: len(idx_maps[label]) / len(data) for label in idx_maps}.items())
 
-        train = self._stratify_sampler(data, labels, train_size, label_probs, idx_maps)
+        train = self._stratify_helper(data, labels, train_size, label_probs, idx_maps)
 
         if dev_size is not None:
-            dev = self._stratify_sampler(data, labels, dev_size, label_probs, idx_maps)
+            dev = self._stratify_helper(data, labels, dev_size, label_probs, idx_maps)
 
         if test_size is None:
             if dev_size is not None:
                 test_size = len(data) - (train_size + dev_size)
             else:
                 test_size = len(data) - train_size
-        else:  # Make sure that all datapoints are used.
+        else:
             if dev_size is not None:
-                test_size = len(data) - (train_size + dev_size + test_size)
+                test_size += len(data) - (train_size + dev_size + test_size)
             else:
-                test_size = len(data) - (train_size + dev_size + test_size)
+                test_size += len(data) - (train_size + dev_size + test_size)
 
         indices = []
         for label in idx_maps:
@@ -536,10 +532,9 @@ class GeneralDataset(IterableDataset):
 
         return train, dev, test
 
-    def _stratify_sampler(self, data: base.DataType, labels: tuple, sample_size: int, probs: tuple,
-                          idx_map: dict) -> base.DataType:
-        """Sample for stratified data splits.
-
+    def _stratify_helper(self, data: base.DataType, labels: tuple, sample_size: int, probs: tuple,
+                         idx_map: dict) -> base.DataType:
+        """Helper function for stratifying the data splits.
         :data (base.DataType): Data to be split.
         :labels (tuple): The labels to choose from.
         :sample_size (int): Number of documents in the split.
@@ -547,8 +542,8 @@ class GeneralDataset(IterableDataset):
         :idx_map (dict): label to index (of documents with said label) map.
         :returns sampled (base.DataType): Returns the stratified split.
         """
-        label_dist = np.random.choice(labels, sample_size, replace = True, p = probs)  # Get samples for distribution
-        label_count = Counter(label_dist)  # Get the number for each.
+        train_dist = np.random.choice(labels, sample_size, replace = True, p = probs)  # Get samples for distribution
+        label_count = Counter(train_dist)  # Get the number for each.
 
         sampled = []
         for label, count in label_count.items():
@@ -560,34 +555,31 @@ class GeneralDataset(IterableDataset):
     def _split(self, data: base.DataType, splits: base.Union[int, base.List[int]], **kwargs
                ) -> base.Tuple[list, base.Union[list, None], list]:
         """Split the dataset without stratification.
-
         :data (base.DataType): dataset to split.
-        :num_splits (int): The number of splits in data.
         :splits (base.List[int]): The sizes of each split.
         :returns out (base.Tuple[list, base.Union[list, None], list]): Tuple containing filled data splits.
         """
         indices = list(range(len(data)))
         num_splits = len(splits)
         if num_splits == 1:
-            train, indices = self._split_sampler(data, splits[0], indices)
-            test, indices = self._split_sampler(data, len(data) - splits[0], indices)
+            train, indices = self._split_helper(data, splits[0], indices)
+            test, indices = self._split_helper(data, len(data) - splits[0], indices)
             out = (train, None, test)
 
         elif num_splits == 2:
-            train, indices = self._split_sampler(data, splits[0], indices)
-            test, indices = self._split_sampler(data, splits[1], indices)
+            train, indices = self._split_helper(data, splits[0], indices)
+            test, indices = self._split_helper(data, splits[1], indices)
             out = (train, None, test)
 
         elif num_splits == 3:
-            train, indices = self._split_sampler(data, splits[0], indices)
-            dev, indices = self._split_sampler(data, splits[1], indices)
-            test, indices = self._split_sampler(data, splits[2], indices)
+            train, indices = self._split_helper(data, splits[0], indices)
+            dev, indices = self._split_helper(data, splits[1], indices)
+            test, indices = self._split_helper(data, splits[2], indices)
             out = (train, dev, test)
         return out
 
-    def _split_sampler(self, data: base.DataType, size: int, indices: base.List[int]) -> base.Tuple[list, list]:
-        """Sample data to split dataset.
-
+    def _split_helper(self, data: base.DataType, size: int, indices: base.List[int]) -> base.Tuple[list, list]:
+        """Helper function for splitting dataset.
         :data (base.DataType): Dataset to split.
         :size: (int): Size of the sample.
         :indices (base.List[int]): Indices for the entire dataset.
@@ -596,7 +588,6 @@ class GeneralDataset(IterableDataset):
         sample = np.random.choice(indices, size, replace = False)
         sampled = [data[ix] for ix in sample]
         indices = [ix for ix in indices if ix not in sample]
-
         return sampled, indices
 
     def __getitem__(self, i):
