@@ -434,10 +434,11 @@ class GeneralDataset(IterableDataset):
 
             yield encoding_func(text)
 
-    def onehot_encode_doc(self, text: base.DataType) -> base.DataType:
+    def onehot_encode_doc(self, text: base.DataType, doc: base.Datapoint) -> base.DataType:
         """Onehot encode a single document.
 
         :text (base.DataType): The document represented as a tokens.
+        :doc (base.Datapoint): The datapoint to encode.
         """
         encoded = torch.zeros(1, self.length, len(self.stoi), dtype = torch.long)
 
@@ -446,13 +447,18 @@ class GeneralDataset(IterableDataset):
 
         return encoded
 
-    def encode_doc(self, text: base.DataType) -> base.DataType:
+    def encode_doc(self, text: base.DataType, doc: base.Datapoint) -> base.DataType:
         """Encode documents using just the index of the tokens that are present in the document.
 
         :text (base.DataType): The document represented as a tokens.
+        :doc (base.Datapoint): The datapoint to encode.
         """
-        encoded = torch.tensor([self.stoi.get(text[ix], self.unk_tok) for ix in range(len(text))], dtype = torch.long)
-
+        if hasattr(doc, 'encoded'):
+            encoded = doc.encoded
+        else:
+            encoded = torch.tensor([self.stoi.get(text[ix], self.unk_tok) for ix in range(len(text))],
+                                   dtype = torch.long)
+            setattr(doc, 'encoded', encoded)
         return encoded
 
     def split(self, data: base.DataType = None, splits: base.List[float] = [0.8, 0.1, 0.1],
