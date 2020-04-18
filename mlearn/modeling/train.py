@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-import pandas as pd
 from tqdm import tqdm
 from mlearn import base
 from collections import defaultdict
@@ -29,30 +28,27 @@ def process_and_batch(dataset, data, batch_size: int, onehot: bool = True):
     return batches
 
 
-def write_predictions(output_info: pd.DataFrame, main_dataset: data.GeneralDataset, preds: list, truths: list,
-                      model_info: list, model_header: list, data_name: str, main_name: str):
-    """Write predictions out to file.
+def write_predictions(data: base.DataType, dataset: data.GeneralDataset, train_field: str, label_field: str,
+                      model_info: list, model_header: list, data_name: str, main_name: str, pred_fn: base.Callable,
+                      **kwargs):
+    """Write document out
 
-    :output_info (pd.DataFrame): Dataframe containing information to be written including each doc.
-    :main_dataset (data.GeneralDataset): dataset for main task.
-    :preds (list): Predictions
+    :data: The dataset objects that were predicted on.
+    :train_field (str): Attribute that is predicted on.
+    :label_field (str): Attribute in data that contains the label.
     :model_info (list): Model information
-    :model_header (list): Header with field information of the model.
+    :model_header (list): Header with model information.
     :data_name (str): Dataset evaluated on.
-    :main_name (str): Main task dataset.
+    :main_name (str): Dataset trained on.
+    :pred_fn (base.Callable): Opened resultfile.
     :returns: TODO
     """
 
-    output_info['predictions'] = [main_dataset.label_name_lookup(p) for p in preds]
-    output_info['true'] = [main_dataset.label_name_lookup(t) for t in truths]
-
-    for head, info in zip(model_header, model_info):
-        output_info[head] = info
-
-    # TODO Figure out a way to get access to the original document after prediction
-    # TODO Write all predictions out to a file.
-    # TODO File header: Dataset, Model info, Train (yes/no), Predicted label, True label, Document
-    pass
+    for doc in data:
+        out = [getattr(doc.replace('\n' ' ').replace('\r'), train_field),
+               dataset.label_ix_lookup(getattr(doc, label_field)), dataset.label_ix_lookup(doc.pred),
+               data_name, main_name] + model_info
+        pred_fn.write(out)
 
 
 def write_results(writer: base.Callable, train_scores: dict, train_loss: list, dev_scores: dict, dev_loss: list,
