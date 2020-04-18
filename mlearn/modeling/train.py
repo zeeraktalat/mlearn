@@ -3,11 +3,11 @@ import numpy as np
 from tqdm import tqdm
 from mlearn import base
 from collections import defaultdict
-import mlearn.data_processing.data as data
 from mlearn.modeling.metrics import compute
 from mlearn.modeling.evaluate import eval_torch_model
 from mlearn.modeling.early_stopping import EarlyStopping
 from mlearn.data_processing.batching import Batch, BatchExtractor
+from mlearn.data_processing.fileio import write_predictions, write_results
 
 
 def process_and_batch(dataset, data, batch_size: int, onehot: bool = True):
@@ -28,64 +28,6 @@ def process_and_batch(dataset, data, batch_size: int, onehot: bool = True):
     return batches
 
 
-def write_predictions(data: base.DataType, dataset: data.GeneralDataset, train_field: str, label_field: str,
-                      model_info: list, model_header: list, data_name: str, main_name: str, pred_fn: base.Callable,
-                      **kwargs):
-    """Write document out
-
-    :data: The dataset objects that were predicted on.
-    :train_field (str): Attribute that is predicted on.
-    :label_field (str): Attribute in data that contains the label.
-    :model_info (list): Model information
-    :model_header (list): Header with model information.
-    :data_name (str): Dataset evaluated on.
-    :main_name (str): Dataset trained on.
-    :pred_fn (base.Callable): Opened resultfile.
-    :returns: TODO
-    """
-
-    for doc in data:
-        out = [getattr(doc.replace('\n' ' ').replace('\r'), train_field),
-               dataset.label_ix_lookup(getattr(doc, label_field)), dataset.label_ix_lookup(doc.pred),
-               data_name, main_name] + model_info
-        pred_fn.write(out)
-
-
-def write_results(writer: base.Callable, train_scores: dict, train_loss: list, dev_scores: dict, dev_loss: list,
-                  epochs: int, model_info: list, metrics: list, exp_len: int, data_name: str, main_name: str,
-                  **kwargs) -> None:
-    """Write results to file.
-
-    :writer (base.Callable): Path to file.
-    :train_scores (dict): Train scores.
-    :train_loss (list): Train losses.
-    :dev_scores (dict): Dev scores.
-    :dev_loss (list): Dev losses.
-    :epochs (int): Epochs.
-    :model_info (list): Model info.
-    :metrics (list): Model info.
-    :exp_len (int): Expected length of each line.
-    :data_name (str): Name of the dataset that's being run on.
-    :main_name (str): Name of the dataset the model is trained/being trained on.
-    """
-    for i in range(epochs):
-        try:
-            out = [data_name, main_name] + [i] + model_info  # Base info
-            out += [train_scores[m][i] for m in metrics] + [train_loss[i]]  # Train info
-            if dev_scores:
-                out += [dev_scores[m][i] for m in metrics] + [dev_loss[i]]  # Dev info
-        except IndexError:
-            __import__('pdb').set_trace()
-
-        row_len = len(out)
-        if row_len < exp_len:
-            out += [''] * (row_len - exp_len)
-        elif row_len > exp_len:
-            __import__('pdb').set_trace()
-
-        writer.writerow(out)
-
-
 def run_model(library: str, train: bool, writer: base.Callable, model_info: list, head_len: int, **kwargs):
     """Train or evaluate model.
 
@@ -103,6 +45,9 @@ def run_model(library: str, train: bool, writer: base.Callable, model_info: list
     train_loss, dev_loss, train_scores, dev_scores = func(**kwargs)
     write_results(writer, train_scores, train_loss, dev_scores, dev_loss, model_info = model_info, exp_len = head_len,
                   **kwargs)
+
+    if not train:
+        write_predictions(kwargs['iterator'], model_info = model_info, **kwargs)
 
 
 def train_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base.Callable, batches: base.DataType,
@@ -193,7 +138,7 @@ def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataTy
 
 def _train_mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: base.DataType, opt: base.Callable,
                      batchers: base.List[base.Batch], batch_count: int, dataset_weights: base.List[float],
-                     clip: base.Union[int, float] = None, **kwargs):
+                     clip: float = None, **kwargs):
     """Train one epoch of an MTL training loop.
 
     :model (base.ModelType): Model in the process of being trained.
@@ -203,7 +148,7 @@ def _train_mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weigh
     :batchers (base.List[base.Batch]): A list of batched objects.
     :batch_count (int): The number of batches to go through in each epoch.
     :dataset_weights (base.List[float]): The probability with which each dataset is chosen to be trained on.
-    :clip (base.Union[int, float], default = None): Use gradient clipping.
+    :clip (float, default = None): Use gradient clipping.
     """
     epoch_loss = []
 
@@ -228,16 +173,16 @@ def _train_mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weigh
         epoch_loss.append(loss.data.item().cpu())
 
 
-def train_mtl_model(model, training_datasets, save_path, optimizer, metrics: base.Dict[str, base.Callable],
-                    dev_metric: str, batch_size = 64, epochs = 2, clip = None, dev = None, dev_task_id = 0,
-                    dataset_weights = None, patience = 10, batches_per_epoch = None, shuffle_data = True,
-                    loss_weights = None, loss_func = None):
+def train_mtl_model(model: base.ModelType, training_datasets: list[base.DataType], save_path: str, opt: base.Callable,
+                    metrics: base.Dict[str, base.Callable], dev_metric: str, batch_size = 64, epochs = 2,
+                    clip: float = None, dev = None, dev_task_id = 0, dataset_weights = None, patience = 10,
+                    batches_per_epoch = None, shuffle_data = True, loss_weights = None, loss_func = None):
     """Trains a multi-task learning model.
 
     :model: Untrained model.
     :training_datasets: List of tuples containing dense matrices.
     :save_path: Path to save trained model to.
-    :optimizer: Pytorch optimizer to train model.
+    :opt: Pytorch optimizer to train model.
     :batch_size: Training batch size.
     :patience: Number of epochs to observe non-improving dev performance before early stopping.
     :epochs: Maximum number of epochs (if no early stopping).
@@ -272,7 +217,7 @@ def train_mtl_model(model, training_datasets, save_path, optimizer, metrics: bas
         batchers.append(batches)
 
     for epoch in tqdm(range(epochs), desc = "Training model"):
-        epoch_loss = _train_mtl_epoch(model, loss_func, loss_weights, optimizer, batchers, batches_per_epoch,
+        epoch_loss = _train_mtl_epoch(model, loss_func, loss_weights, opt, batchers, batches_per_epoch,
                                       dataset_weights, clip)
 
         print("Epoch train loss:", np.array(epoch_loss).mean())

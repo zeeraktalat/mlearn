@@ -2,6 +2,7 @@ import sys
 import ast
 import json
 from mlearn import base
+from mlearn.data_processing.data import data
 
 
 def read_json(fh: str, enc, doc_key: str, label_key: str, **kwargs) -> base.Tuple[str, str, ...]:
@@ -47,51 +48,57 @@ def read_json(fh: str, enc, doc_key: str, label_key: str, **kwargs) -> base.Tupl
     return tuple(out_vals)
 
 
-def write_results(performance: dict, parameters: dict, out_fh: str, mode: str) -> None:
-    """Write results out to a tsv file.
-    :param performance: Dictionary containing results of model.
-    :param parameters: A dictionary containng the model parameters.
-    :param out_fh: Filename of the output file.
-    :param mode: Write mode of the file (options: ['a', 'w']).
-    """
-    fh = open('../../experiments/results/' + out_fh, mode = mode, encoding = 'utf-8')
-    if mode == 'a':
-        pass
-    elif mode == 'w':
-        first_line = "\t".join(performance.keys()) + "\t".join(parameters.keys())
-        fh.write(first_line)
+def write_predictions(data: base.DataType, dataset: data.GeneralDataset, train_field: str, label_field: str,
+                      model_info: list, data_name: str, main_name: str, pred_fn: base.Callable,
+                      **kwargs) -> None:
+    """Write document out
 
-    # Write results
-    output = "\t".join(performance.values()) + "\t".join(parameters.values())
-    fh.write(output)
-
-    fh.close()
-
-
-def print_results(performance: dict, parameters: dict, iter_info: dict = {}, first: bool = False) -> None:
-    """Print results in a readable manner.
-    :param performance: Classifier metrics.
-    :param parameters: Parameters for this iteration.
-    :param iter_info: Information about the iteration.
-    :param first: Whether it's the first line or not.
+    :data: The dataset objects that were predicted on.
+    :train_field (str): Attribute that is predicted on.
+    :label_field (str): Attribute in data that contains the label.
+    :model_info (list): Model information
+    :data_name (str): Dataset evaluated on.
+    :main_name (str): Dataset trained on.
+    :pred_fn (base.Callable): Opened resultfile.
     """
 
-    out = ""
-    i_info = ""
+    for doc in data:
+        out = [getattr(doc, train_field).replace('\n' ' ').replace('\r'),
+               dataset.label_ix_lookup(getattr(doc, label_field)), dataset.label_ix_lookup(doc.pred),
+               data_name, main_name] + model_info
+        pred_fn.write(out)
 
-    if iter_info:
-        for k, v in iter_info.items():
-            i_info = "{0}: {1} | ".format(k, v)
-        i_info = i_info[0:-2] + ': '
 
-    if first:
-        out = "\t".join(performance.keys()) + ' | ' + "\t".join(parameters.keys())
-        out = len(i_info) * " " + out
-        print(out)
+def write_results(writer: base.Callable, train_scores: dict, train_loss: list, dev_scores: dict, dev_loss: list,
+                  epochs: int, model_info: list, metrics: list, exp_len: int, data_name: str, main_name: str,
+                  **kwargs) -> None:
+    """Write results to file.
 
-    out = "\t".join(performance.values()) + ' | ' + "\t".join(parameters.values())
+    :writer (base.Callable): Path to file.
+    :train_scores (dict): Train scores.
+    :train_loss (list): Train losses.
+    :dev_scores (dict): Dev scores.
+    :dev_loss (list): Dev losses.
+    :epochs (int): Epochs.
+    :model_info (list): Model info.
+    :metrics (list): Model info.
+    :exp_len (int): Expected length of each line.
+    :data_name (str): Name of the dataset that's being run on.
+    :main_name (str): Name of the dataset the model is trained/being trained on.
+    """
+    for i in range(epochs):
+        try:
+            out = [data_name, main_name] + [i] + model_info  # Base info
+            out += [train_scores[m][i] for m in metrics] + [train_loss[i]]  # Train info
+            if dev_scores:
+                out += [dev_scores[m][i] for m in metrics] + [dev_loss[i]]  # Dev info
+        except IndexError:
+            __import__('pdb').set_trace()
 
-    if iter_info != {}:
-        out = i_info + out
+        row_len = len(out)
+        if row_len < exp_len:
+            out += [''] * (row_len - exp_len)
+        elif row_len > exp_len:
+            __import__('pdb').set_trace()
 
-    print(out)
+        writer.writerow(out)
