@@ -1,40 +1,49 @@
 from mlearn import base
-from collections import OrderedDict
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score, confusion_matrix, f1_score
 
 
-def select_metrics(metrics: base.List[str]) -> base.Dict[str, base.Callable]:
-    """Select metrics for computation based on a list of metric names.
-    :metrics: List of metric names.
-    :return out: Dictionary containing name and methods.
-    """
-    out = OrderedDict()
-    if not isinstance(metrics, list):
-        metrics = [metrics]
+class Metrics:
 
-    for m in metrics:
-        m = m.lower()
-        if 'accuracy' in m and 'accuracy' not in out:
-            out['accuracy'] = accuracy_score
-        elif 'precision' in m and 'precision' not in out:
-            out['precision'] = precision_score
-        elif 'recall' in m and 'recall' not in out:
-            out['recall'] = recall_score
-        elif 'auc' in m and 'auc' not in out:
-            out['auc'] = roc_auc_score
-        elif 'confusion' in m and 'confusion' not in out:
-            out['confusion'] = confusion_matrix
-        elif 'f1' in m and 'f1-score' not in out:
-            out['f1-score'] = f1_score
+    def __init__(self, metrics: base.List[str], display_metric: str):
+        self.scores = {}
+        self.display = display_metric
+        self.metrics = {}
 
-    return out
+        self.select_metrics(metrics)  # Initialize the metrics dict.
 
+    def select_metrics(self, metrics: base.List[str]) -> base.Dict[str, base.Callable]:
+        """Select metrics for computation based on a list of metric names.
+        :metrics: List of metric names.
+        :return out: Dictionary containing name and methods.
+        """
 
-def compute(metrics: base.Dict[str, base.Callable], labels: base.DataType,
-            preds: base.DataType) -> base.Dict[str, float]:
-    """Compute scores for the model.
-    :metrics (base.Dict[str, base.Callable]): Metrics dictionary.
-    :labels (base.DataType): True labels.
-    :preds (base.DataType): Predicted labels.
-    """
-    return {name: float(metric(preds, labels)) for name, metric in metrics.items()}
+        for m in metrics:
+            m = m.lower()
+            if 'accuracy' in m and 'accuracy':
+                self.metrics['accuracy'] = accuracy_score
+            elif 'precision' in m:
+                self.metrics['precision'] = precision_score
+            elif 'recall' in m:
+                self.metrics['recall'] = recall_score
+            elif 'auc' in m:
+                self.metrics['auc'] = roc_auc_score
+            elif 'confusion' in m:
+                self.metrics['confusion'] = confusion_matrix
+            elif 'f1' in m:
+                self.metrics['f1-score'] = f1_score
+
+    def compute(self, labels: base.DataType, preds: base.DataType) -> base.Dict[str, float]:
+        """Compute scores for the model.
+        :metrics (base.Dict[str, base.Callable]): Metrics dictionary.
+        :labels (base.DataType): True labels.
+        :preds (base.DataType): Predicted labels.
+        """
+
+        self.scores = {name: float(metric(preds, labels)) for name, metric in self.metrics.items()}
+        return self.scores
+
+    def display_metric(self):
+        return {self.display: self.scores[self.display]}
+
+    def __getitem__(self, x):
+        return self.metrics[x]
