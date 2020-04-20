@@ -1,7 +1,6 @@
 import torch
 from tqdm import tqdm
 from mlearn import base
-from mlearn.modeling.metrics import compute
 
 
 def predict_torch_model(model: base.modelType, iterator: base.DataType, loss_f: base.Callable,
@@ -31,13 +30,13 @@ def predict_torch_model(model: base.modelType, iterator: base.DataType, loss_f: 
 
 
 def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_f: base.Callable,
-                     metrics: base.Dict[str, base.Callable], mtl: bool = False, task_id: int = None, **kwargs):
+                     metrics: object, mtl: bool = False, task_id: int = None, **kwargs):
     """Evalute pytorch model.
 
     :model (base.ModelType): Trained model to be trained.
     :iterator (base.DataType): Batched dataset to predict on.
     :loss_f (base.Callable): Loss function.
-    :metrics (base.Dict[str, base.Callable]): Metrics dictionary.
+    :metrics (object): Initialized Metrics object.
     :mtl (bool, default = False): Is it a Multi-task Learning problem?
     :task_id (int, default = None): Task ID for MTL problem.
     :returns: TODO
@@ -50,7 +49,7 @@ def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_f: bas
         else:
             predicted, true, loss = predict_torch_model(model, iterator, **kwargs)
 
-        scores = compute(metrics, true, predicted)
+        scores = metrics._compute(metrics, true, predicted)
 
     return loss, None, scores, None
 
