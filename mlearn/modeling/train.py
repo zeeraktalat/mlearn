@@ -3,7 +3,6 @@ import numpy as np
 from tqdm import tqdm, trange
 from mlearn import base
 from collections import defaultdict
-from mlearn.modeling.metrics import compute
 from mlearn.modeling.evaluate import eval_torch_model
 from mlearn.modeling.early_stopping import EarlyStopping
 from mlearn.data_processing.batching import Batch, BatchExtractor
@@ -51,13 +50,14 @@ def run_model(library: str, train: bool, writer: base.Callable, model_info: list
 
 
 def train_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base.Callable, iterator: base.DataType,
-                gpu: bool = True, **kwargs):
+                clip: float = None, gpu: bool = True, **kwargs):
     """Basic training procedure for pytorch models.
 
     :model (base.ModelType): Untrained model to be trained.
     :optimizer (bas.Callable): Optimizer function.
     :loss_func (base.Callable): Loss function to use.
     :iterator (base.DataType): Batched training set.
+    :clip (float, default = None): Add gradient clipping to prevent exploding gradients.
     :gpu (bool, default = True): Run on GPU
     :returns: TODO
     """
@@ -76,8 +76,11 @@ def train_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base
             loss = loss_func(scores, y)
             epoch_loss.append(float(loss.data.item()))
 
-            # Update steps
             loss.backward()
+
+            if clip is not None:
+                torch.nn.utils.clip_grad_norm(model.parameters(), clip)
+
             optimizer.step()
 
             predictions.extend(torch.argmax(scores, 1).cpu().tolist())
@@ -85,31 +88,36 @@ def train_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base
 
             loop.set_postfix(batch_loss = epoch_loss[-1])
 
-    return predictions, labels, loss
+    return predictions, labels, epoch_loss
 
 
-def train_pytorch_model(model: base.ModelType, epochs: int, iterator: base.DataType, loss_func: base.Callable,
-                        optimizer: base.Callable, metrics: object, dev_iterator: base.DataType = None,
-                        gpu: bool = True, shuffle: bool = True,
-                        display_metric: str = 'accuracy', **kwargs) -> base.Union[list, int, dict, dict]:
+def train_pytorch_model(model: base.ModelType, save_path: str, epochs: int, iterator: base.DataType,
+                        loss_func: base.Callable, optimizer: base.Callable, metrics: object,
+                        dev_iterator: base.DataType = None, clip: float = None, patience: int = 10,
+                        shuffle: bool = True, gpu: bool = True, **kwargs) -> base.Union[list, int, dict, dict]:
     """Train a machine learning model.
 
     :model (base.ModelType): Untrained model to be trained.
+    :save_path (str): Path to save models to.
     :epochs (int): The number of epochs to run.
     :iterator (base.DataType): Batched training set.
     :loss_func (base.Callable): Loss function to use.
     :optimizer (bas.Callable): Optimizer function.
-    :metrics (base.Dict[str, base.Callable])): Metrics to use.
+    :metrics (object): Initialized Metrics object.
     :dev_iterator (base.DataType, optional): Batched dev set.
+    :clip (float, default = None):
+    :shuffle (bool, default = True): Shuffle the dataset.
     :gpu (bool, default = True): Run on GPU
     """
     with trange(epochs) as loop:
-        train_loss = []
-        train_preds, train_labels = [], []
+        preds, labels, loss = [], [], []
         train_scores = defaultdict(list)
 
         dev_losses = []
         dev_scores = defaultdict(list)
+
+        if patience > 0:
+            early_stopping = EarlyStopping(save_path, patience, low_is_good = False)
 
         for ep in loop:
             model.train()
@@ -118,29 +126,32 @@ def train_pytorch_model(model: base.ModelType, epochs: int, iterator: base.DataT
             if shuffle:
                 iterator.shuffle()
 
-            epoch_preds, epoch_labels, epoch_loss = train_epoch(model, optimizer, loss_func, iterator, gpu)
-            train_loss.append(sum(epoch_loss))
+            epoch_preds, epoch_labels, epoch_loss = train_epoch(model, optimizer, loss_func, iterator, clip, gpu)
             metrics.compute(epoch_labels, epoch_preds)
             epoch_display = metrics.display_metric()
 
-            train_preds.extend(epoch_preds)
-            train_labels.extend(epoch_labels)
+            preds.extend(epoch_preds)
+            labels.extend(epoch_labels)
+            loss.append(sum(epoch_loss))
 
             try:
-                dev_loss, _, dev_score, _ = eval_torch_model(model, dev_iterator, loss_func, metrics, **kwargs)
+                dev_loss, _, dev_scores, _ = eval_torch_model(model, dev_iterator, loss_func, metrics, **kwargs)
                 dev_losses.append(dev_loss)
-                dev_score = dev_scores[display_metric]
+                dev_score = dev_scores[metrics.display]
 
-                ep.set_postfix(loss = epoch_loss, dev_loss = dev_loss, **epoch_display,
-                               dev_score = dev_score[metrics.display])
+                if early_stopping is not None and early_stopping(model, dev_scores[metrics.early_stopping()]):
+                    early_stopping.set_best_state(model)
+                    break
+
+                ep.set_postfix(loss = epoch_loss, dev_loss = dev_loss, **epoch_display, dev_score = dev_score)
             except Exception as e:
                 ep.set_postfix(loss = epoch_loss, **epoch_display)
             finally:
                 loop.refresh()
 
-        train_scores = metrics.compute(train_preds, train_labels)
+        train_scores = metrics.compute(preds, labels)
 
-    return train_loss, dev_losses, train_scores, dev_scores
+    return loss, dev_losses, train_scores, dev_scores
 
 
 def _train_mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: base.DataType, opt: base.Callable,
@@ -189,7 +200,7 @@ def _train_mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weigh
 
 def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.DataType], save_path: str,
                     opt: base.Callable, loss_func: base.Callable, metrics: object, batch_size: int = 64,
-                    epochs: int = 2, clip: float = 1.0, patience: int = 10, dev: base.DataType = None,
+                    epochs: int = 2, clip: float = None, patience: int = 10, dev: base.DataType = None,
                     dev_task_id: int = 0, batches_per_epoch: int = None, shuffle_data: bool = True,
                     dataset_weights: base.DataType = None, loss_weights: base.DataType = None, **kwargs) -> None:
     """Train a multi-task learning model.
@@ -202,7 +213,7 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
     :metrics (object): Initialized metrics object.
     :batch_size (int): Training batch size.
     :epochs (int): Maximum number of epochs (if no early stopping).
-    :clip (float, default = 1.0): Use gradient clipping.
+    :clip (float, default = None): Use gradient clipping.
     :patience (int, default = 10): Number of epochs to observe non-improving dev performance before early stopping.
     :dev (base.DataType): Dev dataset object.
     :dev_task_id (int, default = 0): Task ID for task to use for early stopping, in case of multitask learning.
