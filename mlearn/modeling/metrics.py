@@ -38,7 +38,7 @@ class Metrics:
             elif 'f1' in m:
                 self.metrics['f1-score'] = f1_score
 
-    def compute(self, labels: base.DataType, preds: base.DataType) -> base.Dict[str, float]:
+    def compute(self, labels: base.DataType, preds: base.DataType, **kwargs) -> base.Dict[str, float]:
         """Compute scores for the model.
         :metrics (base.Dict[str, base.Callable]): Metrics dictionary.
         :labels (base.DataType): True labels.
@@ -47,13 +47,13 @@ class Metrics:
         self.scores = self._compute(labels, preds)
         return self.scores
 
-    def _compute(self, labels: base.DataType, preds: base.DataType) -> base.Dict[str, float]:
+    def _compute(self, labels: base.DataType, preds: base.DataType, **kwargs) -> base.Dict[str, float]:
         """Compute scores for the model without storing them.
         :metrics (base.Dict[str, base.Callable]): Metrics dictionary.
         :labels (base.DataType): True labels.
         :preds (base.DataType): Predicted labels.
         """
-        scores = {name: float(metric(preds, labels)) for name, metric in self.metrics.items()}
+        scores = {name: float(metric(preds, labels, **kwargs)) for name, metric in self.metrics.items()}
         return scores
 
     def display_metric(self) -> base.Dict[str, float]:
