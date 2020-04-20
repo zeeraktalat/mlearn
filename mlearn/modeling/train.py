@@ -212,11 +212,10 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
         dataset_weights = loss_weights / len(training_datasets)
 
     if batches_per_epoch is None:
-        batches_per_epoch = sum([len(dataset) * batch_size for dataset
-                                 in training_datasets]) // batch_size
+        batches_per_epoch = sum([len(dataset) * batch_size for dataset in training_datasets]) // batch_size
+
     if patience > 0:
-        early_stopping = EarlyStopping(save_path, patience,
-                                       low_is_good=False)
+        early_stopping = EarlyStopping(save_path, patience, low_is_good = False)
 
     batchers = []
 
@@ -241,7 +240,7 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
 
                 t.set_postfix(epoch_loss = epoch_loss, dev_loss = dev_loss)
 
-                if early_stopping is not None and early_stopping(model, dev_scores.early_stopping):
+                if early_stopping is not None and early_stopping(model, dev_scores.early_stopping()):
                     early_stopping.set_best_state(model)
                     break
 
