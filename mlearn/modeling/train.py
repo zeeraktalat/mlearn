@@ -63,23 +63,27 @@ def train_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base
     """
     predictions, labels = [], []
     epoch_loss = []
-    for X, y in tqdm(batches, desc = "iterating over batches", leave = False):
 
-        if gpu:  # make sure it's gpu runnable
-            X = X.cuda()
-            y = y.cuda()
+    with tqdm(batches, desc = "Batch") as loop:
 
-        scores = model(X, **kwargs)
+        for X, y in loop:
+            if gpu:
+                X = X.cuda()
+                y = y.cuda()
 
-        loss = loss_func(scores, y)
-        epoch_loss.append(float(loss.data.item()))
+            scores = model(X, **kwargs)
 
-        # Update steps
-        loss.backward()
-        optimizer.step()
+            loss = loss_func(scores, y)
+            epoch_loss.append(float(loss.data.item()))
 
-        predictions.extend(torch.argmax(scores, 1).cpu().tolist())
-        labels.extend(y.cpu().tolist())
+            # Update steps
+            loss.backward()
+            optimizer.step()
+
+            predictions.extend(torch.argmax(scores, 1).cpu().tolist())
+            labels.extend(y.cpu().tolist())
+
+            loop.set_postfix(batch_loss = epoch_loss[-1])
 
     return predictions, labels, loss
 
