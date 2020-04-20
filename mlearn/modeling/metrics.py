@@ -44,8 +44,17 @@ class Metrics:
         :labels (base.DataType): True labels.
         :preds (base.DataType): Predicted labels.
         """
-        self.scores = {name: float(metric(preds, labels)) for name, metric in self.metrics.items()}
+        self.scores = self._compute(labels, preds)
         return self.scores
+
+    def _compute(self, labels: base.DataType, preds: base.DataType) -> base.Dict[str, float]:
+        """Compute scores for the model without storing them.
+        :metrics (base.Dict[str, base.Callable]): Metrics dictionary.
+        :labels (base.DataType): True labels.
+        :preds (base.DataType): Predicted labels.
+        """
+        scores = {name: float(metric(preds, labels)) for name, metric in self.metrics.items()}
+        return scores
 
     def display_metric(self) -> base.Dict[str, float]:
         """Get display metric dict.
