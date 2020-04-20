@@ -6,11 +6,11 @@ class Metrics:
 
     def __init__(self, metrics: base.List[str], display_metric: str, early_stop: str):
         """Intialize metrics computation class.
+
         :metrics (base.List[str]): List of strings containing metric names.
         :display_metric (str): Metric to display in TQDM loops.
         :early_stop (str): Metric to evaluate whether to perform early stopping.
         """
-
         self.scores, self.metrics = {}, {}
         self.display = display_metric
         self.early_stop_metric = early_stop
@@ -19,10 +19,10 @@ class Metrics:
 
     def select_metrics(self, metrics: base.List[str]) -> base.Dict[str, base.Callable]:
         """Select metrics for computation based on a list of metric names.
+
         :metrics: List of metric names.
         :return out: Dictionary containing name and methods.
         """
-
         for m in metrics:
             m = m.lower()
             if 'accuracy' in m and 'accuracy':
@@ -44,14 +44,19 @@ class Metrics:
         :labels (base.DataType): True labels.
         :preds (base.DataType): Predicted labels.
         """
-
         self.scores = {name: float(metric(preds, labels)) for name, metric in self.metrics.items()}
         return self.scores
 
-    def display_metric(self):
+    def display_metric(self) -> base.Dict[str, float]:
+        """Get display metric dict.
+
+        :returns (base.Dict[str, float]): display metric dict."""
         return {self.display: self.scores[self.display]}
 
-    def early_stopping(self):
+    def early_stopping(self) -> float:
+        """Get score for metric for identifying early stopping.
+
+        :returns (float): Score for early stopping metric."""
         return self.scores[self.early_stop_metric]
 
     def __getitem__(self, x):

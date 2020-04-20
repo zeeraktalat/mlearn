@@ -137,14 +137,15 @@ def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataTy
 
 
 def _train_mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: base.DataType, opt: base.Callable,
-                     batchers: base.List[base.Batch], batch_count: int, dataset_weights: base.List[float],
-                     clip: float = None, **kwargs):
+                     metrics: object, batchers: base.List[base.Batch], batch_count: int,
+                     dataset_weights: base.List[float], clip: float = None, **kwargs):
     """Train one epoch of an MTL training loop.
 
     :model (base.ModelType): Model in the process of being trained.
     :loss_func (base.Callable): The loss function being used.
     :loss_weights (base.DataType): Determines relative task importance When using multiple input/output functions.
     :opt (base.Callable): The optimizer function used.
+    :metrics (object): Initialized Metrics object.
     :batchers (base.List[base.Batch]): A list of batched objects.
     :batch_count (int): The number of batches to go through in each epoch.
     :dataset_weights (base.List[float]): The probability with which each dataset is chosen to be trained on.
@@ -179,24 +180,29 @@ def _train_mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weigh
     return epoch_loss
 
 
-def train_mtl_model(model: base.ModelType, training_datasets: list[base.DataType], save_path: str, opt: base.Callable,
-                    metrics: base.Dict[str, base.Callable], dev_metric: str, batch_size = 64, epochs = 2,
-                    clip: float = None, dev = None, dev_task_id = 0, dataset_weights = None, patience = 10,
-                    batches_per_epoch = None, shuffle_data = True, loss_weights = None, loss_func = None):
-    """Trains a multi-task learning model.
+def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.DataType], save_path: str,
+                    opt: base.Callable, loss_func: base.Callable, metrics: object, batch_size: int = 64,
+                    epochs: int = 2, clip: float = 1.0, patience: int = 10, dev: base.DataType = None,
+                    dev_task_id: int = 0, batches_per_epoch: int = None, shuffle_data: bool = True,
+                    dataset_weights: base.DataType = None, loss_weights: base.DataType = None, **kwargs) -> None:
+    """Train a multi-task learning model.
 
-    :model: Untrained model.
-    :training_datasets: List of tuples containing dense matrices.
-    :save_path: Path to save trained model to.
-    :opt: Pytorch optimizer to train model.
-    :batch_size: Training batch size.
-    :patience: Number of epochs to observe non-improving dev performance before early stopping.
-    :epochs: Maximum number of epochs (if no early stopping).
-    :dev: Dev dataset object.
-    :dev_task_id: Task ID for task to use for early stopping, in case of multitask learning.
-    :clip: Use gradient clipping.
-    :batches_per_epoch: Set fixed number of batches per epoch. If None, an epoch consists of all training examples.
+    :model (base.ModelType): Untrained model.
+    :training_datasets (base.List[base.DataType]): List of tuples containing dense matrices.
+    :save_path (str): Path to save trained model to.
+    :opt (base.Callable): Pytorch optimizer to train model.
+    :loss_func (base.Callable): Loss function.
+    :metrics (object): Initialized metrics object.
+    :batch_size (int): Training batch size.
+    :epochs (int): Maximum number of epochs (if no early stopping).
+    :clip (float, default = 1.0): Use gradient clipping.
+    :patience (int, default = 10): Number of epochs to observe non-improving dev performance before early stopping.
+    :dev (base.DataType): Dev dataset object.
+    :dev_task_id (int, default = 0): Task ID for task to use for early stopping, in case of multitask learning.
+    :batches_per_epoch (int, default = None): Set number of batches per epoch. If None, an epoch consists of all
+                                              training examples.
     :shuffle_data: Whether to shuffle data at training.
+    :dataset_weights (base.DataType, default = None): Probability for each dataset to be chosen (must sum to 1.0).
     :loss_weights (base.DataType): Determines relative task importance When using multiple input/output functions.
     """
     if loss_weights is None:
@@ -234,11 +240,11 @@ def train_mtl_model(model: base.ModelType, training_datasets: list[base.DataType
                                                               task_id = dev_task_id)
 
                 t.set_postfix(epoch_loss = epoch_loss, dev_loss = dev_loss)
-                t.refresh()
 
-                if early_stopping is not None and early_stopping(model, dev_scores[dev_metric]):
+                if early_stopping is not None and early_stopping(model, dev_scores.early_stopping):
                     early_stopping.set_best_state(model)
                     break
+
             except Exception as e:
                 t.set_postfix(epoch_loss = epoch_loss)
             finally:
