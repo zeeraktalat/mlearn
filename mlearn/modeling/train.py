@@ -50,21 +50,21 @@ def run_model(library: str, train: bool, writer: base.Callable, model_info: list
         write_predictions(kwargs['iterator'], model_info = model_info, **kwargs)
 
 
-def train_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base.Callable, batches: base.DataType,
+def train_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base.Callable, iterator: base.DataType,
                 gpu: bool = True, **kwargs):
     """Basic training procedure for pytorch models.
 
     :model (base.ModelType): Untrained model to be trained.
     :optimizer (bas.Callable): Optimizer function.
     :loss_func (base.Callable): Loss function to use.
-    :batches (base.DataType): Batched training set.
+    :iterator (base.DataType): Batched training set.
     :gpu (bool, default = True): Run on GPU
     :returns: TODO
     """
     predictions, labels = [], []
     epoch_loss = []
 
-    with tqdm(batches, desc = "Batch") as loop:
+    with tqdm(iterator, desc = "Batch") as loop:
 
         for X, y in loop:
             if gpu:
@@ -88,54 +88,57 @@ def train_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base
     return predictions, labels, loss
 
 
-def train_pytorch_model(model: base.ModelType, epochs: int, batches: base.DataType, loss_func: base.Callable,
-                        optimizer: base.Callable, metrics: base.Dict[str, base.Callable],
-                        dev_batches: base.DataType = None, gpu: bool = True, shuffle: bool = True,
+def train_pytorch_model(model: base.ModelType, epochs: int, iterator: base.DataType, loss_func: base.Callable,
+                        optimizer: base.Callable, metrics: object, dev_iterator: base.DataType = None,
+                        gpu: bool = True, shuffle: bool = True,
                         display_metric: str = 'accuracy', **kwargs) -> base.Union[list, int, dict, dict]:
     """Train a machine learning model.
 
     :model (base.ModelType): Untrained model to be trained.
     :epochs (int): The number of epochs to run.
-    :batches (base.DataType): Batched training set.
+    :iterator (base.DataType): Batched training set.
     :loss_func (base.Callable): Loss function to use.
     :optimizer (bas.Callable): Optimizer function.
     :metrics (base.Dict[str, base.Callable])): Metrics to use.
-    :dev_batches (base.DataType, optional): Batched dev set.
+    :dev_iterator (base.DataType, optional): Batched dev set.
     :gpu (bool, default = True): Run on GPU
-    :display_metric (str): Metric to be diplayed in TQDM iterator
     """
-    model.train()
+    with trange(epochs) as loop:
+        train_loss = []
+        train_preds, train_labels = [], []
+        train_scores = defaultdict(list)
 
-    train_loss = []
-    train_scores = defaultdict(list)
+        dev_losses = []
+        dev_scores = defaultdict(list)
 
-    dev_losses = []
-    dev_scores = defaultdict(list)
+        for ep in loop:
+            model.train()
+            optimizer.zero_grad()  # Zero out gradients
 
-    for epoch in tqdm(range(epochs), desc = "Training model"):  # TODO Get TQDM to show the scores for each epoch
+            if shuffle:
+                iterator.shuffle()
 
-        optimizer.zero_grad()  # Zero out gradients
-        epoch_loss = []
+            epoch_preds, epoch_labels, epoch_loss = train_epoch(model, optimizer, loss_func, iterator, gpu)
+            train_loss.append(sum(epoch_loss))
+            metrics.compute(epoch_labels, epoch_preds)
+            epoch_display = metrics.display_metric()
 
-        if shuffle:
-            batches.shuffle()
+            train_preds.extend(epoch_preds)
+            train_labels.extend(epoch_labels)
 
-        epoch_preds, epoch_labels, epoch_loss = train_epoch(model, optimizer, loss_func, batches, gpu)
+            try:
+                dev_loss, _, dev_score, _ = eval_torch_model(model, dev_iterator, loss_func, metrics, **kwargs)
+                dev_losses.append(dev_loss)
+                dev_score = dev_scores[display_metric]
 
-        epoch_scores = compute(metrics, epoch_labels, epoch_preds)
-        train_loss.append(sum(epoch_loss))
-        # epoch_performance = epoch_scores[display_metric]  TODO
+                ep.set_postfix(loss = epoch_loss, dev_loss = dev_loss, **epoch_display,
+                               dev_score = dev_score[metrics.display])
+            except Exception as e:
+                ep.set_postfix(loss = epoch_loss, **epoch_display)
+            finally:
+                loop.refresh()
 
-        for metric in metrics:
-            train_scores[metrics].append(epoch_scores[metric])
-
-        if dev_batches is not None:
-            dev_loss, _, dev_score, _ = eval_torch_model(model, dev_batches, loss_func, metrics, **kwargs)
-            dev_losses.append(dev_loss)
-
-            for score in dev_score:
-                dev_scores[score].append(dev_score[score])
-            # dev_performance = dev_performance[display_metric]  TODO
+        train_scores = metrics.compute(train_preds, train_labels)
 
     return train_loss, dev_losses, train_scores, dev_scores
 
