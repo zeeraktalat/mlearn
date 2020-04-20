@@ -74,7 +74,7 @@ def train_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base
         loss = loss_func(scores, y)
         epoch_loss.append(float(loss.data.item()))
 
-        # update steps
+        # Update steps
         loss.backward()
         optimizer.step()
 
@@ -152,7 +152,7 @@ def _train_mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weigh
     """
     epoch_loss = []
 
-    for b in tqdm(range(batch_count), desc = "Iterating over batches"):
+    with tqdm(range(batch_count, desc = 'Batch')) as b:
         task_id = np.random.choice(range(len(batchers)), p = dataset_weights)  # set probability for each task
         batcher = batchers[task_id]
         X, y = next(iter(batcher))
@@ -171,6 +171,7 @@ def _train_mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weigh
         opt.step()
 
         epoch_loss.append(loss.data.item().cpu())
+        b.set_postfix(batch_loss = epoch_loss[-1])
 
 
 def train_mtl_model(model: base.ModelType, training_datasets: list[base.DataType], save_path: str, opt: base.Callable,
