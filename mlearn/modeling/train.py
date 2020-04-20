@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from tqdm import tqdm
+from tqdm import tqdm, trange
 from mlearn import base
 from collections import defaultdict
 from mlearn.modeling.metrics import compute
@@ -153,9 +153,10 @@ def _train_mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weigh
     epoch_loss = []
 
     with tqdm(range(batch_count, desc = 'Batch')) as b:
-        task_id = np.random.choice(range(len(batchers)), p = dataset_weights)  # set probability for each task
-        batcher = batchers[task_id]
-        X, y = next(iter(batcher))
+
+        # Select task and get batch
+        task_id = np.random.choice(range(len(batchers)), p = dataset_weights)
+        X, y = next(iter(batchers[task_id]))
 
         # Do model training
         model.train()
@@ -170,8 +171,12 @@ def _train_mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weigh
 
         opt.step()
 
+        metrics.compute()
         epoch_loss.append(loss.data.item().cpu())
-        b.set_postfix(batch_loss = epoch_loss[-1])
+
+        b.set_postfix(batch_loss = epoch_loss[-1], **metrics.display_metric(), task = task_id)
+
+    return epoch_loss
 
 
 def train_mtl_model(model: base.ModelType, training_datasets: list[base.DataType], save_path: str, opt: base.Callable,
@@ -217,21 +222,27 @@ def train_mtl_model(model: base.ModelType, training_datasets: list[base.DataType
 
         batchers.append(batches)
 
-    for epoch in tqdm(range(epochs), desc = "Training model"):
-        epoch_loss = _train_mtl_epoch(model, loss_func, loss_weights, opt, batchers, batches_per_epoch,
-                                      dataset_weights, clip)
+    with trange(epochs, desc = "Training model") as t:
+        for epoch in t:
+            epoch_loss = _train_mtl_epoch(model, loss_func, loss_weights, opt, batchers, batches_per_epoch,
+                                          dataset_weights, clip)
 
-        print("Epoch train loss:", np.array(epoch_loss).mean())
+            try:
+                dev_batches = process_and_batch(dev, dev.dev, len(dev.dev))
+                dev_loss, _, dev_scores, _ = eval_torch_model(model, dev_batches, loss_func,
+                                                              metrics, mtl = True,
+                                                              task_id = dev_task_id)
 
-        if dev is not None:
-            dev_batches = process_and_batch(dev, dev.dev, len(dev.dev))
-            dev_loss, _, dev_scores, _ = eval_torch_model(model, dev_batches, loss_func,
-                                                          metrics, mtl = True,
-                                                          task_id = dev_task_id)
+                t.set_postfix(epoch_loss = epoch_loss, dev_loss = dev_loss)
+                t.refresh()
 
-            if early_stopping is not None and early_stopping(model, dev_scores[dev_metric]):
-                early_stopping.set_best_state(model)
-                break
+                if early_stopping is not None and early_stopping(model, dev_scores[dev_metric]):
+                    early_stopping.set_best_state(model)
+                    break
+            except Exception as e:
+                t.set_postfix(epoch_loss = epoch_loss)
+            finally:
+                t.refresh()
 
 
 def train_sklearn_model(arg1):
