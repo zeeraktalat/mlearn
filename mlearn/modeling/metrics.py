@@ -59,5 +59,10 @@ class Metrics:
         :returns (float): Score for early stopping metric."""
         return self.scores[self.early_stop_metric]
 
-    def __getitem__(self, x):
-        return self.metrics[x]
+    def __getitem__(self, metric: str) -> float:
+        """Get individual metric.
+
+        :metric (str): Metric to get results for.
+        :returns (float): Score for desired metric.
+        """
+        return self.metrics[metric]
