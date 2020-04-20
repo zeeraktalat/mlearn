@@ -70,6 +70,8 @@ def write_predictions(data: base.DataType, dataset: data.GeneralDataset, train_f
         except Exception as e:
             breakpoint()
 
+    pred_fn.writerow(len(out) * ['---'])
+
 
 def write_results(writer: base.Callable, train_scores: dict, train_loss: list, dev_scores: dict, dev_loss: list,
                   epochs: int, model_info: list, metrics: list, exp_len: int, data_name: str, main_name: str,
