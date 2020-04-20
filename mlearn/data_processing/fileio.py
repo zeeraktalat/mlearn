@@ -61,12 +61,14 @@ def write_predictions(data: base.DataType, dataset: data.GeneralDataset, train_f
     :main_name (str): Dataset trained on.
     :pred_fn (base.Callable): Opened resultfile.
     """
-
     for doc in data:
-        out = [getattr(doc, train_field).replace('\n' ' ').replace('\r'),
-               dataset.label_ix_lookup(getattr(doc, label_field)), dataset.label_ix_lookup(doc.pred),
-               data_name, main_name] + model_info
-        pred_fn.write(out)
+        try:
+            out = [" ".join(getattr(doc, train_field)).replace('\n', ' ').replace('\r', ' '),
+                   dataset.label_ix_lookup(getattr(doc, label_field)), dataset.label_ix_lookup(doc.pred),
+                   data_name, main_name] + model_info
+            pred_fn.writerow(out)
+        except Exception as e:
+            breakpoint()
 
 
 def write_results(writer: base.Callable, train_scores: dict, train_loss: list, dev_scores: dict, dev_loss: list,
