@@ -27,7 +27,7 @@ def process_and_batch(dataset, data, batch_size: int, onehot: bool = True):
     return batches
 
 
-def run_model(library: str, train: bool, writer: base.Callable, model_info: list, head_len: int, **kwargs):
+def run_singletask_model(library: str, train: bool, writer: base.Callable, model_info: list, head_len: int, **kwargs):
     """Train or evaluate model.
 
     :library (str): Library of the model.
@@ -37,7 +37,7 @@ def run_model(library: str, train: bool, writer: base.Callable, model_info: list
     :head_len (int): The length of the header.
     """
     if train:
-        func = train_pytorch_model if library == 'pytorch' else train_sklearn_model
+        func = train_singletask_model if library == 'pytorch' else train_sklearn_model
     else:
         func = eval_torch_model if library == 'pytorch' else evaluate_sklearn_model
 
@@ -49,9 +49,9 @@ def run_model(library: str, train: bool, writer: base.Callable, model_info: list
         write_predictions(kwargs['iterator'], model_info = model_info, **kwargs)
 
 
-def train_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base.Callable, iterator: base.DataType,
-                clip: float = None, gpu: bool = True, **kwargs):
-    """Basic training procedure for pytorch models.
+def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base.Callable,
+                      iterator: base.DataType, clip: float = None, gpu: bool = True, **kwargs):
+    """Basic training procedure for single task pytorch models.
 
     :model (base.ModelType): Untrained model to be trained.
     :optimizer (bas.Callable): Optimizer function.
@@ -91,11 +91,11 @@ def train_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base
     return predictions, labels, epoch_loss
 
 
-def train_pytorch_model(model: base.ModelType, save_path: str, epochs: int, iterator: base.DataType,
-                        loss_func: base.Callable, optimizer: base.Callable, metrics: object,
-                        dev_iterator: base.DataType = None, clip: float = None, patience: int = 10,
-                        shuffle: bool = True, gpu: bool = True, **kwargs) -> base.Union[list, int, dict, dict]:
-    """Train a machine learning model.
+def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, iterator: base.DataType,
+                           loss_func: base.Callable, optimizer: base.Callable, metrics: object,
+                           dev_iterator: base.DataType = None, clip: float = None, patience: int = 10,
+                           shuffle: bool = True, gpu: bool = True, **kwargs) -> base.Union[list, int, dict, dict]:
+    """Train a single task pytorch model.
 
     :model (base.ModelType): Untrained model to be trained.
     :save_path (str): Path to save models to.
@@ -126,7 +126,7 @@ def train_pytorch_model(model: base.ModelType, save_path: str, epochs: int, iter
             if shuffle:
                 iterator.shuffle()
 
-            epoch_preds, epoch_labels, epoch_loss = train_epoch(model, optimizer, loss_func, iterator, clip, gpu)
+            epoch_preds, epoch_labels, epoch_loss = _singletask_epoch(model, optimizer, loss_func, iterator, clip, gpu)
             metrics.compute(epoch_labels, epoch_preds)
             epoch_display = metrics.display_metric()
 
@@ -144,7 +144,8 @@ def train_pytorch_model(model: base.ModelType, save_path: str, epochs: int, iter
                     break
 
                 ep.set_postfix(loss = epoch_loss, dev_loss = dev_loss, **epoch_display, dev_score = dev_score)
-            except Exception as e:
+            except Exception:
+                # Add logging of error
                 ep.set_postfix(loss = epoch_loss, **epoch_display)
             finally:
                 loop.refresh()
@@ -154,9 +155,9 @@ def train_pytorch_model(model: base.ModelType, save_path: str, epochs: int, iter
     return loss, dev_losses, train_scores, dev_scores
 
 
-def _train_mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: base.DataType, opt: base.Callable,
-                     metrics: object, batchers: base.List[base.Batch], batch_count: int,
-                     dataset_weights: base.List[float], clip: float = None, **kwargs):
+def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: base.DataType, opt: base.Callable,
+               metrics: object, batchers: base.List[base.Batch], batch_count: int, dataset_weights: base.List[float],
+               clip: float = None, **kwargs):
     """Train one epoch of an MTL training loop.
 
     :model (base.ModelType): Model in the process of being trained.
@@ -247,8 +248,8 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
 
     with trange(epochs, desc = "Training model") as t:
         for epoch in t:
-            epoch_loss = _train_mtl_epoch(model, loss_func, loss_weights, opt, batchers, batches_per_epoch,
-                                          dataset_weights, clip)
+            epoch_loss = _mtl_epoch(model, loss_func, loss_weights, opt, batchers, batches_per_epoch,
+                                    dataset_weights, clip)
 
             try:
                 dev_batches = process_and_batch(dev, dev.dev, len(dev.dev))
@@ -262,7 +263,7 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
                     early_stopping.set_best_state(model)
                     break
 
-            except Exception as e:
+            except Exception:
                 t.set_postfix(epoch_loss = epoch_loss)
             finally:
                 t.refresh()
