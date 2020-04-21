@@ -6,6 +6,7 @@ from string import punctuation
 
 
 class Preprocessors(object):
+    """A class to contain preprocessors and wrap preprocessing functions and their requirements."""
 
     def __init__(self, liwc_path: str = None):
         """Initialise cleaner class."""
@@ -15,8 +16,9 @@ class Preprocessors(object):
         self.slur_window = None
         self.liwc_path = liwc_path
 
-    def word_length(self, doc: base.DocType):
-        """Represent sentence as the length of each token.
+    def word_length(self, doc: base.DocType) -> base.List[int]:
+        """
+        Represent sentence as the length of each token.
 
         :doc (base.DocType): Document to be processed.
         :returns: Processed document.
@@ -24,7 +26,8 @@ class Preprocessors(object):
         return [len(tok) for tok in doc]
 
     def syllable_count(self, doc: base.DocType) -> base.List[int]:
-        """Represent sentence as the syllable count for each word.
+        """
+        Represent sentence as the syllable count for each word.
 
         :doc (base.DocType): Document to be processed.
         :returns: Processed document.
@@ -32,7 +35,8 @@ class Preprocessors(object):
         return [self._syllable_counter(tok) for tok in doc]
 
     def _syllable_counter(self, tok: str) -> int:
-        """Calculate syllables for each token.
+        """
+        Calculate syllables for each token.
 
         :tok (str): The token to be analyzed.
         :returns count (int): The number of syllables in the word.
@@ -51,11 +55,13 @@ class Preprocessors(object):
                 count += 1
 
     def load_slurs(self):
+        """Load slurs file."""
         self.slurs = None
         # TODO Update this with a slur list
 
     def slur_replacement(self, doc: base.DocType):
-        """Produce documents where slurs are replaced.
+        """
+        Produce documents where slurs are replaced.
 
         :doc (base.List[str]): Document to be processed.
         :returns doc: processed document
@@ -74,16 +80,19 @@ class Preprocessors(object):
                 doc[i] = pos[i]
         return doc
 
-    def word_token(self, doc: base.List[str]):
-        """Produce word tokens.
+    def word_token(self, doc: base.DocType) -> base.DocType:
+        """
+        Produce word tokens.
 
         :doc (base.List[str]): Document to be processed.
         :returns: processed document
         """
         return doc
 
-    def ptb_tokenize(self, document: base.DocType, processes: base.List[str] = None):
-        """Tokenize the document using SpaCy, get PTB tags and clean it as it is processed.
+    def ptb_tokenize(self, document: base.DocType, processes: base.List[str] = None) -> base.DocType:
+        """
+        Tokenize the document using SpaCy, get PTB tags and clean it as it is processed.
+
         :document: Document to be parsed.
         :processes: The cleaning processes to engage in.
         :returns toks: Document that has been passed through spacy's tagger.
@@ -93,6 +102,7 @@ class Preprocessors(object):
         return toks
 
     def read_liwc(self) -> dict:
+        """Read LIWC dict."""
         with open(self.liwc_path, 'r') as liwc_f:
             liwc_dict = {}
             for line in liwc_f:
@@ -101,10 +111,16 @@ class Preprocessors(object):
                     liwc_dict[k] += [v]
                 else:
                     liwc_dict.update({k: [v]})
-
         return liwc_dict
 
-    def _compute_liwc_token(self, tok, kleene_star):
+    def _compute_liwc_token(self, tok: str, kleene_star: base.List[str]) -> str:
+        """
+        Compute LIWC categories for a given token.
+
+        :tok (str): Token to identify list of.
+        :kleen_star: List of kleen_start tokens.
+        :returns (str): Token reprented in terms of LIWC categories.
+        """
         if tok in self.liwc_dict:
             term = self.liwc_dict[tok]
         else:
@@ -133,12 +149,13 @@ class Preprocessors(object):
 
         return term
 
-    def compute_unigram_liwc(self, doc: base.DocType):
-        """Compute LIWC for each document document.
+    def compute_unigram_liwc(self, doc: base.DocType) -> base.DocType:
+        """
+        Compute LIWC for each document document.
+
         :doc (base.DocType): Document to operate on.
         :returns liwc_doc (base.DocType): Document represented as LIWC categories.
         """
-
         if not self.liwc_dict:
             self.liwc_dict = self.read_liwc()
         liwc_doc = []
@@ -166,7 +183,9 @@ class Cleaner(object):
     """A class for methods for cleaning."""
 
     def __init__(self, processes: base.List[str] = None):
-        """Initialise cleaner class.
+        """
+        Initialise cleaner class.
+
         :processes base.List[str]: Cleaning operations to be taken.
         """
         self.processes = processes
@@ -174,7 +193,9 @@ class Cleaner(object):
         self.liwc_dict = None
 
     def clean_document(self, text: base.DocType, processes: base.List[str] = None):
-        """Data cleaning method.
+        """
+        Clean document.
+
         :text (types.DocType): The document to be cleaned.
         :processes (List[str]): The cleaning processes to be undertaken.
         :returns cleaned: Return the cleaned text.
@@ -194,7 +215,9 @@ class Cleaner(object):
         return cleaned
 
     def tokenize(self, document: base.DocType, processes: base.List[str] = None):
-        """Tokenize the document using SpaCy and clean it as it is processed.
+        """
+        Tokenize the document using SpaCy and clean it as it is processed.
+
         :document: Document to be parsed.
         :processes: The cleaning processes to engage in.
         :returns toks: Document that has been passed through spacy's tagger.
@@ -203,7 +226,9 @@ class Cleaner(object):
         return toks
 
     def ptb_tokenize(self, document: base.DocType, processes: base.List[str] = None):
-        """Tokenize the document using SpaCy, get PTB tags and clean it as it is processed.
+        """
+        Tokenize the document using SpaCy, get PTB tags and clean it as it is processed.
+
         :document: Document to be parsed.
         :processes: The cleaning processes to engage in.
         :returns toks: Document that has been passed through spacy's tagger.
@@ -212,7 +237,9 @@ class Cleaner(object):
         return " ".join(toks)
 
     def sentiment_tokenize(self, document: base.DocType, processes: base.List[str] = None):
-        """Tokenize the document using SpaCy, get sentiment and clean it as it is processed.
+        """
+        Tokenize the document using SpaCy, get sentiment and clean it as it is processed.
+
         :document: Document to be parsed.
         :processes: The cleaning processes to engage in.
         :returns toks: Document that has been passed through spacy's tagger.

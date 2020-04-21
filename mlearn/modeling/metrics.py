@@ -3,9 +3,11 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_a
 
 
 class Metrics:
+    """Metrics data object, to contain methods for computing, extracting, and evaluating different metrics."""
 
     def __init__(self, metrics: base.List[str], display_metric: str, early_stop: str):
-        """Intialize metrics computation class.
+        """
+        Intialize metrics computation class.
 
         :metrics (base.List[str]): List of strings containing metric names.
         :display_metric (str): Metric to display in TQDM loops.
@@ -17,8 +19,9 @@ class Metrics:
 
         self.select_metrics(metrics)  # Initialize the metrics dict.
 
-    def select_metrics(self, metrics: base.List[str]) -> base.Dict[str, base.Callable]:
-        """Select metrics for computation based on a list of metric names.
+    def select_metrics(self, metrics: base.List[str]) -> None:
+        """
+        Select metrics for computation based on a list of metric names.
 
         :metrics: List of metric names.
         :return out: Dictionary containing name and methods.
@@ -39,37 +42,48 @@ class Metrics:
                 self.metrics['f1-score'] = f1_score
 
     def compute(self, labels: base.DataType, preds: base.DataType, **kwargs) -> base.Dict[str, float]:
-        """Compute scores for the model.
+        """
+        Compute scores for the model.
+
         :metrics (base.Dict[str, base.Callable]): Metrics dictionary.
         :labels (base.DataType): True labels.
         :preds (base.DataType): Predicted labels.
+        :returns (base.Dict[str, float]): Dict containing computed scores.
         """
         self.scores = self._compute(labels, preds)
         return self.scores
 
     def _compute(self, labels: base.DataType, preds: base.DataType, **kwargs) -> base.Dict[str, float]:
-        """Compute scores for the model without storing them.
+        """
+        Compute scores for the model without storing them.
+
         :metrics (base.Dict[str, base.Callable]): Metrics dictionary.
         :labels (base.DataType): True labels.
         :preds (base.DataType): Predicted labels.
+        :returns (base.Dict[str, float]): Dict containing computed scores.
         """
         scores = {name: float(metric(preds, labels, **kwargs)) for name, metric in self.metrics.items()}
         return scores
 
     def display_metric(self) -> base.Dict[str, float]:
-        """Get display metric dict.
+        """
+        Get display metric dict.
 
-        :returns (base.Dict[str, float]): display metric dict."""
+        :returns (base.Dict[str, float]): display metric dict.
+        """
         return {self.display: self.scores[self.display]}
 
     def early_stopping(self) -> float:
-        """Get score for metric for identifying early stopping.
+        """
+        Get score for metric for identifying early stopping.
 
-        :returns (float): Score for early stopping metric."""
+        :returns (float): Score for early stopping metric.
+        """
         return self.scores[self.early_stop_metric]
 
     def __getitem__(self, metric: str) -> float:
-        """Get individual metric.
+        """
+        Get individual metric.
 
         :metric (str): Metric to get results for.
         :returns (float): Score for desired metric.

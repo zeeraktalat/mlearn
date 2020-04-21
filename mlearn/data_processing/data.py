@@ -6,20 +6,22 @@ import numpy as np
 from tqdm import tqdm
 from math import floor
 from mlearn import base
+from torch.nn.functional import one_hot
 from collections import Counter, defaultdict
 from torch.utils.data import Dataset as IterableDataset
-from torch.nn.functional import one_hot
 
 
 class GeneralDataset(IterableDataset):
     """A general dataset class, which loads a dataset, creates a vocabulary, pads, tensorizes, etc."""
+
     def __init__(self, data_dir: str, ftype: str, fields: base.FieldType, name: str, train: str,
                  dev: str = None, test: str = None, train_labels: str = None, dev_labels: str = None,
                  test_labels: str = None, sep: str = None, tokenizer: base.Union[base.Callable, str] = 'spacy',
                  preprocessor: base.Callable = None, transformations: base.Callable = None,
                  label_processor: base.Callable = None, label_preprocessor: base.Callable = None,
                  length: int = None, lower: bool = True, gpu: bool = True) -> None:
-        """Initialize the variables required for the dataset loading.
+        """
+        Initialize the variables required for the dataset loading.
 
         :data_dir (str): Path of the directory containing the files.
         :ftype (str): ftype of the file ([C|T]SV and JSON accepted)
@@ -83,7 +85,8 @@ class GeneralDataset(IterableDataset):
         self.gpu = gpu
 
     def load(self, dataset: str = 'train', skip_header = True, **kwargs) -> None:
-        """Load the datasebase.
+        """
+        Load the datasebase.
 
         :skip_header (bool, default = True): Skip the header.
         :dataset (str, default = 'train'): Dataset to load. Must exist as key in self.data_files.
@@ -135,7 +138,8 @@ class GeneralDataset(IterableDataset):
     def load_labels(self, dataset: str, label_name: str, label_path: str = None, ftype: str = None, sep: str = None,
                     skip_header: bool = True, label_processor: base.Callable = None,
                     label_ix: base.Union[int, str] = None, **kwargs) -> None:
-        """Load labels from external file.
+        """
+        Load labels from external file.
 
         :path (str): Path to data files.
         :dataset (str): dataset labels belong to.
@@ -168,7 +172,13 @@ class GeneralDataset(IterableDataset):
         for l, doc in zip(labels, data):
             setattr(doc, label_name, l)
 
-    def set_labels(self, data, labels):
+    def set_labels(self, data: base.DataType, labels: base.DataType) -> None:
+        """
+        Set labels for documents.
+
+        :data (base.DataType): Data to add label to.
+        :labels (base.DataType): Labels to add to the labels.
+        """
         for doc, label in zip(data, labels):
             setattr(doc, 'label', label)
 
@@ -179,41 +189,47 @@ class GeneralDataset(IterableDataset):
 
     @train_set.setter
     def train_set(self, train: base.DataType) -> None:
+        """Set or get the training set."""
         self.data = train
 
     @property
     def dev_set(self) -> base.DataType:
         """Set or get the development set."""
-        return self.data
+        return self.dev
 
     @dev_set.setter
     def dev_set(self, dev: base.DataType) -> None:
+        """Set or get the development set."""
         self.dev = dev
 
     @property
     def test_set(self) -> base.DataType:
         """Set or get the testelopment set."""
-        return self.data
+        return self.test
 
     @test_set.setter
-    def train_set(self, test: base.DataType) -> None:
+    def test_set(self, test: base.DataType) -> None:
+        """Set or get the testelopment set."""
         self.test = test
 
     @property
     def modify_length(self):
+        """Get or set the max length of the documents."""
         return self.length
 
     @modify_length.setter
     def modify_length(self, x: int):
+        """Get or set the max length of the documents."""
         self.length = x
 
-    def reader(self, fp, ftype: str = None, sep: str = None):
-        """Instatiate the reader to be used.
+    def reader(self, fp, ftype: str = None, sep: str = None) -> base.Callable:
+        """
+        Instatiate the reader to be used.
 
         :fp: Opened file.
         :ftype (str, default = None): Filetype if loading external data.
         :sep (str, default = None): Separator to be used.
-        :return reader: Iterable objecbase.
+        :return reader: Iterable object.
         """
         ftype = ftype if ftype is not None else self.ftype
         if ftype in ['CSV', 'TSV']:
@@ -224,15 +240,18 @@ class GeneralDataset(IterableDataset):
         return reader
 
     def json_reader(self, fp: str) -> base.Generator:
-        """Create a JSON reading objecbase.
+        """
+        Create a JSON reading object.
 
         :fp (str): Opened file objecbase.
-        :return: """
+        :returns: Loaded lines.
+        """
         for line in fp:
             yield json.loads(line)
 
-    def build_token_vocab(self, data: base.DataType, original: bool = False):
-        """Build vocab over datasebase.
+    def build_token_vocab(self, data: base.DataType, original: bool = False) -> None:
+        """
+        Build vocab over datasebase.
 
         :data (base.DataType): List of datapoints to process.
         :original (bool): Use the original document to generate vocab.
@@ -258,8 +277,9 @@ class GeneralDataset(IterableDataset):
         self.unk_tok = self.stoi['<unk>']
         self.pad_tok = self.stoi['<pad>']
 
-    def extend_vocab(self, data: base.DataType):
-        """Extend the vocabulary.
+    def extend_vocab(self, data: base.DataType) -> None:
+        """
+        Extend the vocabulary.
 
         :data (base.DataType): List of datapoints to process.
         """
@@ -273,7 +293,8 @@ class GeneralDataset(IterableDataset):
         self.stoi = {tok: ix for ix, tok in self.itos.items()}
 
     def limit_vocab(self, limiter: base.Callable, **kwargs) -> None:
-        """Limit vocabulary using a function that returns a new vocabulary.
+        """
+        Limit vocabulary using a function that returns a new vocabulary.
 
         :limiter (base.Callable): Function to limit the vocabulary.
         :kwargs: All arguments needed for the limiter function.
@@ -288,7 +309,8 @@ class GeneralDataset(IterableDataset):
         return len(self.itos)
 
     def vocab_token_lookup(self, tok: str) -> int:
-        """Lookup a single token in the vocabulary.
+        """
+        Lookup a single token in the vocabulary.
 
         :tok (str): Token to look up.
         :return ix (int): Return the index of the vocabulary item.
@@ -300,7 +322,8 @@ class GeneralDataset(IterableDataset):
         return ix
 
     def vocab_ix_lookup(self, ix: int) -> str:
-        """Lookup a single index in the vocabulary.
+        """
+        Lookup a single index in the vocabulary.
 
         :ix (int): Index to look up.
         :return tok (str): Returns token
@@ -308,7 +331,8 @@ class GeneralDataset(IterableDataset):
         return self.itos[ix]
 
     def build_label_vocab(self, labels: base.DataType) -> None:
-        """Build label vocabulary.
+        """
+        Build label vocabulary.
 
         :labels (base.DataType): List of datapoints to process.
         """
@@ -320,17 +344,21 @@ class GeneralDataset(IterableDataset):
             self.ltoi[l] = ix
 
     def label_name_lookup(self, label: str) -> int:
-        """Look up label index from label.
+        """
+        Look up label index from label.
 
         :label (str): Label to process.
-        :returns (int): Return index value of label."""
+        :returns (int): Return index value of label.
+        """
         return self.ltoi[label]
 
     def label_ix_lookup(self, label: int) -> str:
-        """Look up label index from label.
+        """
+        Look up label index from label.
 
         :label (int): Label index to process.
-        :returns (str): Return label."""
+        :returns (str): Return label.
+        """
         return self.itol[label]
 
     def label_count(self) -> int:
@@ -338,7 +366,8 @@ class GeneralDataset(IterableDataset):
         return len(self.itol)
 
     def process_labels(self, data: base.DataType, processor: base.Callable = None):
-        """Take a dataset of labels and process them.
+        """
+        Take a dataset of labels and process them.
 
         :data (base.DataType): Dataset of datapoints to process.
         :processor (base.Callable, optional): Custom processor to use.
@@ -356,21 +385,26 @@ class GeneralDataset(IterableDataset):
             # elif isinstance(label, list):
             #     setattr(doc, 'label', label[0])
 
-    def _process_label(self, label, processor: base.Callable = None) -> int:
-        """Modify label using external function to process labels.
+    def _process_label(self, label: base.List[str], processor: base.Callable = None) -> int:
+        """
+        Modify label using external function to process labels.
 
-        :label: Label to process.
-        :processor: Function to process the label."""
+        :label (base.List[str]): Label to process.
+        :processor (base.Callable): Function to process the label.
+        :returns (int): Label processed as an int.
+        """
         if not isinstance(label, list):
             label = [label]
         processor = processor if processor is not None else self.label_processor
         return [processor(l) for l in label]
 
     def process_doc(self, doc: base.DocType) -> list:
-        """Process a single documenbase.
+        """
+        Process a single document.
 
         :doc (base.DocType): Document to be processed.
-        :return doc (list): Return processed doc in tokenized list formabase."""
+        :returns (list): Return processed doc in tokenized list format.
+        """
         if isinstance(doc, list):
             doc = " ".join(doc)
 
@@ -386,13 +420,14 @@ class GeneralDataset(IterableDataset):
 
         return doc
 
-    def pad(self, data: base.DataType, length: int = None) -> list:
-        """Pad each document in the datasets in the dataset or trim documenbase.
+    def pad(self, data: base.DataType, length: int = None) -> base.List[base.Datapoint]:
+        """
+        Pad each document in the datasets in the dataset or trim documenbase.
 
         :data (base.DataType): List of datapoints to process.
         :length (int, optional): The sequence length to be applied.
-        :return doc: Return list of padded datapoints."""
-
+        :returns (list): Return list of padded datapoints.
+        """
         if not self.length and length is not None:
             self.length = length
         elif not self.length and length is None:
@@ -406,22 +441,25 @@ class GeneralDataset(IterableDataset):
                 padded.append(doc)
         return padded
 
-    def _pad_doc(self, text, length):
-        """Do the actual padding.
+    def _pad_doc(self, text, length) -> base.List[str]:
+        """
+        Do the actual padding.
 
         :text: The extracted text to be padded or trimmed.
         :length: The length of the sequence length to be applied.
-        :return padded: Return padded document as a lisbase.
+        :return (base.List[str]): Return padded document as a list.
         """
         delta = length - len(text)
         padded = text[:delta] if delta < 0 else text + ['<pad>'] * delta
         return padded
 
-    def encode(self, data: base.DataType, onehot: bool = True):
-        """Encode a documenbase.
+    def encode(self, data: base.DataType, onehot: bool = True) -> base.Generator[base.DataType]:
+        """
+        Encode a documenbase.
 
         :data (base.DataType): List of datapoints to be encoded.
         :onehot (bool, default = True): Set to true to onehot encode the documenbase.
+        :returns (base.Generator[base.DataType]): Return documents encoded as tensors.
         """
         names = [getattr(f, 'name') for f in self.train_fields]
         encoding_func = self.onehot_encode_doc if onehot else self.encode_doc
@@ -435,20 +473,24 @@ class GeneralDataset(IterableDataset):
             yield encoding_func(text)
 
     def onehot_encode_doc(self, text: base.DataType, doc: base.Datapoint) -> base.DataType:
-        """Onehot encode a single document.
+        """
+        Onehot encode a single document.
 
         :text (base.DataType): The document represented as a tokens.
         :doc (base.Datapoint): The datapoint to encode.
+        :returns (base.DataType): Return onehot encoded tensor.
         """
         encoded = one_hot(self.encode_doc(text, doc), len(self.stoi)).type(torch.long).unsqueeze(0)
 
         return encoded
 
     def encode_doc(self, text: base.DataType, doc: base.Datapoint) -> base.DataType:
-        """Encode documents using just the index of the tokens that are present in the document.
+        """
+        Encode documents using just the index of the tokens that are present in the document.
 
         :text (base.DataType): The document represented as a tokens.
         :doc (base.Datapoint): The datapoint to encode.
+        :returns (base.DataType): Return index encoded
         """
         if hasattr(doc, 'encoded'):
             encoded = doc.encoded
@@ -460,13 +502,14 @@ class GeneralDataset(IterableDataset):
 
     def split(self, data: base.DataType = None, splits: base.List[float] = [0.8, 0.1, 0.1],
               store: bool = True, stratify: str = None, **kwargs) -> base.Tuple[base.DataType]:
-        """Split the datasebase.
+        """
+        Split the datasebase.
 
         :data (base.DataType, default = None): Dataset to split. If None, use self.data.
         :splits (int | base.List[int]], default = [0.8, 0.1, 0.1]): Size of each split.
         :store (bool, default = True): Store the splitted data in the object.
         :stratify (str): The field to stratify the data along.
-        :return data: Return splitted data.
+        :return (base.Tuple[base.DataType]): Return splitted data.
         """
         data = self.data if data is None else data
         split_sizes = list(map(lambda x: floor(len(data) * x), splits))  # Get the actual sizes of the splits.
@@ -486,12 +529,13 @@ class GeneralDataset(IterableDataset):
 
     def _stratify_split(self, data: base.DataType, strata_field: str, split_sizes: base.List[int], **kwargs
                         ) -> base.Tuple[list, base.Union[list, None], list]:
-        """Stratify and split the data.
+        """
+        Stratify and split the data.
 
         :data (base.DataType): dataset to split.
         :split_sizes (int | base.List[int]): The number of documents in each split.
         :strata_field (str): Name of label field.
-        :returns train, dev, test (base.Tuple[list, base.Union[list, None], list]): Return stratified splits.
+        :returns (base.Tuple[list, base.Union[list, None], list]): Return stratified splits.
         """
         train_size = split_sizes[0]
 
@@ -539,14 +583,15 @@ class GeneralDataset(IterableDataset):
 
     def _stratify_helper(self, data: base.DataType, labels: tuple, sample_size: int, probs: tuple,
                          idx_map: dict) -> base.DataType:
-        """Perform stratified allocation of documents.
+        """
+        Perform stratified allocation of documents.
 
         :data (base.DataType): Data to be split.
         :labels (tuple): The labels to choose from.
         :sample_size (int): Number of documents in the split.
         :probs (tuple): Probability for each label.
         :idx_map (dict): label to index (of documents with said label) map.
-        :returns sampled (base.DataType): Returns the stratified split.
+        :returns (base.DataType): Returns the stratified sample.
         """
         # Get counts for the label distribution
         label_count = Counter(np.random.choice(labels, sample_size, replace = True, p = probs))
@@ -560,11 +605,12 @@ class GeneralDataset(IterableDataset):
 
     def _split(self, data: base.DataType, splits: base.Union[int, base.List[int]], **kwargs
                ) -> base.Tuple[list, base.Union[list, None], list]:
-        """Split the dataset without stratification.
+        """
+        Split the dataset without stratification.
 
         :data (base.DataType): dataset to split.
         :splits (base.List[int]): The sizes of each split.
-        :returns out (base.Tuple[list, base.Union[list, None], list]): Tuple containing filled data splits.
+        :returns (base.Tuple[list, base.Union[list, None], list]): Tuple containing data splits.
         """
         indices = list(range(len(data)))
         num_splits = len(splits)
@@ -586,32 +632,46 @@ class GeneralDataset(IterableDataset):
         return out
 
     def _split_helper(self, data: base.DataType, size: int, indices: base.List[int]) -> base.Tuple[list, list]:
-        """Allocate samples into the dataset.
+        """
+        Allocate samples into the dataset.
 
         :data (base.DataType): Dataset to split.
         :size: (int): Size of the sample.
         :indices (base.List[int]): Indices for the entire dataset.
-        :returns sampled, indices (base.Tuple[list, list]): Return the sampled data and unused indices.
+        :returns (base.Tuple[list, list]): Return the sampled data and unused indices.
         """
         sample = np.random.choice(indices, size, replace = False)
         sampled = [data[ix] for ix in sample]
         indices = [ix for ix in indices if ix not in sample]
         return sampled, indices
 
-    def __getitem__(self, i):
-        return self.data[i]
+    def __getitem__(self, idx: int) -> base.Datapoint:
+        """
+        Get document in data given an index.
+
+        :idx (int): Index of datapoint to extract.
+        :returns (base.Datapoint): Datapoint in position idx.
+        """
+        return self.data[idx]
 
     def __len__(self):
+        """Get the number of batches."""
         try:
             return len(self.data)
         except TypeError:
             return 2**32
 
     def __iter__(self):
+        """Iterate over datapoints."""
         for x in self.data:
             yield x
 
     def __getattr__(self, attr):
+        """
+        Get attribute from the batch.
+
+        :attr (str): Attribute to extract from the data.
+        """
         if attr in self.fields_dict:
             for x in self.data:
                 yield getattr(x, attr)

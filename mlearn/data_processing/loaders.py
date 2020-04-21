@@ -2,11 +2,12 @@ from mlearn import base
 from mlearn.data_processing.data import GeneralDataset
 
 
-def _loader(args: dict):
-    """Load the dataset.
+def _loader(args: dict) -> GeneralDataset:
+    """
+    Load the dataset.
 
     :args (dict): Dict containing arguments to load dataaset.
-    :returns: Loaded and splitted dataset.
+    :returns (GeneralDataset): Loaded and splitted dataset.
     """
     dataset = GeneralDataset(**args)
     dataset.load('train')
@@ -31,10 +32,11 @@ def _loader(args: dict):
 
 
 def davidson_to_binary(label: str) -> str:
-    """Convert Davidson labels to binary labels.
+    """
+    Convert Davidson labels to binary labels.
 
     :label: Raw label as string
-    :returns: label as int.
+    :returns (str): label as str.
     """
     if label in ['0', '1']:
         return 'abuse'
@@ -43,8 +45,9 @@ def davidson_to_binary(label: str) -> str:
 
 
 def davidson(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-             transformer: base.Callable = None, label_processor: base.Callable = None):
-    """Function to load the davidson dataset.
+             transformer: base.Callable = None, label_processor: base.Callable = None) -> GeneralDataset:
+    """
+    Load the davidson dataset.
 
     :cleaners (base.Callable): Initialized cleaner.
     :data_path (str): Path to data files.
@@ -52,7 +55,7 @@ def davidson(cleaners: base.Callable, data_path: str, length: int = None, prepro
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :transformer (base.Callable, default = None): Document processing, if additional processing is required.
     :label_preprocessor (base.Callable, default = None): Label preprocessing, allowing for modifying the labelset.
-    :returns: Loaded datasets.
+    :returns (GeneralDataset): Loaded datasets.
     """
     args = {'data_dir': data_path,
             'ftype': 'csv',
@@ -78,10 +81,11 @@ def davidson(cleaners: base.Callable, data_path: str, length: int = None, prepro
 
 
 def waseem_to_binary(label: str) -> str:
-    """Turn Waseem labels into binary labels.
+    """
+    Turn Waseem labels into binary labels.
 
     :label: String as label.
-    :returns: label
+    :returns (str): label
     """
     if label.lower() in ['sexism', 'racism', 'both']:
         return 'abuse'
@@ -90,16 +94,17 @@ def waseem_to_binary(label: str) -> str:
 
 
 def waseem(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-           transformer: base.Callable = None, label_processor: base.Callable = None):
-    """Load the Waseem dataset (expert annotations).
+           transformer: base.Callable = None, label_processor: base.Callable = None) -> GeneralDataset:
+    """
+    Load the Waseem dataset (expert annotations).
 
     :cleaners (base.Callable): Initialized cleaner.
     :data_path (str): Path to data directory.
     :length (int), default = None): Maximum length of sequence.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :transformer (base.Callable, default = None): Additional document processing, if required.
-    :label_processor (base.callable, default = None): Label preprocessing, allowing for modifying labelset.
-    :returns: Loaded datasets.
+    :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :returns (GeneralDataset): Loaded datasets.
     """
     args = {'data_dir': data_path,
             'ftype': 'json',
@@ -124,15 +129,16 @@ def waseem(cleaners: base.Callable, data_path: str, length: int = None, preproce
 
 def waseem_hovy(cleaners: base.Callable, data_path: str, train: str, length: int = None,
                 preprocessor: base.Callable = None, transformer: base.Callable = None,
-                label_processor: base.Callable = None):
-    """Load the Waseem-Hovy dataset.
+                label_processor: base.Callable = None) -> GeneralDataset:
+    """
+    Load the Waseem-Hovy dataset.
 
     :cleaners (base.Callable): Initialized cleaner.
     :data_path (str): Path to data directory.
     :length (int), default = None): Maximum length of sequence.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :transformer (base.Callable, default = None): Additional document processing, if required.
-    :returns: Loaded datasets.
+    :returns (GeneralDataset): Loaded datasets.
     """
     args = {'data_dir': data_path,
             'ftype': 'json',
@@ -155,10 +161,11 @@ def waseem_hovy(cleaners: base.Callable, data_path: str, train: str, length: int
     return _loader(args)
 
 
-def binarize_garcia(label: str):
-    """Streamline Garcia labels with the other datasets.
+def binarize_garcia(label: str) -> str:
+    """
+    Streamline Garcia labels with the other datasets.
 
-    :returns: streamlined labels.
+    :returns (str): streamlined labels.
     """
     if label == 'hate':
         return 'abuse'
@@ -168,16 +175,17 @@ def binarize_garcia(label: str):
 
 def garcia(cleaners: base.Callable, data_path: str, length: int = None,
            preprocessor: base.Callable = None, transformer: base.Callable = None,
-           label_processor: base.Callable = None):
-    """Load the Garcia et al. dataset.
+           label_processor: base.Callable = None) -> GeneralDataset:
+    """
+    Load the Garcia et al. dataset.
 
     :cleaners (base.Callable): Initialized cleaner.
     :data_path (str): Path to data directory.
     :length (int), default = None): Maximum length of sequence.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :transformer (base.Callable, default = None): Additional document processing, if required.
-    :label_processor (base.callable, default = None): Label preprocessing, allowing for modifying labelset.
-    :returns: Loaded datasets.
+    :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :returns (GeneralDataset): Loaded datasets.
     """
     args = {'data_dir': data_path,
             'ftype': 'tsv',
@@ -205,16 +213,17 @@ def garcia(cleaners: base.Callable, data_path: str, length: int = None,
 
 
 def wulczyn(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-            transformer: base.Callable = None, label_processor: base.Callable = None):
-    """Load the Wulczyn et al. dataset.
+            transformer: base.Callable = None, label_processor: base.Callable = None) -> GeneralDataset:
+    """
+    Load the Wulczyn et al. dataset.
 
     :cleaners (base.Callable): Initialized cleaner.
     :data_path (str): Path to data directory.
     :length (int), default = None): Maximum length of sequence.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :transformer (base.Callable, default = None): Additional document processing, if required.
-    :label_processor (base.callable, default = None): Label preprocessing, allowing for modifying labelset.
-    :returns: Loaded datasets.
+    :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :returns (GeneralDataset): Loaded datasets.
     """
     # Labelfield needs to be set to nothing, then fields need to be modified
     args = {'data_dir': data_path,
@@ -242,15 +251,16 @@ def wulczyn(cleaners: base.Callable, data_path: str, length: int = None, preproc
 
 
 def hoover(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-           transformer: base.Callable = None, label_processor: base.Callable = None):
-    """Load the Hoover et al. dataset.
+           transformer: base.Callable = None, label_processor: base.Callable = None) -> GeneralDataset:
+    """
+    Load the Hoover et al. dataset.
 
     :cleaners (base.Callable): Initialized cleaner.
     :data_path (str): Path to data directory.
     :length (int), default = None): Maximum length of sequence.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :transformer (base.Callable, default = None): Additional document processing, if required.
-    :label_processor (base.callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
     :returns: Loaded datasets.
     """
     args = {'data_dir': data_path,
@@ -283,7 +293,7 @@ def vidgen(cleaners: base.Callable, data_path: str, length: int = None, preproce
     :length (int), default = None): Maximum length of sequence.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :transformer (base.Callable, default = None): Additional document processing, if required.
-    :label_processor (base.callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
     :returns: Loaded datasets.
     """
     args = {'data_dir': data_path,

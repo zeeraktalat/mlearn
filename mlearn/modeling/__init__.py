@@ -1,1 +1,1 @@
-"""Just an empty init file"""
+"""Just an empty init file."""

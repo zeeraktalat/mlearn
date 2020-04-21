@@ -1,7 +1,14 @@
+from mlearn import base
 from collections import Counter
 
 
-def majority_voted(annotations):
+def majority_voted(annotations: base.List[str]) -> str:
+    """
+    Get majority voted label.
+
+    :annotations (base.List[str]): List of annotations.
+    :returns (str): The majority voted label.
+    """
     cleaned = []
     candidates = []
     for a in annotations:
@@ -11,7 +18,13 @@ def majority_voted(annotations):
     return c.most_common(1)[0][0]
 
 
-def clean_mftc(read_path, write_path):
+def clean_mftc(read_path: str, write_path: str) -> None:
+    """
+    Read and prepare MFTC data for processing.
+
+    :read_path (str): Path to input file.
+    :write_path (str): Path to output file.
+    """
     fin = open(read_path, 'r', encoding = 'utf-8')
     fout = open(write_path, 'w', encoding = 'utf-8')
     tweet_data = []

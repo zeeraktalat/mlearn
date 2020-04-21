@@ -5,10 +5,13 @@ import torch.nn.functional as F
 
 
 class LSTMClassifier(nn.Module):
+    """Onehot LSTM classifier."""
 
     def __init__(self, input_dim: int, embedding_dim: int, hidden_dim: int, output_dim: int, num_layers: int,
-                 batch_first: bool = True, activation: str = 'tanh', **kwargs):
-        """Initialise the LSTM.
+                 batch_first: bool = True, activation: str = 'tanh', **kwargs) -> None:
+        """
+        Initialise the LSTM.
+
         :input_dim (int): The dimensionality of the input to the embedding generation.
         :hidden_dim (int): The dimensionality of the hidden dimension.
         :output_dim (int): Number of classes for to predict on.
@@ -28,10 +31,12 @@ class LSTMClassifier(nn.Module):
         self.activation = nn.ReLU() if activation == 'relu' else nn.Tanh()
         self.softmax = nn.LogSoftmax(dim = 1)
 
-    def forward(self, sequence):
-        """The forward step in the classifier.
+    def forward(self, sequence: base.DataType) -> base.DataType:
+        """
+        Forward step in the classifier.
+
         :sequence: The sequence to pass through the network.
-        :return scores: The "probability" distribution for the classes.
+        :return (base.DataType): The "probability" distribution for the classes.
         """
         if not self.batch_first:
             sequence = sequence.transpose(0, 1)
@@ -46,10 +51,13 @@ class LSTMClassifier(nn.Module):
 
 
 class MLPClassifier(nn.Module):
+    """Onehot MLP Classifier."""
 
     def __init__(self, input_dim: int, hidden_dim: int, output_dim: int, dropout: float = 0.2, batch_first: bool = True,
-                 activation: str = 'tanh', **kwargs):
-        """Initialise the model.
+                 activation: str = 'tanh', **kwargs) -> None:
+        """
+        Initialise the model.
+
         :input_dim: The dimension of the input to the model.
         :hidden_dim: The dimension of the hidden layer.
         :output_dim: The dimension of the output layer (i.e. the number of classes).
@@ -69,10 +77,12 @@ class MLPClassifier(nn.Module):
         self.activation = nn.ReLU() if activation == 'relu' else nn.Tanh()
         self.softmax = nn.LogSoftmax(dim = 1)
 
-    def forward(self, sequence):
-        """The forward step in the classifier.
+    def forward(self, sequence: base.DataType):
+        """
+        Forward step in the classifier.
+
         :sequence: The sequence to pass through the network.
-        :return scores: The "probability" distribution for the classes.
+        :return (base.DataType): The "probability" distribution for the classes.
         """
         if self.batch_first:
             sequence = sequence.transpose(0, 1)
@@ -89,10 +99,13 @@ class MLPClassifier(nn.Module):
 
 
 class CNNClassifier(nn.Module):
+    """CNN Classifier."""
 
     def __init__(self, window_sizes: base.List[int], num_filters: int, max_feats: int, hidden_dim: int, output_dim: int,
-                 batch_first: bool = True, **kwargs):
-        """Initialise the model.
+                 batch_first: bool = True, **kwargs) -> None:
+        """
+        Initialise the model.
+
         :window_sizes: The size of the filters (e.g. 1: unigram, 2: bigram, etc.)
         :no_filters: The number of filters to apply.
         :max_feats: The maximum length of the sequence to consider.
@@ -109,12 +122,13 @@ class CNNClassifier(nn.Module):
         self.linear = nn.Linear(len(window_sizes) * num_filters, output_dim)
         self.softmax = nn.LogSoftmax(dim = 1)
 
-    def forward(self, sequence):
-        """The forward step of the model.
-        :sequence: The sequence to be predicted on.
-        :return scores: The scores computed by the model.
+    def forward(self, sequence) -> base.DataType:
         """
+        Forward step of the model.
 
+        :sequence: The sequence to be predicted on.
+        :return (base.DataType): The scores computed by the model.
+        """
         # CNNs expect batch first so let's try that
         if self.batch_first:
             sequence = sequence.transpose(0, 1)
@@ -130,10 +144,13 @@ class CNNClassifier(nn.Module):
 
 
 class RNNClassifier(nn.Module):
+    """Onehot RNN Classifier."""
 
     def __init__(self, input_dim: int, hidden_dim: int, output_dim: int, batch_first: bool = True,
-                 activation: str = 'tanh', **kwargs):
-        """Initialise the RNN classifier.
+                 activation: str = 'tanh', **kwargs) -> None:
+        """
+        Initialise the RNN classifier.
+
         :input_dim: The dimension of the input to the network.
         :hidden_dim: The dimension of the hidden representation.
         :output_dim: The dimension of the output representation.
@@ -156,11 +173,13 @@ class RNNClassifier(nn.Module):
         self.activation = nn.ReLU() if activation == 'relu' else nn.Tanh()
         self.softmax = nn.LogSoftmax(dim=1)
 
-    def forward(self, sequence):
-        """The forward step in the network.
+    def forward(self, sequence) -> base.DataType:
+        """
+        Forward step in the network.
+
         :inputs: The inputs to pass through network.
         :hidden: The hidden representation at the previous timestep.
-        :return softmax, hidden: Return the "probability" distribution and the new hidden representation.
+        :return (base.DataType): Return the "probability" distribution and the new hidden representation.
         """
         if not self.batch_first:
             sequence = sequence.transpose(0, 1)
@@ -175,11 +194,14 @@ class RNNClassifier(nn.Module):
 
 
 class MTLLSTMClassifier(nn.Module):
+    """Multitask LSTM Classifier."""
 
     def __init__(self, input_dims: base.List[int], shared_dim: int, hidden_dims: base.List[int],
                  output_dims: base.List[int], no_layers: int = 1, dropout: float = 0.2, batch_first = True,
-                 activation: str = 'tanh', **kwargs):
-        """Initialise the LSTM.
+                 activation: str = 'tanh', **kwargs) -> None:
+        """
+        Initialise the Multitask LSTM.
+
         :param input_dims (base.List[int]): The dimensionality of the input.
         :param shared_dim (int): The dimensionality of the shared layers.
         :param hidden_dim (base.List[int]): The dimensionality of the hidden dimensions for each task.
@@ -247,11 +269,13 @@ class MTLLSTMClassifier(nn.Module):
         print(self)
         print(list(self.all_parameters))
 
-    def forward(self, sequence, task_id):
-        """The forward step in the classifier.
+    def forward(self, sequence, task_id) -> base.DataType:
+        """
+        Forward step in the classifier.
+
         :param sequence: The sequence to pass through the network.
         :param task_id: The task on which to perform forward pass.
-        :return scores: The "probability" distribution for the classes.
+        :return (base.DataType): The "probability" distribution for the classes.
         """
         res = self.dropout(self.activation(self.inputs[task_id](sequence.float())))
 

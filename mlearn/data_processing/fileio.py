@@ -6,16 +6,18 @@ from mlearn.data_processing.data import data
 
 
 def read_json(fh: str, enc, doc_key: str, label_key: str, **kwargs) -> base.Tuple[str, str, ...]:
-    """Read JSON file containing entire document and label.
+    """
+    Read JSON file containing entire document and label.
+
     To access keys in nested dictionaries, use the syntax <outer_key>.<inner_key>. Max depth 4.
+
     :param fh: Filename
     :param enc: Encoding of the file.
     :param doc_key: Key to access document.
     :param label_key: Key to access label.
     :param kwargs: Other keys to access.
-    :return data_tup: Tuple containing document, label, and other indexed items.
+    :return (tuple): Document, label, and other indexed items.
     """
-
     for line in open('../../data/' + fh, 'r', encoding = enc):
         try:
             dict_in = json.loads(line)
@@ -51,7 +53,8 @@ def read_json(fh: str, enc, doc_key: str, label_key: str, **kwargs) -> base.Tupl
 def write_predictions(data: base.DataType, dataset: data.GeneralDataset, train_field: str, label_field: str,
                       model_info: list, data_name: str, main_name: str, pred_fn: base.Callable,
                       **kwargs) -> None:
-    """Write document out
+    """
+    Write documents and their predictions along with info about model making the prediction.
 
     :data: The dataset objects that were predicted on.
     :train_field (str): Attribute that is predicted on.
@@ -67,7 +70,7 @@ def write_predictions(data: base.DataType, dataset: data.GeneralDataset, train_f
                    dataset.label_ix_lookup(getattr(doc, label_field)), dataset.label_ix_lookup(doc.pred),
                    data_name, main_name] + model_info
             pred_fn.writerow(out)
-        except Exception as e:
+        except Exception:
             breakpoint()
 
     pred_fn.writerow(len(out) * ['---'])
@@ -76,7 +79,8 @@ def write_predictions(data: base.DataType, dataset: data.GeneralDataset, train_f
 def write_results(writer: base.Callable, train_scores: dict, train_loss: list, dev_scores: dict, dev_loss: list,
                   epochs: int, model_info: list, metrics: list, exp_len: int, data_name: str, main_name: str,
                   **kwargs) -> None:
-    """Write results to file.
+    """
+    Write results to file.
 
     :writer (base.Callable): Path to file.
     :train_scores (dict): Train scores.

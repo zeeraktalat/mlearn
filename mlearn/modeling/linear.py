@@ -8,11 +8,12 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, Ha
 
 
 def select_vectorizer(vectorizer: str) -> VectType:
-    """Identify vectorizer used and return it to be used.
+    """
+    Identify vectorizer used and return it to be used.
+
     :param vectorizer: Vectorizer to be used.
     :return v: Vectorizer function.
     """
-
     if not any(vec in vectorizer for vec in ['dict', 'count', 'hash', 'tfidf']):
         print("You need to select from the options: dict, count, hash, tfidf. Defaulting to Dict.")
         return DictVectorizer
@@ -34,7 +35,9 @@ def train(model: ModelType, dataX: NPData, dataY: NPData,
           featurizer: Callable,
           vectorizer: str,
           devX: NPData = [], devY: NPData = []) -> Tuple[ModelType, VectType, VectType]:
-    """Train a model and return the fitted model, vectorizer, and labelencoder.
+    """
+    Train a model and return the fitted model, vectorizer, and labelencoder.
+
     :param model: Uninitialised model
     :param dataX: Training data.
     :param dataY: Training labels.
@@ -67,7 +70,9 @@ def train(model: ModelType, dataX: NPData, dataY: NPData,
 def evaluate_model(model: ModelType, label_encoder: VectType, vect: VectType,
                    metrics: List[str], featurizer: Callable, result_fh: str,
                    dataX: NPData, dataY: NPData, params: dict = {}) -> dict:
-    """Evaluate model on the data.
+    """
+    Evaluate model on the data.
+
     :param model: Fitted model.
     :param label_encoder: Fitted labelencoder.
     :param vect: Fitted vectorizer.
@@ -79,7 +84,6 @@ def evaluate_model(model: ModelType, label_encoder: VectType, vect: VectType,
     :param params: Parameters for the model.
     :return performance: Dictionary containing evaluations.
     """
-
     performance = OrderedDict()
 
     # Get metric functions and generate features

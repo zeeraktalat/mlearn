@@ -3,13 +3,15 @@ from tqdm import tqdm
 from mlearn import base
 
 
-def predict_torch_model(model: base.modelType, iterator: base.DataType, loss_f: base.Callable,
-                        **kwargs) -> base.Tuple[list, list]:
-    """Predict using trained model.
+def predict_torch_model(model: base.ModelType, iterator: base.DataType, loss_f: base.Callable,
+                        **kwargs) -> base.Tuple[list, list, float]:
+    """
+    Predict using trained model.
+
     :model (base.ModelType): Trained model to be trained.
     :iterator (base.DataType): Batched dataset to predict on.
     :loss_f (base.Callable): Loss function.
-    :returns (): eval_loss, None, scores, None
+    :returns (base.Tuple[list, list, float]): Predictions, true labels, mean loss.
     """
     predicted, labels = [], []
     loss = []
@@ -31,7 +33,8 @@ def predict_torch_model(model: base.modelType, iterator: base.DataType, loss_f: 
 
 def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_f: base.Callable,
                      metrics: object, mtl: bool = False, task_id: int = None, **kwargs):
-    """Evalute pytorch model.
+    """
+    Evalute pytorch model.
 
     :model (base.ModelType): Trained model to be trained.
     :iterator (base.DataType): Batched dataset to predict on.

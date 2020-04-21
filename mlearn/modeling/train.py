@@ -10,7 +10,8 @@ from mlearn.data_processing.fileio import write_predictions, write_results
 
 
 def process_and_batch(dataset, data, batch_size: int, onehot: bool = True):
-    """Process a dataset and data.
+    """
+    Process a dataset and data.
 
     :dataset: A dataset object.
     :data: Data to be processed.
@@ -28,7 +29,8 @@ def process_and_batch(dataset, data, batch_size: int, onehot: bool = True):
 
 
 def run_singletask_model(library: str, train: bool, writer: base.Callable, model_info: list, head_len: int, **kwargs):
-    """Train or evaluate model.
+    """
+    Train or evaluate model.
 
     :library (str): Library of the model.
     :train (bool): Whether it's a train or test run.
@@ -51,7 +53,8 @@ def run_singletask_model(library: str, train: bool, writer: base.Callable, model
 
 def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base.Callable,
                       iterator: base.DataType, clip: float = None, gpu: bool = True, **kwargs):
-    """Basic training procedure for single task pytorch models.
+    """
+    Training procedure for single task pytorch models.
 
     :model (base.ModelType): Untrained model to be trained.
     :optimizer (bas.Callable): Optimizer function.
@@ -95,7 +98,8 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
                            loss_func: base.Callable, optimizer: base.Callable, metrics: object,
                            dev_iterator: base.DataType = None, clip: float = None, patience: int = 10,
                            shuffle: bool = True, gpu: bool = True, **kwargs) -> base.Union[list, int, dict, dict]:
-    """Train a single task pytorch model.
+    """
+    Train a single task pytorch model.
 
     :model (base.ModelType): Untrained model to be trained.
     :save_path (str): Path to save models to.
@@ -158,7 +162,8 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
 def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: base.DataType, opt: base.Callable,
                metrics: object, batchers: base.List[base.Batch], batch_count: int, dataset_weights: base.List[float],
                clip: float = None, **kwargs):
-    """Train one epoch of an MTL training loop.
+    """
+    Train one epoch of an MTL training loop.
 
     :model (base.ModelType): Model in the process of being trained.
     :loss_func (base.Callable): The loss function being used.
@@ -204,7 +209,8 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
                     epochs: int = 2, clip: float = None, patience: int = 10, dev: base.DataType = None,
                     dev_task_id: int = 0, batches_per_epoch: int = None, shuffle_data: bool = True,
                     dataset_weights: base.DataType = None, loss_weights: base.DataType = None, **kwargs) -> None:
-    """Train a multi-task learning model.
+    """
+    Train a multi-task learning model.
 
     :model (base.ModelType): Untrained model.
     :training_datasets (base.List[base.DataType]): List of tuples containing dense matrices.
@@ -270,7 +276,8 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
 
 
 def train_sklearn_model(arg1):
-    """TODO: Docstring for train_sklearn_model.
+    """
+    TODO: Docstring for train_sklearn_model.
 
     :arg1: TODO
     :returns: TODO
@@ -282,7 +289,8 @@ def train_sklearn_model(arg1):
 
 
 def evaluate_sklearn_model(arg1):
-    """TODO: Docstring for evaluate_sklearn_model.
+    """
+    TODO: Docstring for evaluate_sklearn_model.
 
     :arg1: TODO
     :returns: TODO

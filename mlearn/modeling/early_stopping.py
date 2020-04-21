@@ -3,8 +3,11 @@ import torch
 
 
 class EarlyStopping:
+    """Early stopping module."""
+
     def __init__(self, path_prefix: str, patience: int = 8, low_is_good: bool = False, verbose: bool = False) -> None:
-        """Early stopping module to identify when a training loop can exit because a local optima is found.
+        """
+        Early stopping module to identify when a training loop can exit because a local optima is found.
 
         :path_prefix (str): Path to store file.
         :patience (int, default = 8): The number of epochs to allow the model to get out of local optima.
@@ -21,8 +24,9 @@ class EarlyStopping:
         self.path_prefix = path_prefix
         self.verbose = verbose
 
-    def __call__(self, model: base.ModelType, score: float) -> None:
-        """Perform check to see if training can be stoppped.
+    def __call__(self, model: base.ModelType, score: float) -> bool:
+        """
+        Perform check to see if training can be stoppped.
 
         :model (base.ModelType): The model being trained.
         :score (float): The score achieved in the current epoch.
@@ -47,7 +51,8 @@ class EarlyStopping:
         return False
 
     def new_best(self, score: float) -> bool:
-        """Identiy if the current score is better than previous scores.
+        """
+        Identiy if the current score is better than previous scores.
 
         :score (float): Score for the current epoch.
         :returns (bool): True if the current score is better than the previous best.
@@ -58,7 +63,8 @@ class EarlyStopping:
             return score >= self.best_score
 
     def set_best_state(self, model: base.ModelType):
-        """Load the best model state prior to early stopping being activated.
+        """
+        Load the best model state prior to early stopping being activated.
 
         :model (base.ModelType): The model in its current state.
         """
