@@ -284,9 +284,29 @@ def hoover(cleaners: base.Callable, data_path: str, length: int = None, preproce
     return _loader(args)
 
 
-def vidgen(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-           transformer: base.Callable = None, label_processor: base.Callable = None):
-    """Load the Vidgen et al. dataset.
+def guest_to_multiclass(label: str) -> str:
+    """
+    Map Gues labels to multiclass.
+
+    :label (str): Raw label.
+    :return (str): Mapped label.
+    """
+    if label == 'entity_directed_hostility':
+        return label
+    elif label == 'counter_speech':
+        return 'discussion_of_eastasian_prejudice'
+    elif label == 'discussion_of_eastasian_prejudice':
+        return label
+    elif label == 'entity_directed_criticism':
+        return label
+    else:
+        return 'negative'
+
+
+def guest(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
+          transformer: base.Callable = None, label_processor: base.Callable = None) -> GeneralDataset:
+    """
+    Load the Vidgen et al. dataset.
 
     :cleaners (base.Callable): Initialized cleaner.
     :data_path (str): Path to data directory.
@@ -299,17 +319,17 @@ def vidgen(cleaners: base.Callable, data_path: str, length: int = None, preproce
     args = {'data_dir': data_path,
             'ftype': 'tsv',
             'fields': None,
-            'train': 'vidgen.tsv', 'dev': None, 'test': None,
-            'sep': '\t',
+            'train': 'guest.csv', 'dev': None, 'test': None,
+            'sep': ',',
             'tokenizer': cleaners.tokenize,
             'preprocessor': preprocessor,
             'transformations': transformer,
             'length': length,
             'label_preprocessor': label_processor,
-            'name': 'Hoover et al.'}
+            'name': 'Guest et al.'}
 
-    text = base.Field('text', train = True, label = False, cname = 'text', ix = 1)
-    label = base.Field('label', train = False, label = True, cname = 'label', ix = 18)
+    text = base.Field('text', train = True, label = False, cname = 'text', ix = 3)
+    label = base.Field('label', train = False, label = True, cname = 'label', ix = 3)
     ignore = base.Field('ignore', train = False, label = False, cname = 'ignore', ignore = True)
 
     args['fields'] = [ignore, text] + 16 * [ignore] + [label, ignore]
