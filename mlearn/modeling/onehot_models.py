@@ -4,11 +4,11 @@ from mlearn import base
 import torch.nn.functional as F
 
 
-class LSTMClassifier(nn.Module):
+class OnehotLSTMClassifier(nn.Module):
     """Onehot LSTM classifier."""
 
     def __init__(self, input_dim: int, embedding_dim: int, hidden_dim: int, output_dim: int, num_layers: int,
-                 batch_first: bool = True, activation: str = 'tanh', **kwargs) -> None:
+                 batch_first: bool = True, **kwargs) -> None:
         """
         Initialise the LSTM.
 
@@ -17,9 +17,8 @@ class LSTMClassifier(nn.Module):
         :output_dim (int): Number of classes for to predict on.
         :num_layers (int): The number of recurrent layers in the LSTM (1-3).
         :batch_first (bool, default = True): Batch the first dimension?
-        :activation (str, default = 'tanh'): String name of activation function to be used.
         """
-        super(LSTMClassifier, self).__init__()
+        super(OnehotLSTMClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'lstm'
 
@@ -28,7 +27,6 @@ class LSTMClassifier(nn.Module):
         self.htoo = nn.Linear(hidden_dim, output_dim)
 
         # Set the method for producing "probability" distribution.
-        self.activation = nn.ReLU() if activation == 'relu' else nn.Tanh()
         self.softmax = nn.LogSoftmax(dim = 1)
 
     def forward(self, sequence: base.DataType) -> base.DataType:
@@ -42,15 +40,15 @@ class LSTMClassifier(nn.Module):
             sequence = sequence.transpose(0, 1)
 
         sequence = sequence.float()
-        out = self.activation(self.itoh(sequence))  # Get embedding for the sequence
+        out = self.itoh(sequence)  # Get embedding for the sequence
         out, last_layer = self.lstm(out)  # Get layers of the LSTM
-        out = self.htoo(self.activation(last_layer[0]))
+        out = self.htoo(last_layer[0])
         prob_dist = self.softmax(out)  # The probability distribution
 
         return prob_dist.squeeze(0)
 
 
-class MLPClassifier(nn.Module):
+class OnehotMLPClassifier(nn.Module):
     """Onehot MLP Classifier."""
 
     def __init__(self, input_dim: int, hidden_dim: int, output_dim: int, dropout: float = 0.2, batch_first: bool = True,
@@ -64,7 +62,7 @@ class MLPClassifier(nn.Module):
         :batch_first (bool): Batch the first dimension?
         :activation (str, default = 'tanh'): String name of activation function to be used.
         """
-        super(MLPClassifier, self).__init__()
+        super(OnehotMLPClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'mlp'
 
@@ -98,7 +96,7 @@ class MLPClassifier(nn.Module):
         return prob_dist
 
 
-class CNNClassifier(nn.Module):
+class OnehotCNNClassifier(nn.Module):
     """CNN Classifier."""
 
     def __init__(self, window_sizes: base.List[int], num_filters: int, max_feats: int, hidden_dim: int, output_dim: int,
@@ -113,7 +111,7 @@ class CNNClassifier(nn.Module):
         :output_dim (int): Output dimension.
         :batch_first (bool, default: True): True if the batch is the first dimension.
         """
-        super(CNNClassifier, self).__init__()
+        super(OnehotCNNClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'cnn'
 
@@ -143,11 +141,11 @@ class CNNClassifier(nn.Module):
         return scores
 
 
-class RNNClassifier(nn.Module):
+class OnehotRNNClassifier(nn.Module):
     """Onehot RNN Classifier."""
 
     def __init__(self, input_dim: int, hidden_dim: int, output_dim: int, batch_first: bool = True,
-                 activation: str = 'tanh', **kwargs) -> None:
+                 **kwargs) -> None:
         """
         Initialise the RNN classifier.
 
@@ -155,9 +153,8 @@ class RNNClassifier(nn.Module):
         :hidden_dim: The dimension of the hidden representation.
         :output_dim: The dimension of the output representation.
         :batch_first (bool): Is batch the first dimension?
-        :activation (str, default = 'tanh'): String name of activation function to be used.
         """
-        super(RNNClassifier, self).__init__()
+        super(OnehotRNNClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'rnn'
 
@@ -170,7 +167,6 @@ class RNNClassifier(nn.Module):
         self.htoo = nn.Linear(hidden_dim, output_dim)
 
         # Set the method for producing "probability" distribution.
-        self.activation = nn.ReLU() if activation == 'relu' else nn.Tanh()
         self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, sequence) -> base.DataType:
@@ -185,20 +181,20 @@ class RNNClassifier(nn.Module):
             sequence = sequence.transpose(0, 1)
 
         sequence = sequence.float()
-        hidden = self.activation(self.itoh(sequence))  # Map from input to hidden representation
+        hidden = self.itoh(sequence)  # Map from input to hidden representation
         hidden, last_h = self.rnn(hidden)
-        output = self.htoo(self.activation(last_h))  # Map from hidden representation to output
+        output = self.htoo(last_h)  # Map from hidden representation to output
         prob_dist = self.softmax(output)  # Generate probability distribution of output
 
         return prob_dist.squeeze(0)
 
 
-class MTLLSTMClassifier(nn.Module):
+class OnehotMTLLSTMClassifier(nn.Module):
     """Multitask LSTM Classifier."""
 
     def __init__(self, input_dims: base.List[int], shared_dim: int, hidden_dims: base.List[int],
                  output_dims: base.List[int], no_layers: int = 1, dropout: float = 0.2, batch_first = True,
-                 activation: str = 'tanh', **kwargs) -> None:
+                 **kwargs) -> None:
         """
         Initialise the Multitask LSTM.
 
@@ -210,7 +206,7 @@ class MTLLSTMClassifier(nn.Module):
         :param no_layers: The number of recurrent layers in the LSTM (1-3).
         :param dropout: Value fo dropout
         """
-        super(MTLLSTMClassifier, self).__init__()
+        super(OnehotMTLLSTMClassifier, self).__init__()
 
         # Initialise the hidden dim
         self.all_parameters = nn.ParameterList()
@@ -261,7 +257,6 @@ class MTLLSTMClassifier(nn.Module):
             self.all_parameters.append(layer.bias)
 
         # Set the method for producing "probability" distribution.
-        self.activation = nn.ReLU() if activation == 'relu' else nn.Tanh()
         self.dropout = nn.Dropout(dropout)
         self.softmax = nn.LogSoftmax(dim = 1)
 
@@ -277,14 +272,14 @@ class MTLLSTMClassifier(nn.Module):
         :param task_id: The task on which to perform forward pass.
         :return (base.DataType): The "probability" distribution for the classes.
         """
-        res = self.dropout(self.activation(self.inputs[task_id](sequence.float())))
+        res = self.dropout(self.inputs[task_id](sequence.float()))
 
         for layer in self.shared:
-            res = self.dropout(self.activation(layer(res)))
+            res = self.dropout(layer(res))
 
         lstm_out, (lstm_hidden, _) = self.lstm[task_id](res)
 
-        output = self.activation(self.outputs[task_id](lstm_hidden))
+        output = self.outputs[task_id](lstm_hidden)
 
         prob_dist = self.softmax(output)  # The probability distribution
 
