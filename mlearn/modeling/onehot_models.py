@@ -8,7 +8,7 @@ class OnehotLSTMClassifier(nn.Module):
     """Onehot LSTM classifier."""
 
     def __init__(self, input_dim: int, embedding_dim: int, hidden_dim: int, output_dim: int, num_layers: int,
-                 batch_first: bool = True, **kwargs) -> None:
+                 dropout: float = 0.0, batch_first: bool = True, **kwargs) -> None:
         """
         Initialise the LSTM.
 
@@ -16,6 +16,7 @@ class OnehotLSTMClassifier(nn.Module):
         :hidden_dim (int): The dimensionality of the hidden dimension.
         :output_dim (int): Number of classes for to predict on.
         :num_layers (int): The number of recurrent layers in the LSTM (1-3).
+        :dropout (float, default = 0.0): Value of dropout layer.
         :batch_first (bool, default = True): Batch the first dimension?
         """
         super(OnehotLSTMClassifier, self).__init__()
@@ -27,6 +28,7 @@ class OnehotLSTMClassifier(nn.Module):
         self.htoo = nn.Linear(hidden_dim, output_dim)
 
         # Set the method for producing "probability" distribution.
+        self.dropout = nn.Dropout(dropout)
         self.softmax = nn.LogSoftmax(dim = 1)
 
     def forward(self, sequence: base.DataType) -> base.DataType:
@@ -42,7 +44,7 @@ class OnehotLSTMClassifier(nn.Module):
         sequence = sequence.float()
         out = self.itoh(sequence)  # Get embedding for the sequence
         out, last_layer = self.lstm(out)  # Get layers of the LSTM
-        out = self.htoo(last_layer[0])
+        out = self.htoo(self.dropout(last_layer[0]))
         prob_dist = self.softmax(out)  # The probability distribution
 
         return prob_dist.squeeze(0)
@@ -56,9 +58,10 @@ class OnehotMLPClassifier(nn.Module):
         """
         Initialise the model.
 
-        :input_dim: The dimension of the input to the model.
-        :hidden_dim: The dimension of the hidden layer.
-        :output_dim: The dimension of the output layer (i.e. the number of classes).
+        :input_dim (int): The dimension of the input to the model.
+        :hidden_dim (int): The dimension of the hidden layer.
+        :output_dim (int): The dimension of the output layer (i.e. the number of classes).
+        :dropout (float, default = 0.0): Value of dropout layer.
         :batch_first (bool): Batch the first dimension?
         :activation (str, default = 'tanh'): String name of activation function to be used.
         """
@@ -104,9 +107,9 @@ class OnehotCNNClassifier(nn.Module):
         """
         Initialise the model.
 
-        :window_sizes: The size of the filters (e.g. 1: unigram, 2: bigram, etc.)
-        :no_filters: The number of filters to apply.
-        :max_feats: The maximum length of the sequence to consider.
+        :window_sizes (base.List[int]): The size of the filters (e.g. 1: unigram, 2: bigram, etc.)
+        :no_filters (int): The number of filters to apply.
+        :max_feats (int): The maximum length of the sequence to consider.
         :hidden_dim (int): Hidden dimension size.
         :output_dim (int): Output dimension.
         :batch_first (bool, default: True): True if the batch is the first dimension.
@@ -144,14 +147,15 @@ class OnehotCNNClassifier(nn.Module):
 class OnehotRNNClassifier(nn.Module):
     """Onehot RNN Classifier."""
 
-    def __init__(self, input_dim: int, hidden_dim: int, output_dim: int, batch_first: bool = True,
+    def __init__(self, input_dim: int, hidden_dim: int, output_dim: int, dropout: float = 0.0, batch_first: bool = True,
                  **kwargs) -> None:
         """
         Initialise the RNN classifier.
 
-        :input_dim: The dimension of the input to the network.
-        :hidden_dim: The dimension of the hidden representation.
-        :output_dim: The dimension of the output representation.
+        :input_dim (int): The dimension of the input to the network.
+        :hidden_dim (int): The dimension of the hidden representation.
+        :output_dim (int): The dimension of the output representation.
+        :dropout (float, default = 0.0): The value of the dropout layer.
         :batch_first (bool): Is batch the first dimension?
         """
         super(OnehotRNNClassifier, self).__init__()
@@ -167,6 +171,7 @@ class OnehotRNNClassifier(nn.Module):
         self.htoo = nn.Linear(hidden_dim, output_dim)
 
         # Set the method for producing "probability" distribution.
+        self.dropout = nn.Dropout(dropout)
         self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, sequence) -> base.DataType:
@@ -183,7 +188,7 @@ class OnehotRNNClassifier(nn.Module):
         sequence = sequence.float()
         hidden = self.itoh(sequence)  # Map from input to hidden representation
         hidden, last_h = self.rnn(hidden)
-        output = self.htoo(last_h)  # Map from hidden representation to output
+        output = self.htoo(self.dropout(last_h))  # Map from hidden representation to output)
         prob_dist = self.softmax(output)  # Generate probability distribution of output
 
         return prob_dist.squeeze(0)
@@ -199,12 +204,12 @@ class OnehotMTLLSTMClassifier(nn.Module):
         Initialise the Multitask LSTM.
 
         :param input_dims (base.List[int]): The dimensionality of the input.
-        :param shared_dim (int): The dimensionality of the shared layers.
-        :param hidden_dim (base.List[int]): The dimensionality of the hidden dimensions for each task.
-        :param embedding_dim: The dimensionality of the the produced embeddings.
-        :param no_classes: Number of classes for to predict on.
-        :param no_layers: The number of recurrent layers in the LSTM (1-3).
-        :param dropout: Value fo dropout
+        :param shared_dim (int): The dimensionality of the shared layer.
+        :param hidden_dims (base.List[int]): The dimensionality of the hidden dimensions for each task.
+        :param output_dims (base.List[int]): Number of classes for to predict on.
+        :param no_layers (int, default = 1): The number of recurrent layers in the LSTM (1-3).
+        :param dropout (float, default = 0.2): Value of dropout layer.
+        :batch_first (boo, default = True): If input tensors have the batch dimension in the first dimensino.
         """
         super(OnehotMTLLSTMClassifier, self).__init__()
 
