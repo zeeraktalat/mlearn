@@ -4,8 +4,8 @@ from mlearn import base
 import torch.nn.functional as F
 
 
-class OnehotLSTMClassifier(nn.Module):
-    """Onehot LSTM classifier."""
+class LSTMClassifier(nn.Module):
+    """LSTM classifier."""
 
     def __init__(self, input_dim: int, embedding_dim: int, hidden_dim: int, output_dim: int, num_layers: int,
                  dropout: float = 0.0, batch_first: bool = True, **kwargs) -> None:
@@ -19,7 +19,7 @@ class OnehotLSTMClassifier(nn.Module):
         :dropout (float, default = 0.0): Value of dropout layer.
         :batch_first (bool, default = True): Batch the first dimension?
         """
-        super(OnehotLSTMClassifier, self).__init__()
+        super(LSTMClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'lstm'
 
@@ -50,8 +50,8 @@ class OnehotLSTMClassifier(nn.Module):
         return prob_dist.squeeze(0)
 
 
-class OnehotMLPClassifier(nn.Module):
-    """Onehot MLP Classifier."""
+class MLPClassifier(nn.Module):
+    """MLP Classifier."""
 
     def __init__(self, input_dim: int, hidden_dim: int, output_dim: int, dropout: float = 0.2, batch_first: bool = True,
                  activation: str = 'tanh', **kwargs) -> None:
@@ -65,7 +65,7 @@ class OnehotMLPClassifier(nn.Module):
         :batch_first (bool): Batch the first dimension?
         :activation (str, default = 'tanh'): String name of activation function to be used.
         """
-        super(OnehotMLPClassifier, self).__init__()
+        super(MLPClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'mlp'
 
@@ -99,7 +99,7 @@ class OnehotMLPClassifier(nn.Module):
         return prob_dist
 
 
-class OnehotCNNClassifier(nn.Module):
+class CNNClassifier(nn.Module):
     """CNN Classifier."""
 
     def __init__(self, window_sizes: base.List[int], num_filters: int, max_feats: int, hidden_dim: int, output_dim: int,
@@ -114,7 +114,7 @@ class OnehotCNNClassifier(nn.Module):
         :output_dim (int): Output dimension.
         :batch_first (bool, default: True): True if the batch is the first dimension.
         """
-        super(OnehotCNNClassifier, self).__init__()
+        super(CNNClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'cnn'
 
@@ -144,8 +144,8 @@ class OnehotCNNClassifier(nn.Module):
         return scores
 
 
-class OnehotRNNClassifier(nn.Module):
-    """Onehot RNN Classifier."""
+class RNNClassifier(nn.Module):
+    """RNN Classifier."""
 
     def __init__(self, input_dim: int, hidden_dim: int, output_dim: int, dropout: float = 0.0, batch_first: bool = True,
                  **kwargs) -> None:
@@ -158,7 +158,7 @@ class OnehotRNNClassifier(nn.Module):
         :dropout (float, default = 0.0): The value of the dropout layer.
         :batch_first (bool): Is batch the first dimension?
         """
-        super(OnehotRNNClassifier, self).__init__()
+        super(RNNClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'rnn'
 
@@ -194,7 +194,7 @@ class OnehotRNNClassifier(nn.Module):
         return prob_dist.squeeze(0)
 
 
-class OnehotMTLLSTMClassifier(nn.Module):
+class MTLLSTMClassifier(nn.Module):
     """Multitask LSTM Classifier."""
 
     def __init__(self, input_dims: base.List[int], shared_dim: int, hidden_dims: base.List[int],
@@ -211,7 +211,7 @@ class OnehotMTLLSTMClassifier(nn.Module):
         :param dropout (float, default = 0.2): Value of dropout layer.
         :batch_first (boo, default = True): If input tensors have the batch dimension in the first dimensino.
         """
-        super(OnehotMTLLSTMClassifier, self).__init__()
+        super(MTLLSTMClassifier, self).__init__()
 
         # Initialise the hidden dim
         self.all_parameters = nn.ParameterList()
