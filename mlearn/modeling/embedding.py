@@ -41,7 +41,6 @@ class EmbeddingLSTMClassifier(nn.Module):
         if not self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        sequence = sequence.float()
         out = self.dropout(self.itoe(sequence))
         out, last_layer = self.lstm(out)
         out = self.htoo(last_layer[0])
@@ -87,8 +86,7 @@ class EmbeddingMLPClassifier(nn.Module):
         if self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        sequence = sequence.float()
-        dropout = self.dropout if self.mode else lambda x: x
+        dropout = self.dropout
         out = dropout(self.activation(self.itoe(sequence)))
         out = dropout(self.activation(self.htoh(out)))
         out = out.mean(0)
@@ -101,8 +99,8 @@ class EmbeddingMLPClassifier(nn.Module):
 class CNNClassifier(nn.Module):
     """CNN Classifier."""
 
-    def __init__(self, window_sizes: base.List[int], num_filters: int, max_feats: int, hidden_dim: int, output_dim: int,
-                 batch_first: bool = True, **kwargs) -> None:
+    def __init__(self, window_sizes: base.List[int], num_filters: int, max_feats: int,
+                 input_dim: int, embedding_dim: int, output_dim: int, batch_first: bool = True, **kwargs) -> None:
         """
         Initialise the model.
 
@@ -117,8 +115,8 @@ class CNNClassifier(nn.Module):
         self.batch_first = batch_first
         self.name = 'cnn'
 
-        self.itoh = nn.Embedding(max_feats, hidden_dim)  # Works
-        self.conv = nn.ModuleList([nn.Conv2d(1, num_filters, (w, hidden_dim)) for w in window_sizes])
+        self.itoh = nn.Embedding(input_dim, embedding_dim)  # Works
+        self.conv = nn.ModuleList([nn.Conv2d(1, num_filters, (w, embedding_dim)) for w in window_sizes])
         self.linear = nn.Linear(len(window_sizes) * num_filters, output_dim)
         self.softmax = nn.LogSoftmax(dim = 1)
 
@@ -130,10 +128,9 @@ class CNNClassifier(nn.Module):
         :return (base.DataType): The scores computed by the model.
         """
         # CNNs expect batch first so let's try that
-        if self.batch_first:
+        if not self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        sequence = sequence.float()
         emb = self.itoh(sequence)  # Get embeddings for sequence
         output = [F.relu(conv(emb.unsqueeze(1))).squeeze(3) for conv in self.conv]
         output = [F.max_pool1d(i, i.size(2)).squeeze(2) for i in output]
@@ -185,7 +182,6 @@ class EmbeddingRNNClassifier(nn.Module):
         if not self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        sequence = sequence.float()
         hidden = self.itoe(sequence)  # Map from input to hidden representation
         hidden, last_h = self.rnn(hidden)
         output = self.htoo(last_h)  # Map from hidden representation to output
