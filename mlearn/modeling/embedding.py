@@ -42,8 +42,8 @@ class LSTMClassifier(nn.Module):
             sequence = sequence.transpose(0, 1)
 
         out = self.dropout(self.itoe(sequence))
-        out, last_layer = self.lstm(out)
-        out = self.htoo(last_layer[0])
+        out, (last_layer, _) = self.lstm(out)
+        out = self.htoo(self.dropout(last_layer))
         prob_dist = self.softmax(out)
 
         return prob_dist.squeeze(0)
@@ -86,9 +86,8 @@ class MLPClassifier(nn.Module):
         if self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        dropout = self.dropout
-        out = dropout(self.activation(self.itoe(sequence)))
-        out = dropout(self.activation(self.htoh(out)))
+        out = self.dropout(self.activation(self.itoe(sequence)))
+        out = self.dropout(self.activation(self.htoh(out)))
         out = out.mean(0)
         out = self.htoo(out)
         prob_dist = self.softmax(out)  # Re-shape to fit batch size.
@@ -182,9 +181,9 @@ class RNNClassifier(nn.Module):
         if not self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        hidden = self.itoe(sequence)  # Map from input to hidden representation
+        hidden = self.dropout(self.itoe(sequence))  # Map from input to hidden representation
         hidden, last_h = self.rnn(hidden)
-        output = self.htoo(last_h)  # Map from hidden representation to output
+        output = self.htoo(self.dropout(last_h))  # Map from hidden representation to output
         prob_dist = self.softmax(output)  # Generate probability distribution of output
 
         return prob_dist.squeeze(0)

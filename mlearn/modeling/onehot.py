@@ -43,8 +43,8 @@ class LSTMClassifier(nn.Module):
 
         sequence = sequence.float()
         out = self.itoh(sequence)  # Get embedding for the sequence
-        out, last_layer = self.lstm(out)  # Get layers of the LSTM
-        out = self.htoo(self.dropout(last_layer[0]))
+        out, (last_layer, _) = self.lstm(out)  # Get layers of the LSTM
+        out = self.htoo(self.dropout(last_layer))
         prob_dist = self.softmax(out)  # The probability distribution
 
         return prob_dist.squeeze(0)
@@ -89,9 +89,8 @@ class MLPClassifier(nn.Module):
             sequence = sequence.transpose(0, 1)
 
         sequence = sequence.float()
-        dropout = self.dropout if self.mode else lambda x: x
-        out = dropout(self.activation(self.itoh(sequence)))
-        out = dropout(self.activation(self.htoh(out)))
+        out = self.dropout(self.activation(self.itoh(sequence)))
+        out = self.dropout(self.activation(self.htoh(out)))
         out = out.mean(0)
         out = self.htoo(out)
         prob_dist = self.softmax(out)  # Re-shape to fit batch size.
@@ -102,14 +101,14 @@ class MLPClassifier(nn.Module):
 class CNNClassifier(nn.Module):
     """CNN Classifier."""
 
-    def __init__(self, window_sizes: base.List[int], num_filters: int, max_feats: int, hidden_dim: int, output_dim: int,
+    def __init__(self, window_sizes: base.List[int], num_filters: int, input_dim: int, hidden_dim: int, output_dim: int,
                  batch_first: bool = True, **kwargs) -> None:
         """
         Initialise the model.
 
         :window_sizes (base.List[int]): The size of the filters (e.g. 1: unigram, 2: bigram, etc.)
         :no_filters (int): The number of filters to apply.
-        :max_feats (int): The maximum length of the sequence to consider.
+        :input_dim (int): The input dimension (can and should be limited beyond the raw input dimensions).
         :hidden_dim (int): Hidden dimension size.
         :output_dim (int): Output dimension.
         :batch_first (bool, default: True): True if the batch is the first dimension.
@@ -118,7 +117,7 @@ class CNNClassifier(nn.Module):
         self.batch_first = batch_first
         self.name = 'cnn'
 
-        self.itoh = nn.Linear(max_feats, hidden_dim)  # Works
+        self.itoh = nn.Linear(input_dim, hidden_dim)  # Works
         self.conv = nn.ModuleList([nn.Conv2d(1, num_filters, (w, hidden_dim)) for w in window_sizes])
         self.linear = nn.Linear(len(window_sizes) * num_filters, output_dim)
         self.softmax = nn.LogSoftmax(dim = 1)
@@ -131,7 +130,7 @@ class CNNClassifier(nn.Module):
         :return (base.DataType): The scores computed by the model.
         """
         # CNNs expect batch first so let's try that
-        if self.batch_first:
+        if not self.batch_first:
             sequence = sequence.transpose(0, 1)
 
         sequence = sequence.float()
