@@ -9,25 +9,6 @@ from mlearn.data_processing.batching import Batch, BatchExtractor
 from mlearn.data_processing.fileio import write_predictions, write_results
 
 
-def process_and_batch(dataset, data, batch_size: int, onehot: bool = True):
-    """
-    Process a dataset and data.
-
-    :dataset: A dataset object.
-    :data: Data to be processed.
-    :batch_size (int): Size of batches to create.
-    :returns: Processed data.
-    """
-    # Process labels and encode data.
-    dataset.process_labels(data)
-
-    # Batch data
-    batch = Batch(batch_size, data)
-    batch.create_batches()
-    batches = BatchExtractor('label', batch, dataset, onehot)
-    return batches
-
-
 def run_singletask_model(library: str, train: bool, writer: base.Callable, model_info: list, head_len: int, **kwargs):
     """
     Train or evaluate model.

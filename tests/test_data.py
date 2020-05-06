@@ -1,9 +1,9 @@
 import torch
 import unittest
 import torchtestcase
-from ..data import GeneralDataset
-from ..base import Field, Datapoint
-from ..batching import Batch, BatchExtractor
+from mlearn.data_processing.data import GeneralDataset
+from from mlearn.base import Field, Datapoint
+from mlearn.data_processing.batching import Batch, BatchExtractor
 
 
 class TestDataSet(torchtestcase.TorchTestCase):
