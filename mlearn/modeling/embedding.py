@@ -4,7 +4,7 @@ from mlearn import base
 import torch.nn.functional as F
 
 
-class EmbeddingLSTMClassifier(nn.Module):
+class LSTMClassifier(nn.Module):
     """Embedding based LSTM classifier."""
 
     def __init__(self, input_dim: int, embedding_dim: int, hidden_dim: int, output_dim: int, num_layers: int,
@@ -19,7 +19,7 @@ class EmbeddingLSTMClassifier(nn.Module):
         :dropout (float, default = 0.2): The strength of the dropout as a float [0.0;1.0]
         :batch_first (bool, default = True): Batch the first dimension?
         """
-        super(EmbeddingLSTMClassifier, self).__init__()
+        super(LSTMClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'lstm'
 
@@ -49,7 +49,7 @@ class EmbeddingLSTMClassifier(nn.Module):
         return prob_dist.squeeze(0)
 
 
-class EmbeddingMLPClassifier(nn.Module):
+class MLPClassifier(nn.Module):
     """Embedding based MLP Classifier."""
 
     def __init__(self, input_dim: int, embedding_dim: int, hidden_dim: int, output_dim: int, dropout: float = 0.2,
@@ -63,7 +63,7 @@ class EmbeddingMLPClassifier(nn.Module):
         :batch_first (bool): Batch the first dimension?
         :activation (str, default = 'tanh'): String name of activation function to be used.
         """
-        super(EmbeddingMLPClassifier, self).__init__()
+        super(MLPClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'mlp'
 
@@ -99,15 +99,15 @@ class EmbeddingMLPClassifier(nn.Module):
 class CNNClassifier(nn.Module):
     """CNN Classifier."""
 
-    def __init__(self, window_sizes: base.List[int], num_filters: int, max_feats: int,
-                 input_dim: int, embedding_dim: int, output_dim: int, batch_first: bool = True, **kwargs) -> None:
+    def __init__(self, window_sizes: base.List[int], num_filters: int, input_dim: int, embedding_dim: int,
+                 output_dim: int, batch_first: bool = True, **kwargs) -> None:
         """
         Initialise the model.
 
-        :window_sizes: The size of the filters (e.g. 1: unigram, 2: bigram, etc.)
-        :no_filters: The number of filters to apply.
-        :max_feats: The maximum length of the sequence to consider.
-        :hidden_dim (int): Hidden dimension size.
+        :window_sizes (base.list[int]): The size of the filters (e.g. 1: unigram, 2: bigram, etc.)
+        :num_filters (int): The number of filters to apply.
+        :input_dim (int): The input dimension (can be limited to less than the vocab size)
+        :embedding_dim (int): Embedding dimension size.
         :output_dim (int): Output dimension.
         :batch_first (bool, default: True): True if the batch is the first dimension.
         """
@@ -140,7 +140,7 @@ class CNNClassifier(nn.Module):
         return scores
 
 
-class EmbeddingRNNClassifier(nn.Module):
+class RNNClassifier(nn.Module):
     """Embedding RNN Classifier."""
 
     def __init__(self, input_dim: int, embedding_dim: int, hidden_dim: int, output_dim: int, dropout: float = 0.2,
@@ -155,7 +155,7 @@ class EmbeddingRNNClassifier(nn.Module):
         :dropout (float, default = 0.2): The strength of the dropout [0.0; 1.0]
         :batch_first (bool): Is batch the first dimension?
         """
-        super(EmbeddingRNNClassifier, self).__init__()
+        super(RNNClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'rnn'
 
