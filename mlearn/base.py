@@ -3,7 +3,7 @@ import spacy
 import numpy as np
 from torch.nn import Module
 from sklearn.base import ClassifierMixin, TransformerMixin
-from typing import Callable, Dict, Generator, List, Tuple, Union
+from typing import Callable, Dict, Iterator, List, Tuple, Union
 
 
 class Field(object):
