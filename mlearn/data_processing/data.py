@@ -239,7 +239,7 @@ class GeneralDataset(IterableDataset):
             reader = self.json_reader(fp)
         return reader
 
-    def json_reader(self, fp: str) -> base.Generator:
+    def json_reader(self, fp: str) -> base.Iterator:
         """
         Create a JSON reading object.
 
@@ -453,16 +453,16 @@ class GeneralDataset(IterableDataset):
         padded = text[:delta] if delta < 0 else text + ['<pad>'] * delta
         return padded
 
-    def encode(self, data: base.DataType, onehot: bool = True) -> base.Generator[base.DataType]:
+    def encode(self, data: base.DataType, onehot: bool = True) -> base.Iterator[base.DataType]:
         """
         Encode a documenbase.
 
         :data (base.DataType): List of datapoints to be encoded.
         :onehot (bool, default = True): Set to true to onehot encode the documenbase.
-        :returns (base.Generator[base.DataType]): Return documents encoded as tensors.
+        :returns (base.Iterator[base.DataType]): Return documents encoded as tensors.
         """
         names = [getattr(f, 'name') for f in self.train_fields]
-        encoding_func = self.onehot_encode_doc if onehot else self.encode_doc
+        encoding_func = self.onehot_encode_doc if onehot else self.index_encode_doc
 
         for doc in data:
             text = [tok for name in names for tok in getattr(doc, name)]
@@ -470,7 +470,7 @@ class GeneralDataset(IterableDataset):
             if len(text) != self.length:
                 text = self._pad_doc(text, self.length)
 
-            yield encoding_func(text)
+            yield encoding_func(text, doc)
 
     def onehot_encode_doc(self, text: base.DataType, doc: base.Datapoint) -> base.DataType:
         """
@@ -481,6 +481,19 @@ class GeneralDataset(IterableDataset):
         :returns (base.DataType): Return onehot encoded tensor.
         """
         encoded = one_hot(self.encode_doc(text, doc), len(self.stoi)).type(torch.long).unsqueeze(0)
+
+        return encoded
+
+    def index_encode_doc(self, text: base.DataType, doc: base.Datapoint) -> base.DataType:
+        """
+        Index encode a single document.
+
+        :text (base.DataType): The document represented as a tokens.
+        :doc (base.Datapoint): The datapoint to encode.
+        :returns (base.DataType): Return onehot encoded tensor.
+        """
+        encoded = self.encode_doc(text, doc).unsqueeze(0)
+        # encoded = encoded.unsqueeze(encoded.dim())
 
         return encoded
 
