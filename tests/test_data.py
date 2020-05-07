@@ -1,9 +1,7 @@
 import torch
-import unittest
 import torchtestcase
 from mlearn.base import Field, Datapoint
 from mlearn.data_processing.data import GeneralDataset
-from mlearn.data_processing.batching import Batch, BatchExtractor
 
 
 class TestDataSet(torchtestcase.TorchTestCase):
@@ -26,6 +24,8 @@ class TestDataSet(torchtestcase.TorchTestCase):
                                           test = 'test.json', train_labels = None, tokenizer = lambda x: x.split(),
                                           preprocessor = None, transformations = None,
                                           label_processor = None, sep = ',', name = 'test')
+        cls.csv_dataset.load('test')
+        cls.test = cls.csv_dataset.test
 
     @classmethod
     def tearDown(cls):
@@ -82,14 +82,14 @@ class TestDataSet(torchtestcase.TorchTestCase):
 
     def test_vocab_token_lookup(self):
         '''Test looking up in vocab.'''
-        self.csv_dataset.build_label_vocab(self.train)
+        self.csv_dataset.build_token_vocab(self.train)
         expected = 0
         output = self.csv_dataset.vocab_token_lookup('me')
         self.assertEqual(output, expected, msg = 'Vocab token lookup failed.')
 
     def test_vocab_ix_lookup(self):
         '''Test looking up in vocab.'''
-        self.csv_dataset.build_label_vocab(self.train)
+        self.csv_dataset.build_token_vocab(self.train)
         expected = 'me'
         output = self.csv_dataset.vocab_ix_lookup(0)
         self.assertEqual(output, expected, msg = 'Vocab ix lookup failed.')
@@ -243,7 +243,8 @@ class TestDataSet(torchtestcase.TorchTestCase):
         self.csv_dataset.build_token_vocab(self.train)
         self.csv_dataset.load('test')
         test = self.csv_dataset.test
-        expected = torch.zeros(2, 12, 25)
+        expected = torch.zeros(2, 12, 25, dtype = torch.int64)
+
         expected[0][0][23] = 1
         expected[0][1][12] = 1
         expected[0][2][13] = 1
@@ -269,208 +270,74 @@ class TestDataSet(torchtestcase.TorchTestCase):
         expected[1][10][24] = 1
         expected[1][11][24] = 1
 
-        output = torch.cat([datapoint.encoded for datapoint in self.csv_dataset.encode(test, True)], dim = 0)
+        output = torch.cat([datapoint for datapoint in self.csv_dataset.encode(test, onehot = True)], dim = 0)
         self.assertEqual(output, expected, msg = 'Onehot encoding failed.')
 
-    @unittest.skip("Not Implemented.")
-    def test_encoding(self):
+    def test_index_encoding(self):
         """Test the encoding. Not Implemented."""
         self.csv_dataset.build_token_vocab(self.train)
-        self.csv_dataset.load('test')
-        test = self.csv_dataset.test
-        expected = [[6, 13, 14, 6], [1, 17, 22, 6, 0]]
-        output = [datapoint.encoded for datapoint in self.csv_dataset.encode(test, False)]
-        self.assertEqual(output, expected, msg = 'Encoding failed.')
+
+        expected = [torch.LongTensor([23, 12, 13, 23, 24, 24, 24, 24, 24, 24, 24, 24]).unsqueeze(0),
+                    torch.LongTensor([1, 16, 21, 23, 0, 24, 24, 24, 24, 24, 24, 24]).unsqueeze(0)]
+        output = [datapoint for datapoint in self.csv_dataset.encode(self.test, onehot = False)]
+
+        for i, (out, exp) in enumerate(zip(expected, output)):
+            self.assertEqual(out, exp, msg = f'Index encoding failed for doc {i}')
 
     def test_split(self):
         """Test splitting functionality."""
         expected = [3, 1]  # Lengths of the respective splits
-        train, _, test = self.csv_dataset.split(self.train, [0.8])
+        train, _, test = self.csv_dataset.split(self.train, [0.75])
         output = [len(train), len(test)]
-        self.assertListEqual(expected, output, msg = 'Splitting with just float failed.')
+        self.assertEqual(sum(output), len(self.train), msg = "The splits ([0.75]) != len(self.train)")
+        self.assertListEqual(expected, output, msg = 'Split with ratio [0.75] failed.')
 
         expected = [3, 1]
-        train, _, test = self.csv_dataset.split(self.train, [0.8, 0.2])
+        train, _, test = self.csv_dataset.split(self.train, [0.75, 0.25])
         output = [len(train), len(test)]
-        self.assertListEqual(expected, output, msg = 'Two split values in list failed.')
+        self.assertEqual(sum(output), len(self.train), msg = "The splits ([0.75, 0.25]) != len(self.train)")
+        self.assertListEqual(expected, output, msg = 'Two split ([0.75, 0.25] values in list failed.')
 
         expected = [2, 1, 1]
-        train, dev, test = self.csv_dataset.split(self.train, [0.6, 0.2, 0.1])
+        train, dev, test = self.csv_dataset.split(self.train, [0.5, 0.25, 0.25])
         output = [len(train), len(dev), len(test)]
-        self.assertListEqual(expected, output, msg = 'Three split values in list failed.')
+        self.assertEqual(sum(output), len(self.train), msg = "The splits ([0.50, 0.25, 0.25]) != len(self.train)")
+        self.assertListEqual(expected, output, msg = 'Three split ([0.50, 0.25, 0.25]) values in list failed.')
 
+    def test_stratified_split(self):
+        """Test stratified splitting."""
+        fields = [Field('text', train = True, label = False, ignore = False, ix = 5, cname = 'text'),
+                  Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 4)]
 
-class TestDataPoint(unittest.TestCase):
-
-    @classmethod
-    def setUp(cls):
-        """Set up class with data as well."""
-        fields = [Field('text', train = True, label = False, ignore = False, ix = 0, cname = 'text'),
-                  Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 1)]
-
-        cls.dataset = GeneralDataset(data_dir = '~/PhD/projects/active/Generalisable_abuse/gen/shared/tests/',
-                                         ftype = 'csv', fields = fields, train = 'train.csv', dev = None,
-                                         test = 'test.csv', train_labels = None, tokenizer = lambda x: x.split(),
+        data = GeneralDataset(data_dir = '~/PhD/projects/tools/mlearn/tests',
+                                         ftype = 'csv', fields = fields, train = 'garcia_stormfront_train.tsv',
+                                         dev = None, test = None, train_labels = None,
+                                         tokenizer = lambda x: x.split(),
                                          preprocessor = None, transformations = None,
-                                         label_processor = None, sep = ',', name = 'test')
-        cls.dataset.load('train')
-        cls.train = cls.dataset.data
+                                         label_processor = None, sep = '\t', name = 'test')
+        data.load('train')
+        loaded_train = data.data
 
-    def test_datapoint_creation(self):
-        """Test that datapoints are created consistently."""
-        expected = [{'text': 'me gusta comer en la cafeteria'.lower().split(),
-                     'label': 'SPANISH',
-                     'original': 'me gusta comer en la cafeteria'},
-                    {'text': 'Give it to me'.lower().split(),
-                     'label': 'ENGLISH',
-                     'original': 'Give it to me'},
-                    {'text': 'No creo que sea una buena idea'.lower().split(),
-                     'label': 'SPANISH',
-                     'original': 'No creo que sea una buena idea'},
-                    {'text': 'No it is not a good idea to get lost at sea'.lower().split(),
-                     'label': 'ENGLISH',
-                     'original': 'No it is not a good idea to get lost at sea'.lower().split()}
-                    ]
-        for exp, out in zip(expected, self.train):
-            self.assertDictEqual(exp, out.__dict__, msg = "A dictionary is not created right.")
-            self.assertIsInstance(out, Datapoint)
+        breakpoint()
+        expected = [1531, 383]  # Lengths of the respective splits
+        train, _, test = data.split(loaded_train, splits = [0.8], stratify = 'label', store = False)
+        output = [len(train), len(test)]
 
-    def test_datapoint_counts(self):
-        """Test the correct number of datapoints are created."""
-        self.assertEqual(4, len(self.train))
+        self.assertEqual(sum(output), len(loaded_train), msg = f"The splits ([0.8]) != len(self.train)")
+        self.assertListEqual(expected, output, msg = 'Splitting with just float failed.')
 
+        expected = [1531, 383]
+        train, _, test = data.split(loaded_train, [0.8, 0.2], stratify = 'label', store = False)
+        train, _, test = self.csv_dataset.split(loaded_train, [0.8, 0.2], stratify = 'label', store = False)
+        output = [len(train), len(test)]
 
-class TestBatch(unittest.TestCase):
-    """Test the Batch class."""
+        self.assertEqual(sum(output), len(loaded_train), msg = f"The splits ([0.8, 0.2]) != len(loaded_train)")
+        self.assertListEqual(expected, output, msg = 'Two split values in list failed.')
 
-    @classmethod
-    def setUp(cls):
-        """Set up necessary class variables."""
-        text_field = Field('text', train = True, label = False, ignore = False, ix = 5, cname = 'text')
-        label_field = Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 4)
-        ignore_field = Field('ignore', train = False, label = False, cname = 'ignore', ignore = True)
+        expected = [1531, 191, 192]
+        train, dev, test = data.split(loaded_train, [0.8, 0.1, 0.1], stratify = 'label', store = False)
+        train, dev, test = self.csv_dataset.split(loaded_train, [0.8, 0.1, 0.1], stratify = 'label', store = False)
+        output = [len(train), len(dev), len(test)]
 
-        fields = [ignore_field, ignore_field, ignore_field, ignore_field, text_field, label_field]
-
-        cls.dataset = GeneralDataset(data_dir = '~/PhD/projects/tools/mlearn/tests/',
-                                     ftype = 'csv', fields = fields, train = 'garcia_stormfront_test.tsv', dev = None,
-                                     test = None, train_labels = None, tokenizer = lambda x: x.split(),
-                                     preprocessor = None, transformations = None,
-                                     label_processor = None, sep = '\t', name = 'test')
-        cls.dataset.load('train')
-        cls.train = cls.dataset.data
-
-    @classmethod
-    def tearDown(cls):
-        """Tear down class between each test."""
-        cls.dataset = 0
-
-    def test_batch_sizes(self):
-        """Test that the entire dataset has been batched."""
-        batches = Batch(32, self.train)
-        batches.create_batches()
-        self.assertIsNotNone(batches)
-        counts = sum(len(b) for b in batches)
-        self.assertEqual(counts, len(self.train))
-
-    def test_batch_count(self):
-        """Test that each batch contains datapoints."""
-        b = Batch(32, self.train)
-        b.create_batches()
-        expected = 15
-        self.assertEqual(len(b), expected, msg = "The number of batches is wrong.")
-
-    def test_batch_contents(self):
-        """Test that each batch contains datapoints."""
-        b = Batch(32, self.train)
-        b.create_batches()
-        expected = [True for batch in b]
-        output = [all(isinstance(batch_item, Datapoint) for batch_item in batch) for batch in b]
-        self.assertEqual(output, expected, msg = "Not all items are datapoints.")
-
-    def test_onehot_encoded_batches(self):
-        """Test creation of onehot encoded batches."""
-        self.dataset.build_token_vocab(self.train)
-        self.dataset.encode(self.train, True)
-        b = Batch(32, self.train)
-        b.create_batches()
-
-        expected = [True for batch in b]
-        output = [all('encoded' in batch_item.__dict__ for batch_item in batch) for batch in b]
-        self.assertEqual(output, expected, msg = "Not all items have an encoded element.")
-
-        expected = [len(self.dataset.stoi) for batch in b for batch_item in batch]
-        output = [getattr(batch_item, 'encoded').size(2) for batch in b for batch_item in batch]
-        self.assertEqual(output, expected, msg = "Not all encoded items have the right length.")
-
-    @unittest.skip("Not Implemented.")
-    def test_encoded_batches(self):
-        """Test creation of encoded batches. Not Implemented."""
-        self.dataset.build_token_vocab(self.train)
-        b = Batch(32, self.train)
-
-        self.dataset.encode(self.train, False)
-        expected = [True for batch in b]
-        output = [all('encoded' in batch_item.__dict__ for batch_item in batch) for batch in b]
-        self.assertEqual(output, expected, msg = "Not all items have an encoded element.")
-
-        expected = [len(batch_item.text) for batch in b for batch_item in batch]
-        output = [getattr(batch_item, 'encoded').size(2) for batch in b for batch_item in batch]
-        self.assertEqual(output, expected, msg = "Not all encoded items have the right length.")
-
-
-class TestBatchGenerator(unittest.TestCase):
-    """Test the batchgenerator class."""
-
-    @classmethod
-    def setUp(cls):
-        """Set up necessary class variables."""
-        text_field = Field('text', train = True, label = False, ignore = False, ix = 5, cname = 'text')
-        label_field = Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 4)
-        ignore_field = Field('ignore', train = False, label = False, cname = 'ignore', ignore = True)
-
-        fields = [ignore_field, ignore_field, ignore_field, ignore_field, text_field, label_field]
-
-        cls.dataset = GeneralDataset(data_dir = '~/PhD/projects/tools/mlearn/tests/',
-                                     ftype = 'csv', fields = fields, train = 'garcia_stormfront_test.tsv', dev = None,
-                                     test = None, train_labels = None, tokenizer = lambda x: x.split(),
-                                     preprocessor = None, transformations = None,
-                                     label_processor = None, sep = '\t', name = 'test')
-        cls.dataset.load('train')
-        cls.train = cls.dataset.data
-        cls.dataset.load('train')
-        cls.train = cls.dataset.data
-        cls.dataset.build_token_vocab(cls.train)
-        cls.dataset.build_label_vocab(cls.train)
-        cls.dataset.process_labels(cls.train)
-        cls.dataset.encode(cls.train, True)
-        cls.batch_size = 64
-        batches = Batch(cls.batch_size, cls.train)
-        batches.create_batches()
-        cls.batches = batches
-
-    @classmethod
-    def tearDownClass(cls):
-        """Tear down class between each test."""
-        cls.dataset = 0
-        cls.batches = 0
-
-    def test_batch_generation(self):
-        """Test the batchgenerator can access the variables."""
-        batches = BatchExtractor('encoded', 'label', self.batches)
-
-        for batch in batches:
-            self.assertEqual(batch[0].size(0), batch[1].size(0))
-
-    def test_tensorisation(self):
-        """Test that the batches are all tensorized."""
-        batches = BatchExtractor('encoded', 'label', self.batches)
-
-        for batch in batches:
-            self.assertIsInstance(batch[0], torch.Tensor, msg = "The type of the data element is incorrect.")
-            self.assertIsInstance(batch[1], torch.Tensor, msg = "The type of the label element is incorrect.")
-
-    def test_batch_sizes(self):
-        """Test the __len__ function of a BatchExtractor."""
-        batches = BatchExtractor('encoded', 'label', self.batches)
-        self.assertEqual(len(batches), 5, msg = "The len operation on BatchExtractor is incorrect.")
+        self.assertEqual(sum(output), len(loaded_train), msg = f"The splits ([0.8, 0.1, 0.1]) != len(loaded_train)")
+        self.assertListEqual(expected, output, msg = 'Three split values in list failed.')
