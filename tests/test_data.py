@@ -9,35 +9,35 @@ from mlearn.data_processing.batching import Batch, BatchExtractor
 class TestDataSet(torchtestcase.TorchTestCase):
 
     @classmethod
-    def setUpClass(cls):
+    def setUp(cls):
         """Set up class with data as well."""
         fields = [Field('text', train = True, label = False, ignore = False, ix = 0, cname = 'text'),
                   Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 1)]
 
-        cls.csv_dataset = GeneralDataset(data_dir = '~/PhD/projects/active/Generalisable_abuse/gen/shared/tests/',
+        cls.csv_dataset = GeneralDataset(data_dir = '~/PhD/projects/tools/mlearn/tests',
                                          ftype = 'csv', fields = fields, train = 'train.csv', dev = None,
                                          test = 'test.csv', train_labels = None, tokenizer = lambda x: x.split(),
                                          preprocessor = None, transformations = None,
                                          label_processor = None, sep = ',', name = 'test')
         cls.csv_dataset.load('train')
         cls.train = cls.csv_dataset.data
-        cls.json_dataset = GeneralDataset(data_dir = '~/PhD/projects/active/Generalisable_abuse/gen/shared/tests/',
+        cls.json_dataset = GeneralDataset(data_dir = '~/PhD/projects/tools/mlearn/tests',
                                           ftype = 'json', fields = fields, train = 'train.json', dev = None,
                                           test = 'test.json', train_labels = None, tokenizer = lambda x: x.split(),
                                           preprocessor = None, transformations = None,
                                           label_processor = None, sep = ',', name = 'test')
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDown(cls):
         """Take down class."""
         cls.csv_dataset = 0
         cls.json_dataset = 0
 
     def test_load(self):
         """Test dataset loading."""
-        expected = [("me gusta comer en la cafeteria".lower().split() + ['<pad>'] * 6, "SPANISH"),
-                    ("Give it to me".lower().split() + ['<pad>'] * 8, "ENGLISH"),
-                    ("No creo que sea una buena idea".lower().split() + ['<pad>'] * 5, "SPANISH"),
+        expected = [("me gusta comer en la cafeteria".lower().split(), "SPANISH"),
+                    ("Give it to me".lower().split(), "ENGLISH"),
+                    ("No creo que sea una buena idea".lower().split(), "SPANISH"),
                     ("No it is not a good idea to get lost at sea".lower().split(), "ENGLISH")]
 
         csv_train = self.train
@@ -75,8 +75,8 @@ class TestDataSet(torchtestcase.TorchTestCase):
         """Test loading a secondary dataset (test/dev set) from a different file."""
         self.csv_dataset.load('test')
         test = self.csv_dataset.test
-        expected  = ["Yo creo que si".lower().split() + 8 * ['<pad>'],
-                     "it is lost on me".lower().split() + ['<pad>'] * 7]
+        expected  = ["Yo creo que si".lower().split(),
+                     "it is lost on me".lower().split()]
         self.assertListEqual(test[0].text, expected[0])
         self.assertListEqual(test[1].text, expected[1])
 
@@ -124,14 +124,14 @@ class TestDataSet(torchtestcase.TorchTestCase):
         """Test looking up in label."""
         self.csv_dataset.build_label_vocab(self.train)
         output = self.csv_dataset.label_name_lookup('SPANISH')
-        expected = 1
+        expected = 0
         self.assertEqual(output, expected, msg = 'label name lookup failed.')
 
     def test_label_ix_lookup(self):
         '''Test looking up in label.'''
         self.csv_dataset.build_label_vocab(self.train)
         output = self.csv_dataset.label_ix_lookup(1)
-        expected = 'SPANISH'
+        expected = 'ENGLISH'
         self.assertEqual(output, expected, msg = 'label ix lookup failed.')
 
     def test_label_count(self):
@@ -144,7 +144,7 @@ class TestDataSet(torchtestcase.TorchTestCase):
     def test_process_label(self):
         """Test label processing."""
         self.csv_dataset.build_label_vocab(self.train)
-        expected = [1]
+        expected = [0]
         output = self.csv_dataset._process_label('SPANISH')
         self.assertEqual(output, expected, msg = 'Labelprocessor failed without custom processor')
 
@@ -285,12 +285,12 @@ class TestDataSet(torchtestcase.TorchTestCase):
     def test_split(self):
         """Test splitting functionality."""
         expected = [3, 1]  # Lengths of the respective splits
-        train, test = self.csv_dataset.split(self.train, 0.8)
+        train, _, test = self.csv_dataset.split(self.train, [0.8])
         output = [len(train), len(test)]
-        self.assertListEqual(expected, output, msg = 'Splitting with just int failed.')
+        self.assertListEqual(expected, output, msg = 'Splitting with just float failed.')
 
         expected = [3, 1]
-        train, test = self.csv_dataset.split(self.train, [0.8, 0.2])
+        train, _, test = self.csv_dataset.split(self.train, [0.8, 0.2])
         output = [len(train), len(test)]
         self.assertListEqual(expected, output, msg = 'Two split values in list failed.')
 
@@ -303,7 +303,7 @@ class TestDataSet(torchtestcase.TorchTestCase):
 class TestDataPoint(unittest.TestCase):
 
     @classmethod
-    def setUpClass(cls):
+    def setUp(cls):
         """Set up class with data as well."""
         fields = [Field('text', train = True, label = False, ignore = False, ix = 0, cname = 'text'),
                   Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 1)]
@@ -318,15 +318,15 @@ class TestDataPoint(unittest.TestCase):
 
     def test_datapoint_creation(self):
         """Test that datapoints are created consistently."""
-        expected = [{'text': 'me gusta comer en la cafeteria'.lower().split() + ['<pad>'] * 6,
+        expected = [{'text': 'me gusta comer en la cafeteria'.lower().split(),
                      'label': 'SPANISH',
-                     'original': 'me gusta comer en la cafeteria'.lower().split()},
-                    {'text': 'Give it to me'.lower().split() + ['<pad>'] * 8,
+                     'original': 'me gusta comer en la cafeteria'},
+                    {'text': 'Give it to me'.lower().split(),
                      'label': 'ENGLISH',
-                     'original': 'Give it to me'.lower().split()},
-                    {'text': 'No creo que sea una buena idea'.lower().split() + ['<pad>'] * 5,
+                     'original': 'Give it to me'},
+                    {'text': 'No creo que sea una buena idea'.lower().split(),
                      'label': 'SPANISH',
-                     'original': 'No creo que sea una buena idea'.lower().split()},
+                     'original': 'No creo que sea una buena idea'},
                     {'text': 'No it is not a good idea to get lost at sea'.lower().split(),
                      'label': 'ENGLISH',
                      'original': 'No it is not a good idea to get lost at sea'.lower().split()}
@@ -344,24 +344,24 @@ class TestBatch(unittest.TestCase):
     """Test the Batch class."""
 
     @classmethod
-    def setUpClass(cls):
+    def setUp(cls):
         """Set up necessary class variables."""
-        text_field = Field('text', train = True, label = False, ignore = False, ix = 6, cname = 'text')
-        label_field = Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 5)
+        text_field = Field('text', train = True, label = False, ignore = False, ix = 5, cname = 'text')
+        label_field = Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 4)
         ignore_field = Field('ignore', train = False, label = False, cname = 'ignore', ignore = True)
 
-        fields = [ignore_field, ignore_field, ignore_field, ignore_field, ignore_field, label_field, text_field]
+        fields = [ignore_field, ignore_field, ignore_field, ignore_field, text_field, label_field]
 
-        cls.dataset = GeneralDataset(data_dir = '~/PhD/projects/active/Generalisable_abuse/data/',
-                                     ftype = 'csv', fields = fields, train = 'davidson_test.csv', dev = None,
+        cls.dataset = GeneralDataset(data_dir = '~/PhD/projects/tools/mlearn/tests/',
+                                     ftype = 'csv', fields = fields, train = 'garcia_stormfront_test.tsv', dev = None,
                                      test = None, train_labels = None, tokenizer = lambda x: x.split(),
                                      preprocessor = None, transformations = None,
-                                     label_processor = None, sep = ',', name = 'test')
+                                     label_processor = None, sep = '\t', name = 'test')
         cls.dataset.load('train')
         cls.train = cls.dataset.data
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDown(cls):
         """Tear down class between each test."""
         cls.dataset = 0
 
@@ -377,7 +377,7 @@ class TestBatch(unittest.TestCase):
         """Test that each batch contains datapoints."""
         b = Batch(32, self.train)
         b.create_batches()
-        expected = 30
+        expected = 15
         self.assertEqual(len(b), expected, msg = "The number of batches is wrong.")
 
     def test_batch_contents(self):
@@ -423,19 +423,21 @@ class TestBatchGenerator(unittest.TestCase):
     """Test the batchgenerator class."""
 
     @classmethod
-    def setUpClass(cls):
+    def setUp(cls):
         """Set up necessary class variables."""
-        text_field = Field('text', train = True, label = False, ignore = False, ix = 6, cname = 'text')
-        label_field = Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 5)
+        text_field = Field('text', train = True, label = False, ignore = False, ix = 5, cname = 'text')
+        label_field = Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 4)
         ignore_field = Field('ignore', train = False, label = False, cname = 'ignore', ignore = True)
 
-        fields = [ignore_field, ignore_field, ignore_field, ignore_field, ignore_field, label_field, text_field]
+        fields = [ignore_field, ignore_field, ignore_field, ignore_field, text_field, label_field]
 
-        cls.dataset = GeneralDataset(data_dir = '~/PhD/projects/active/Generalisable_abuse/data/',
-                                     ftype = 'csv', fields = fields, train = 'davidson_test.csv', dev = None,
+        cls.dataset = GeneralDataset(data_dir = '~/PhD/projects/tools/mlearn/tests/',
+                                     ftype = 'csv', fields = fields, train = 'garcia_stormfront_test.tsv', dev = None,
                                      test = None, train_labels = None, tokenizer = lambda x: x.split(),
                                      preprocessor = None, transformations = None,
-                                     label_processor = None, sep = ',', name = 'test')
+                                     label_processor = None, sep = '\t', name = 'test')
+        cls.dataset.load('train')
+        cls.train = cls.dataset.data
         cls.dataset.load('train')
         cls.train = cls.dataset.data
         cls.dataset.build_token_vocab(cls.train)
@@ -471,4 +473,4 @@ class TestBatchGenerator(unittest.TestCase):
     def test_batch_sizes(self):
         """Test the __len__ function of a BatchExtractor."""
         batches = BatchExtractor('encoded', 'label', self.batches)
-        self.assertEqual(len(batches), 15, msg = "The len operation on BatchExtractor is incorrect.")
+        self.assertEqual(len(batches), 5, msg = "The len operation on BatchExtractor is incorrect.")
