@@ -318,7 +318,6 @@ class TestDataSet(torchtestcase.TorchTestCase):
         data.load('train')
         loaded_train = data.data
 
-        breakpoint()
         expected = [1531, 383]  # Lengths of the respective splits
         train, _, test = data.split(loaded_train, splits = [0.8], stratify = 'label', store = False)
         output = [len(train), len(test)]
