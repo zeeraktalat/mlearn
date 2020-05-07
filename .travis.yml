@@ -1,4 +1,9 @@
 language: python
+os: [
+  "linux"
+]
+
+dist: "xenial"
 
 services:
   - mongodb
@@ -28,6 +33,3 @@ branches:
   only:
     - staging
     - master
-
-notifications:
-    slack: usfd-nlp:79cXz6zwLt3ApzgjxKx7Yvdx
