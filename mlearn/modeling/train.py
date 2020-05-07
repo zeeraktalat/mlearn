@@ -3,9 +3,9 @@ import numpy as np
 from tqdm import tqdm, trange
 from mlearn import base
 from collections import defaultdict
+from mlearn.utils.pipeline import process_and_batch
 from mlearn.modeling.evaluate import eval_torch_model
 from mlearn.modeling.early_stopping import EarlyStopping
-from mlearn.data_processing.batching import Batch, BatchExtractor
 from mlearn.data_processing.fileio import write_predictions, write_results
 
 
