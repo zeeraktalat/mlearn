@@ -25,8 +25,12 @@ setuptools.setup(
         "torchtext==0.4.0",
         "tqdm==4.36.1",
         "spacy==2.2.2",
-        "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.5/en_core_web_sm-2.2.5.tar.gz",
         "scikit-learn==0.21.3",
-        "torchtestcase"
+        "torchtestcase",
+        "codecov",
+        "en_core_web_sm"
     ],
+    dependency_links=[
+        "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.5/en_core_web_sm-2.2.5.tar.gz#egg=en_core_web_sm"
+      ]
 )
