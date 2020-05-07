@@ -266,16 +266,28 @@ class GeneralDataset(IterableDataset):
                 for f in train_fields:
                     self.token_counts.update(getattr(doc, getattr(f, 'name')))
 
-        self.token_counts.update({'<unk>': int(np.mean(list(self.token_counts.values())))})
-        self.token_counts.update({'<pad>': int(np.mean(list(self.token_counts.values())))})
         self.itos, self.stoi = {}, {}
 
+        self.unk_tok = len(self.token_counts)
+        self.pad_tok = len(self.token_counts) + 1
+
+        try:
+            del self.token_counts['<pad>']
+        except KeyError:
+            pass
+
+        try:
+            del self.token_counts['<unk>']
+        except KeyError:
+            pass
+
+        self.stoi['<unk>'] = self.unk_tok
+        self.stoi['<pad>'] = self.pad_tok
+        self.itos[self.unk_tok] = '<unk>'
+        self.itos[self.pad_tok] = '<pad>'
         for ix, (tok, _) in enumerate(tqdm(self.token_counts.most_common(), desc = "Encoding vocabulary")):
             self.itos[ix] = tok
             self.stoi[tok] = ix
-
-        self.unk_tok = self.stoi['<unk>']
-        self.pad_tok = self.stoi['<pad>']
 
     def extend_vocab(self, data: base.DataType) -> None:
         """
