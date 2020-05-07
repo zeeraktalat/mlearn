@@ -562,7 +562,16 @@ class GeneralDataset(IterableDataset):
         :strata_field (str): Name of label field.
         :returns (base.Tuple[list, base.Union[list, None], list]): Return stratified splits.
         """
-        train_size = split_sizes[0]
+        train_size, dev_size, test_size = split_sizes[0], None, None
+        idx_maps = defaultdict(list)
+
+        # Create lists of each label.
+        for i, doc in enumerate(data):
+            idx_maps[getattr(doc, strata_field)].append(i)
+
+        # Get labels and probabilities ordered
+        labels, label_probs = zip(*{label: len(idx_maps[label]) / len(data) for label in idx_maps}.items())
+        train = self._stratify_helper(data, labels, train_size, label_probs, idx_maps)
 
         num_splits = len(split_sizes)
         if num_splits == 1:
@@ -574,16 +583,6 @@ class GeneralDataset(IterableDataset):
             test_size = split_sizes[2]
 
         dev, test = None, None
-        idx_maps = defaultdict(list)
-
-        # Create lists of each label.
-        for i, doc in enumerate(data):
-            idx_maps[getattr(doc, strata_field)].append(i)
-
-        # Get labels and probabilities ordered
-        labels, label_probs = zip(*{label: len(idx_maps[label]) / len(data) for label in idx_maps}.items())
-
-        train = self._stratify_helper(data, labels, train_size, label_probs, idx_maps)
 
         if dev_size is not None:
             dev = self._stratify_helper(data, labels, dev_size, label_probs, idx_maps)
@@ -597,7 +596,7 @@ class GeneralDataset(IterableDataset):
             if dev_size is not None:
                 test_size += len(data) - (train_size + dev_size + test_size)
             else:
-                test_size += len(data) - (train_size + dev_size + test_size)
+                test_size += len(data) - (train_size + test_size)
 
         indices = []
         for label in idx_maps:
