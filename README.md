@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/ZeerakW/MachineLearningAPI.svg?token=5q8ipi37nhoPMz7eekph&branch=staging)](https://travis-ci.com/ZeerakW/MachineLearningAPI)
+[![Build Status](https://travis-ci.com/ZeerakW/mlearn.svg?token=5q8ipi37nhoPMz7eekph&branch=master)](https://travis-ci.com/ZeerakW/mlearn)
 [![codecov](https://codecov.io/gh/ZeerakW/mlearn/branch/master/graph/badge.svg?token=9ta0auqnmK)](https://codecov.io/gh/ZeerakW/mlearn)
 ------------
 
