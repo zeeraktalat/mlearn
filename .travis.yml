@@ -9,8 +9,9 @@ python:
 cache: pip
 
 install:
-  - pip install flake8 pydocstyle
-  - pip install -r requirements.txt
+  - pip install flake8 pydocstyle codedov
+  - python setup.py install
+
 
 before_script:
   - python -m spacy download en
@@ -19,7 +20,10 @@ before_script:
 script:
   - flake8
   - pydocstyle
-  - python -m unittest discover
+  - coverage run -m unittest discover
+
+after_success:
+  - codecov -t 991386f7-211f-4134-993a-d94a6dba361f
 
 branches:
   only:
