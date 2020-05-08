@@ -21,10 +21,12 @@ class TestDataSet(torchtestcase.TorchTestCase):
         cls.csv_dataset.load('train')
         cls.train = cls.csv_dataset.data
         cls.json_dataset = GeneralDataset(data_dir = os.getcwd() + '/tests/',
-                                          ftype = 'json', fields = fields, train = 'train.json', dev = None,
-                                          test = 'test.json', train_labels = None, tokenizer = lambda x: x.split(),
+                                          ftype = 'json', fields = fields, train = 'train.json',
+                                          dev = 'garcia_stormfront_test.tsv', test = 'test.json', train_labels = None,
+                                          tokenizer = lambda x: x.split(),
                                           preprocessor = None, transformations = None,
-                                          label_processor = None, sep = ',', name = 'test')
+                                          label_processor = lambda x: x, sep = ',', name = 'test',
+                                          length = 200)
         cls.csv_dataset.load('test')
         cls.test = cls.csv_dataset.test
 
@@ -50,6 +52,16 @@ class TestDataSet(torchtestcase.TorchTestCase):
         output = [(doc.text, doc.label) for doc in json_train]
         self.assertListEqual(output, expected, msg = 'Data Loading failed.')
         self.assertIsInstance(json_train[0], Datapoint, msg = 'Data Loading failed gave wrong type.')
+
+        fields = [Field('text', train = True, label = False, ignore = False, ix = 0, cname = 'text'),
+                  Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 1)]
+
+        with self.AssertRaises(AssertionError):
+            GeneralDataset(data_dir = os.getcwd() + '/tests/',
+                           ftype = 'jsn', fields = fields, train = 'train.json', dev = None,
+                           test = 'test.json', train_labels = None, tokenizer = lambda x: x.split(),
+                           preprocessor = None, transformations = None,
+                           label_processor = None, sep = ',', name = 'test')
 
     def test_build_token_vocab(self):
         """Test vocab building method."""

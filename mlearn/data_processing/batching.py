@@ -2,52 +2,6 @@ import torch
 from mlearn import base
 
 
-class TorchTextOnehotBatchGenerator:
-    """A class to get onehot-tensor batches from torchtext data object."""
-
-    def __init__(self, dataloader: base.DataType, datafield: str, labelfield: str, vocab_size: int) -> None:
-        """
-        Initialize onehot batch generator for torchtext.
-
-        :dataloader (base.DataType): The object loading the data.
-        :datafield (str): Name of the field to access the data.
-        :label_field (str): Name of the field to access the labels.
-        :vocab_size (int): The size of the vocabulary.
-        """
-        self.data, self.df, self.lf = dataloader, datafield, labelfield
-        self.VOCAB_SIZE = vocab_size
-
-    def __len__(self) -> int:
-        """Get length of the batches."""
-        return len(self.data)
-
-    def __iter__(self):
-        """Iterate over batches in the data."""
-        for batch in self.data:
-            X = torch.nn.functional.one_hot(getattr(batch, self.df), self.VOCAB_SIZE)
-            y = getattr(batch, self.lf)
-            yield (X, y)
-
-
-class TorchTextDefaultExtractor:
-    """A class to get index-tensor batches from torchtext data object."""
-
-    def __init__(self, datafield: str, labelfield: str, dataloader: base.DataType):
-        """Initialize batch generator for torchtext."""
-        self.data, self.df, self.lf = dataloader, datafield, labelfield
-
-    def __len__(self):
-        """Get length of the batches."""
-        return len(self.data)
-
-    def __iter__(self):
-        """Iterate over batches in the data."""
-        for batch in self.data:
-            X = getattr(batch, self.df)
-            y = getattr(batch, self.lf)
-            yield (X, y)
-
-
 class Batch(base.Batch):
     """Create batches."""
 

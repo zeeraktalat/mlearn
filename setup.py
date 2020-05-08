@@ -22,7 +22,6 @@ setuptools.setup(
     install_requires=[
         "numpy==1.18.2",
         "torch==1.1.0",
-        "torchtext==0.4.0",
         "tqdm==4.36.1",
         "spacy==2.2.2",
         "scikit-learn==0.21.3",
