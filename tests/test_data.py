@@ -56,7 +56,7 @@ class TestDataSet(torchtestcase.TorchTestCase):
         fields = [Field('text', train = True, label = False, ignore = False, ix = 0, cname = 'text'),
                   Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 1)]
 
-        with self.AssertRaises(AssertionError):
+        with self.assertRaises(AssertionError):
             GeneralDataset(data_dir = os.getcwd() + '/tests/',
                            ftype = 'jsn', fields = fields, train = 'train.json', dev = None,
                            test = 'test.json', train_labels = None, tokenizer = lambda x: x.split(),
