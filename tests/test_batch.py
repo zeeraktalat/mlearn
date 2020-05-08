@@ -55,12 +55,12 @@ class TestBatch(torchtestcase.TorchTestCase):
         output = [all(isinstance(batch_item, Datapoint) for batch_item in batch) for batch in b]
         self.assertEqual(output, expected, msg = "Not all items are datapoints.")
 
-    @unittest.SkipTest("Test is not implemented.")
+    @unittest.skip("Test is not implemented.")
     def test_shuffle_batches(self):
         """Test shuffling batches."""
         pass
 
-    @unittest.SkipTest("Test is not implemented.")
+    @unittest.skip("Test is not implemented.")
     def test_shuffle_data(self):
         """Test shuffling data."""
         pass
