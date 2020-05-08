@@ -22,7 +22,7 @@ before_script:
   - python -m spacy download en
 
 script:
-  - flake8 --config=setup.cfg
+  - flake8
   - pydocstyle
   - coverage run -m unittest discover
 
