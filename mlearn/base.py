@@ -44,6 +44,14 @@ class Batch(object):
     pass
 
 
+# Do direct naming to prevent erroring out on CI
+Callable = Callable
+Dict = Dict
+Iterator = Iterator
+List = List
+Tuple = Tuple
+Union = Union
+
 # Data types
 FieldType = Field
 DataType = Union[list, np.ndarray, torch.LongTensor, List[Datapoint]]
