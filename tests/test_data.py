@@ -1,3 +1,4 @@
+import os
 import torch
 import torchtestcase
 from mlearn.base import Field, Datapoint
@@ -12,14 +13,14 @@ class TestDataSet(torchtestcase.TorchTestCase):
         fields = [Field('text', train = True, label = False, ignore = False, ix = 0, cname = 'text'),
                   Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 1)]
 
-        cls.csv_dataset = GeneralDataset(data_dir = '~/PhD/projects/tools/mlearn/tests',
+        cls.csv_dataset = GeneralDataset(data_dir = os.getcwd() + '/tests/',
                                          ftype = 'csv', fields = fields, train = 'train.csv', dev = None,
                                          test = 'test.csv', train_labels = None, tokenizer = lambda x: x.split(),
                                          preprocessor = None, transformations = None,
                                          label_processor = None, sep = ',', name = 'test')
         cls.csv_dataset.load('train')
         cls.train = cls.csv_dataset.data
-        cls.json_dataset = GeneralDataset(data_dir = '~/PhD/projects/tools/mlearn/tests',
+        cls.json_dataset = GeneralDataset(data_dir = os.getcwd + 'tests/',
                                           ftype = 'json', fields = fields, train = 'train.json', dev = None,
                                           test = 'test.json', train_labels = None, tokenizer = lambda x: x.split(),
                                           preprocessor = None, transformations = None,
@@ -309,12 +310,12 @@ class TestDataSet(torchtestcase.TorchTestCase):
         fields = [Field('text', train = True, label = False, ignore = False, ix = 5, cname = 'text'),
                   Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 4)]
 
-        data = GeneralDataset(data_dir = '~/PhD/projects/tools/mlearn/tests',
-                                         ftype = 'csv', fields = fields, train = 'garcia_stormfront_train.tsv',
-                                         dev = None, test = None, train_labels = None,
-                                         tokenizer = lambda x: x.split(),
-                                         preprocessor = None, transformations = None,
-                                         label_processor = None, sep = '\t', name = 'test')
+        data = GeneralDataset(data_dir = os.getcwd + 'tests/',
+                              ftype = 'csv', fields = fields, train = 'garcia_stormfront_train.tsv',
+                              dev = None, test = None, train_labels = None,
+                              tokenizer = lambda x: x.split(),
+                              preprocessor = None, transformations = None,
+                              label_processor = None, sep = '\t', name = 'test')
         data.load('train')
         loaded_train = data.data
 
