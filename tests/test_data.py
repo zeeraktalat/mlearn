@@ -20,7 +20,7 @@ class TestDataSet(torchtestcase.TorchTestCase):
                                          label_processor = None, sep = ',', name = 'test')
         cls.csv_dataset.load('train')
         cls.train = cls.csv_dataset.data
-        cls.json_dataset = GeneralDataset(data_dir = os.getcwd() + 'tests/',
+        cls.json_dataset = GeneralDataset(data_dir = os.getcwd() + '/tests/',
                                           ftype = 'json', fields = fields, train = 'train.json', dev = None,
                                           test = 'test.json', train_labels = None, tokenizer = lambda x: x.split(),
                                           preprocessor = None, transformations = None,
@@ -310,7 +310,7 @@ class TestDataSet(torchtestcase.TorchTestCase):
         fields = [Field('text', train = True, label = False, ignore = False, ix = 5, cname = 'text'),
                   Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 4)]
 
-        data = GeneralDataset(data_dir = os.getcwd() + 'tests/',
+        data = GeneralDataset(data_dir = os.getcwd() + '/tests/',
                               ftype = 'csv', fields = fields, train = 'garcia_stormfront_train.tsv',
                               dev = None, test = None, train_labels = None,
                               tokenizer = lambda x: x.split(),

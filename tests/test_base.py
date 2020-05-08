@@ -12,7 +12,7 @@ class TestDataPoint(unittest.TestCase):
         fields = [Field('text', train = True, label = False, ignore = False, ix = 0, cname = 'text'),
                   Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 1)]
 
-        cls.dataset = GeneralDataset(data_dir = os.getcwd() + 'tests/',
+        cls.dataset = GeneralDataset(data_dir = os.getcwd() + '/tests/',
                                      ftype = 'csv', fields = fields, train = 'train.csv', dev = None,
                                      test = 'test.csv', train_labels = None, tokenizer = lambda x: x.split(),
                                      preprocessor = None, transformations = None,
