@@ -65,6 +65,16 @@ class TestBatch(torchtestcase.TorchTestCase):
         """Test shuffling data."""
         pass
 
+    @unittest.skip("Test not implemented.")
+    def test_getitem__(self):
+        """Test __getitem__ function."""
+        pass
+
+    @unittest.skip("Test not implemented.")
+    def test_getattr__(self):
+        """Test __getattr__ function."""
+        pass
+
 
 class TestBatchGenerator(unittest.TestCase):
     """Test the batchgenerator class."""
@@ -137,3 +147,23 @@ class TestBatchGenerator(unittest.TestCase):
         expected = [self.dataset.length for _ in batches]
         output = [batch[0].size(1) for batch in batches]
         self.assertEqual(output, expected, msg = "Not all encoded items have the right length.")
+
+    @unittest.skip("Test not implemented.")
+    def test_getitem__(self):
+        """Test __getitem__ function."""
+        pass
+
+    @unittest.skip("Test not implemented.")
+    def test_getattr__(self):
+        """Test __getattr__ function."""
+        pass
+
+    @unittest.skip("Test is not implemented.")
+    def test_shuffle_batches(self):
+        """Test shuffling batches."""
+        pass
+
+    @unittest.skip("Test is not implemented.")
+    def test_shuffle_data(self):
+        """Test shuffling data."""
+        pass
