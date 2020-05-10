@@ -21,15 +21,12 @@ setuptools.setup(
     python_requires='>3.6',
     install_requires=[
         "numpy==1.18.2",
-        "torch==1.1.0",
         "tqdm==4.36.1",
         "spacy==2.2.2",
         "scikit-learn==0.21.3",
         "torchtestcase",
-        "en_core_web_sm"
+        "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.5/en_core_web_sm-2.2.5.tar.gz#egg=en_core_web_sm",
+        "torch==1.1.0"
     ],
     dependency_links=[
-        "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.5/en_core_web_sm-2.2.5.tar.gz#egg=en_core_web_sm",
         "https://download.pytorch.org/whl/cu90/torch_stable.html"
-      ]
-)
