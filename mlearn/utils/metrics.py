@@ -14,7 +14,7 @@ class Metrics:
         :early_stop (str): Metric to evaluate whether to perform early stopping.
         """
         self.scores, self.metrics = {}, {}
-        self.display = display_metric
+        self.display_metrc = display_metric
         self.early_stop_metric = early_stop
 
         self.select_metrics(metrics)  # Initialize the metrics dict.
@@ -65,13 +65,13 @@ class Metrics:
         scores = {name: float(metric(preds, labels, **kwargs)) for name, metric in self.metrics.items()}
         return scores
 
-    def display_metric(self) -> base.Dict[str, float]:
+    def display(self) -> base.Dict[str, float]:
         """
         Get display metric dict.
 
         :returns (base.Dict[str, float]): display metric dict.
         """
-        return {self.display: self.scores[self.display]}
+        return {self.display_metric: self.scores[self.display_metric]}
 
     def early_stopping(self) -> float:
         """
