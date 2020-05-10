@@ -70,7 +70,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
             predictions.extend(torch.argmax(scores, 1).cpu().tolist())
             labels.extend(y.cpu().tolist())
 
-            loop.set_postfix(batch_loss = epoch_loss[-1])
+            loop.set_postfix(loss = epoch_loss[-1] / len(y))
 
     return predictions, labels, epoch_loss
 
@@ -112,6 +112,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
                 iterator.shuffle()
 
             epoch_preds, epoch_labels, epoch_loss = _singletask_epoch(model, optimizer, loss_func, iterator, clip, gpu)
+            epoch_loss = epoch_loss / len(epoch_loss)
             metrics.compute(epoch_labels, epoch_preds)
             epoch_display = metrics.display_metric()
 
@@ -121,6 +122,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
 
             try:
                 dev_loss, _, dev_scores, _ = eval_torch_model(model, dev_iterator, loss_func, metrics, **kwargs)
+                dev_loss = dev_loss / len(dev_loss)
                 dev_losses.append(dev_loss)
                 dev_score = dev_scores[metrics.display]
 
@@ -180,7 +182,7 @@ def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: ba
         metrics.compute()
         epoch_loss.append(loss.data.item().cpu())
 
-        b.set_postfix(batch_loss = epoch_loss[-1], **metrics.display_metric(), task = task_id)
+        b.set_postfix(batch_loss = epoch_loss[-1] / len(y), **metrics.display(), task = task_id)
 
     return epoch_loss
 
@@ -234,15 +236,24 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
         batchers.append(batches)
 
     with trange(epochs, desc = "Training model") as t:
+        dev_scores = []
+        dev_losses = []
+        train_loss = []
+
         for epoch in t:
             epoch_loss = _mtl_epoch(model, loss_func, loss_weights, opt, batchers, batches_per_epoch,
                                     dataset_weights, clip)
+            epoch_loss = epoch_loss / len(epoch_loss)
+            train_loss.append(epoch_loss)
 
             try:
                 dev_batches = process_and_batch(dev, dev.dev, len(dev.dev))
-                dev_loss, _, dev_scores, _ = eval_torch_model(model, dev_batches, loss_func,
+                dev_loss, _, dev_score, _ = eval_torch_model(model, dev_batches, loss_func,
                                                               metrics, mtl = True,
                                                               task_id = dev_task_id)
+                dev_loss = dev_loss / len(dev_loss)
+                dev_losses.append(dev_loss)
+                dev_scores.append(dev_score)
 
                 t.set_postfix(epoch_loss = epoch_loss, dev_loss = dev_loss)
 
@@ -254,6 +265,7 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
                 t.set_postfix(epoch_loss = epoch_loss)
             finally:
                 t.refresh()
+    return train_loss, dev_losses, _, dev_scores
 
 
 def train_sklearn_model(arg1):
