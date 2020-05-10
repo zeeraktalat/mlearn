@@ -30,3 +30,4 @@ setuptools.setup(
     ],
     dependency_links=[
         "https://download.pytorch.org/whl/cu90/torch_stable.html"
+        ]
