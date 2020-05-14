@@ -5,17 +5,16 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_a
 class Metrics:
     """Metrics data object, to contain methods for computing, extracting, and evaluating different metrics."""
 
-    def __init__(self, metrics: base.List[str], display_metric: str, early_stop: str):
+    def __init__(self, metrics: base.List[str], display_metric: str):
         """
         Intialize metrics computation class.
 
         :metrics (base.List[str]): List of strings containing metric names.
         :display_metric (str): Metric to display in TQDM loops.
-        :early_stop (str): Metric to evaluate whether to perform early stopping.
+        :early_stop (str, default = None): Metric to evaluate whether to perform early stopping.
         """
         self.scores, self.metrics = {}, {}
         self.display_metrc = display_metric
-        self.early_stop_metric = early_stop
 
         self.select_metrics(metrics)  # Initialize the metrics dict.
 
@@ -72,14 +71,6 @@ class Metrics:
         :returns (base.Dict[str, float]): display metric dict.
         """
         return {self.display_metric: self.scores[self.display_metric]}
-
-    def early_stopping(self) -> float:
-        """
-        Get score for metric for identifying early stopping.
-
-        :returns (float): Score for early stopping metric.
-        """
-        return self.scores[self.early_stop_metric]
 
     def __getitem__(self, metric: str) -> float:
         """
