@@ -3,10 +3,10 @@ import numpy as np
 from tqdm import tqdm, trange
 from mlearn import base
 from collections import defaultdict
+from mlearn.utils.evaluate import eval_torch_model
 from mlearn.utils.pipeline import process_and_batch
-from mlearn.modeling.evaluate import eval_torch_model
-from mlearn.modeling.early_stopping import EarlyStopping
-from mlearn.data_processing.fileio import write_predictions, write_results
+from mlearn.utils.early_stopping import EarlyStopping
+from mlearn.data.fileio import write_predictions, write_results
 
 
 def run_singletask_model(library: str, train: bool, writer: base.Callable, model_info: list, head_len: int, **kwargs):

@@ -1,5 +1,5 @@
 from mlearn import base
-from mlearn.data_processing.data import GeneralDataset
+from mlearn.data.dataset import GeneralDataset
 
 
 def _loader(args: dict) -> GeneralDataset:

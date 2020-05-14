@@ -1,6 +1,6 @@
 from mlearn import base
-from mlearn.data_processing.data import GeneralDataset
-from mlearn.data_processing.batching import Batch, BatchExtractor
+from mlearn.data.dataset import GeneralDataset
+from mlearn.data.batching import Batch, BatchExtractor
 
 
 def process_and_batch(dataset: GeneralDataset, data: base.DataType, batch_size: int, onehot: bool = True):

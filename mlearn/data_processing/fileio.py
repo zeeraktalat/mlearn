@@ -2,7 +2,7 @@ import sys
 import ast
 import json
 from mlearn import base
-from mlearn.data_processing.data import data
+from mlearn.data.dataset import GeneralDataset
 
 
 def read_json(fh: str, enc, doc_key: str, label_key: str, **kwargs) -> base.Tuple[str, str, ...]:
@@ -50,7 +50,7 @@ def read_json(fh: str, enc, doc_key: str, label_key: str, **kwargs) -> base.Tupl
     return tuple(out_vals)
 
 
-def write_predictions(data: base.DataType, dataset: data.GeneralDataset, train_field: str, label_field: str,
+def write_predictions(data: base.DataType, dataset: GeneralDataset, train_field: str, label_field: str,
                       model_info: list, data_name: str, main_name: str, pred_fn: base.Callable,
                       **kwargs) -> None:
     """
