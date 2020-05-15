@@ -5,7 +5,7 @@ from mlearn import base
 from mlearn.data.dataset import GeneralDataset
 
 
-def read_json(fh: str, enc, doc_key: str, label_key: str, **kwargs) -> base.Tuple[str, str, ...]:
+def read_json(fh: str, enc, doc_key: str, label_key: str, **kwargs) -> base.Tuple[str]:
     """
     Read JSON file containing entire document and label.
 
