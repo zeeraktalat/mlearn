@@ -2,7 +2,7 @@ from mlearn import base
 from mlearn.data.dataset import GeneralDataset
 
 
-def _loader(args: dict) -> GeneralDataset:
+def _loader(args: dict, **kwargs) -> GeneralDataset:
     """
     Load the dataset.
 
@@ -10,23 +10,23 @@ def _loader(args: dict) -> GeneralDataset:
     :returns (GeneralDataset): Loaded and splitted dataset.
     """
     dataset = GeneralDataset(**args)
-    dataset.load('train')
+    dataset.load('train', **kwargs)
 
     if (args['dev'], args['test']) == (None, None):
-        dataset.split(dataset.data, [0.8, 0.1, 0.1])
+        dataset.split(dataset.data, [0.8, 0.1, 0.1], **kwargs)
 
     elif args['dev'] is not None and args['test'] is None:
         dataset.load('dev')
-        dataset.split(dataset.data, 0.8)
+        dataset.split(dataset.data, [0.8], **kwargs)
 
     elif args['dev'] is None and args['test'] is not None:
-        dataset.split(dataset.data, 0.8)
+        dataset.split(dataset.data, [0.8], **kwargs)
         dataset.dev_set = dataset.test
         dataset.load('test')
 
     else:
-        dataset.load('dev')
-        dataset.load('test')
+        dataset.load('dev', **kwargs)
+        dataset.load('test', **kwargs)
 
     return dataset
 
@@ -45,7 +45,7 @@ def davidson_to_binary(label: str) -> str:
 
 
 def davidson(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-             transformer: base.Callable = None, label_processor: base.Callable = None) -> GeneralDataset:
+             transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
     """
     Load the davidson dataset.
 
@@ -77,7 +77,7 @@ def davidson(cleaners: base.Callable, data_path: str, length: int = None, prepro
 
     args['fields'] = [ignore, ignore, ignore, ignore, ignore, d_label, d_text]
 
-    return _loader(args)
+    return _loader(args, **kwargs)
 
 
 def waseem_to_binary(label: str) -> str:
@@ -94,7 +94,7 @@ def waseem_to_binary(label: str) -> str:
 
 
 def waseem(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-           transformer: base.Callable = None, label_processor: base.Callable = None) -> GeneralDataset:
+           transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
     """
     Load the Waseem dataset (expert annotations).
 
@@ -124,12 +124,12 @@ def waseem(cleaners: base.Callable, data_path: str, length: int = None, preproce
     label_field = base.Field('label', train = False, label = True, ignore = False, cname = 'Annotation')
     args['fields'] = [text_field, label_field]
 
-    return _loader(args)
+    return _loader(args, **kwargs)
 
 
 def waseem_hovy(cleaners: base.Callable, data_path: str, train: str, length: int = None,
                 preprocessor: base.Callable = None, transformer: base.Callable = None,
-                label_processor: base.Callable = None) -> GeneralDataset:
+                label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
     """
     Load the Waseem-Hovy dataset.
 
@@ -158,7 +158,7 @@ def waseem_hovy(cleaners: base.Callable, data_path: str, train: str, length: int
     label_field = base.Field('label', train = False, label = True, ignore = False, cname = 'Annotation')
     args['fields'] = [text_field, label_field]
 
-    return _loader(args)
+    return _loader(args, **kwargs)
 
 
 def binarize_garcia(label: str) -> str:
@@ -175,7 +175,7 @@ def binarize_garcia(label: str) -> str:
 
 def garcia(cleaners: base.Callable, data_path: str, length: int = None,
            preprocessor: base.Callable = None, transformer: base.Callable = None,
-           label_processor: base.Callable = None) -> GeneralDataset:
+           label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
     """
     Load the Garcia et al. dataset.
 
@@ -209,11 +209,11 @@ def garcia(cleaners: base.Callable, data_path: str, length: int = None,
 
     args['fields'] = [id_field, user_field, ignore, ignore, label_field, text_field]
 
-    return _loader(args)
+    return _loader(args, **kwargs)
 
 
 def wulczyn(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-            transformer: base.Callable = None, label_processor: base.Callable = None) -> GeneralDataset:
+            transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
     """
     Load the Wulczyn et al. dataset.
 
@@ -247,11 +247,11 @@ def wulczyn(cleaners: base.Callable, data_path: str, length: int = None, preproc
 
     args['fields'] = [idx, text, label, ignore]
 
-    return _loader(args)
+    return _loader(args, **kwargs)
 
 
 def hoover(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-           transformer: base.Callable = None, label_processor: base.Callable = None) -> GeneralDataset:
+           transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
     """
     Load the Hoover et al. dataset.
 
@@ -281,7 +281,7 @@ def hoover(cleaners: base.Callable, data_path: str, length: int = None, preproce
 
     args['fields'] = [ignore, text] + 16 * [ignore] + [label, ignore]
 
-    return _loader(args)
+    return _loader(args, **kwargs)
 
 
 def guest_to_multiclass(label: str) -> str:
@@ -304,7 +304,7 @@ def guest_to_multiclass(label: str) -> str:
 
 
 def guest(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-          transformer: base.Callable = None, label_processor: base.Callable = None) -> GeneralDataset:
+          transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
     """
     Load the Vidgen et al. dataset.
 
@@ -334,4 +334,4 @@ def guest(cleaners: base.Callable, data_path: str, length: int = None, preproces
 
     args['fields'] = [ignore, text] + 16 * [ignore] + [label, ignore]
 
-    return _loader(args)
+    return _loader(args, **kwargs)
