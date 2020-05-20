@@ -1,4 +1,5 @@
 from mlearn import base
+from collections import OrderedDict
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score, confusion_matrix, f1_score
 
 
@@ -13,7 +14,7 @@ class Metrics:
         :display_metric (str): Metric to display in TQDM loops.
         :early_stop (str, default = None): Metric to evaluate whether to perform early stopping.
         """
-        self.scores, self.metrics = {}, {}
+        self.scores, self.metrics = {}, OrderedDict()
         self.display_metrc = display_metric
 
         self.select_metrics(metrics)  # Initialize the metrics dict.
@@ -72,6 +73,10 @@ class Metrics:
         """
         return {self.display_metric: self.scores[self.display_metric]}
 
+    def list(self) -> base.List:
+        """Return a list of all metrics."""
+        return self.metrics.keys()
+
     def __getitem__(self, metric: str) -> float:
         """
         Get individual metric.
@@ -80,6 +85,3 @@ class Metrics:
         :returns (float): Score for desired metric.
         """
         return self.metrics[metric]
-
-    def __keys__(self):
-        return self.metrics.keys()
