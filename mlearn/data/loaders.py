@@ -127,7 +127,7 @@ def waseem(cleaners: base.Callable, data_path: str, length: int = None, preproce
     return _loader(args, **kwargs)
 
 
-def waseem_hovy(cleaners: base.Callable, data_path: str, train: str, length: int = None,
+def waseem_hovy(cleaners: base.Callable, data_path: str, length: int = None,
                 preprocessor: base.Callable = None, transformer: base.Callable = None,
                 label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
     """
