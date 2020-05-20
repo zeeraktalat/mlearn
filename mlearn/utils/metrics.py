@@ -80,3 +80,6 @@ class Metrics:
         :returns (float): Score for desired metric.
         """
         return self.metrics[metric]
+
+    def __keys__(self):
+        return self.metrics.keys()
