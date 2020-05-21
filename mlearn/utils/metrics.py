@@ -75,7 +75,7 @@ class Metrics:
 
     def list(self) -> base.List:
         """Return a list of all metrics."""
-        return self.metrics.keys()
+        return list(self.metrics.keys())
 
     def __getitem__(self, metric: str) -> float:
         """
