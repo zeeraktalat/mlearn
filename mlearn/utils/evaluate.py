@@ -48,9 +48,9 @@ def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_f: bas
         model.eval()
 
         if mtl and task_id is not None:
-            predicted, true, loss = predict_torch_model(model, iterator, task_id = task_id, **kwargs)
+            predicted, true, loss = predict_torch_model(model, iterator, loss_f, task_id = task_id, **kwargs)
         else:
-            predicted, true, loss = predict_torch_model(model, iterator, **kwargs)
+            predicted, true, loss = predict_torch_model(model, iterator, loss_f, **kwargs)
 
         metrics._compute(true, predicted)
 
