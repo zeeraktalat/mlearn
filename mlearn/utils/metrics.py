@@ -1,3 +1,4 @@
+import numpy as np
 from mlearn import base
 from collections import OrderedDict
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score, confusion_matrix, f1_score
@@ -74,7 +75,7 @@ class Metrics:
 
         :returns (base.Dict[str, float]): display metric dict.
         """
-        return {self.display_metric: self.scores[self.display_metric]}
+        return {self.display_metric: np.mean(self.scores[self.display_metric])}
 
     def list(self) -> base.List:
         """Return a list of all metrics."""
@@ -88,3 +89,6 @@ class Metrics:
         :returns (float): Score for desired metric.
         """
         return self.metrics[metric]
+
+    def copy(self):
+        return {m: [] for m in self.scores}

@@ -77,8 +77,9 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
 
 def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, iterator: base.DataType,
                            loss_func: base.Callable, optimizer: base.Callable, metrics: object,
-                           dev_iterator: base.DataType = None, clip: float = None, patience: int = 10,
-                           shuffle: bool = True, gpu: bool = True, **kwargs) -> base.Union[list, int, dict, dict]:
+                           dev_iterator: base.DataType = None, dev_metrics: object = None, clip: float = None,
+                           patience: int = 10, shuffle: bool = True, gpu: bool = True,
+                           **kwargs) -> base.Union[list, int, dict, dict]:
     """
     Train a single task pytorch model.
 
@@ -90,6 +91,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
     :optimizer (bas.Callable): Optimizer function.
     :metrics (object): Initialized Metrics object.
     :dev_iterator (base.DataType, optional): Batched dev set.
+    :dev_metrics (object): Initialized Metrics object.
     :clip (float, default = None):
     :shuffle (bool, default = True): Shuffle the dataset.
     :gpu (bool, default = True): Run on GPU
@@ -113,31 +115,31 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
 
             epoch_preds, epoch_labels, epoch_loss = _singletask_epoch(model, optimizer, loss_func, iterator, clip, gpu)
             epoch_loss = sum(epoch_loss) / len(epoch_loss)
-            metrics.compute(epoch_labels, epoch_preds)
-            epoch_display = metrics.display()
 
             preds.extend(epoch_preds)
             labels.extend(epoch_labels)
             loss.append(epoch_loss)
 
-            try:
-                dev_loss, _, dev_scores, _ = eval_torch_model(model, dev_iterator, loss_func, metrics, **kwargs)
-                dev_loss = dev_loss / len(dev_loss)
-                dev_losses.append(dev_loss)
-                dev_score = dev_scores[metrics.display_metric]
+            # try:
+            __import__('pdb').set_trace()
+            dev_loss = eval_torch_model(model, dev_iterator, loss_func, dev_metrics, **kwargs)
+            dev_loss = dev_loss / len(dev_loss)
+            dev_losses.append(dev_loss)
+            dev_score = dev_scores[metrics.display_metric]
 
-                if early_stopping is not None and early_stopping(model, dev_loss):
-                    early_stopping.set_best_state(model)
-                    break
+            if early_stopping is not None and early_stopping(model, dev_loss):
+                early_stopping.set_best_state(model)
+                break
 
-                __import__('pdb').set_trace()
-                loop.set_postfix(loss = f"{epoch_loss:.4f}", dev_loss = f"{dev_loss:.4f}",
-                                 **epoch_display, dev_score = dev_score)
-            except Exception:
-                # TODO Add logging of error
-                loop.set_postfix(loss = f"{epoch_loss:.4f}", **epoch_display)
+            # For displaying
+            metrics.compute(epoch_labels, epoch_preds)
+            epoch_display = metrics.display()
 
-        train_scores = metrics.compute(preds, labels)
+            loop.set_postfix(loss = f"{epoch_loss:.4f}", dev_loss = f"{dev_loss:.4f}",
+                             **epoch_display, dev_score = dev_score)
+            # except Exception:
+            #     # TODO Add logging of error
+            #     loop.set_postfix(loss = f"{epoch_loss:.4f}", **epoch_display)
 
     return loss, dev_losses, train_scores, dev_scores
 
