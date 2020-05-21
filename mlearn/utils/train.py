@@ -70,7 +70,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
             predictions.extend(torch.argmax(scores, 1).cpu().tolist())
             labels.extend(y.cpu().tolist())
 
-            loop.set_postfix(loss = epoch_loss[-1] / len(y))
+            loop.set_postfix(loss = f"{epoch_loss[-1] / len(y):.5f}")
 
     return predictions, labels, epoch_loss
 
@@ -94,7 +94,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
     :shuffle (bool, default = True): Shuffle the dataset.
     :gpu (bool, default = True): Run on GPU
     """
-    with trange(epochs) as loop:
+    with trange(epochs, desc = "Training epochs") as loop:
         preds, labels, loss = [], [], []
         train_scores = defaultdict(list)
 
@@ -112,13 +112,13 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
                 iterator.shuffle()
 
             epoch_preds, epoch_labels, epoch_loss = _singletask_epoch(model, optimizer, loss_func, iterator, clip, gpu)
-            epoch_loss = epoch_loss / len(epoch_loss)
+            epoch_loss = sum(epoch_loss) / len(epoch_loss)
             metrics.compute(epoch_labels, epoch_preds)
             epoch_display = metrics.display()
 
             preds.extend(epoch_preds)
             labels.extend(epoch_labels)
-            loss.append(sum(epoch_loss))
+            loss.append(epoch_loss)
 
             try:
                 dev_loss, _, dev_scores, _ = eval_torch_model(model, dev_iterator, loss_func, metrics, **kwargs)
