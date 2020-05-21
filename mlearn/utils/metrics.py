@@ -52,8 +52,7 @@ class Metrics:
         :preds (base.DataType): Predicted labels.
         :returns (base.Dict[str, float]): Dict containing computed scores.
         """
-        scores = self._compute(labels, preds)
-        for (metric, score) in scores:
+        for metric, score in self._compute(labels, preds).items():
             self.scores[metric].append(score)
         return self.scores
 
