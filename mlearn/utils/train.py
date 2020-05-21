@@ -70,7 +70,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
             predictions.extend(torch.argmax(scores, 1).cpu().tolist())
             labels.extend(y.cpu().tolist())
 
-            loop.set_postfix(loss = f"{epoch_loss[-1] / len(y):.7f}")
+            loop.set_postfix(batch_loss = f"{epoch_loss[-1] / len(y):.7f}", epoch_loss = f"{np.mean(epoch_loss)}")
 
     return predictions, labels, epoch_loss
 
@@ -114,32 +114,27 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
                 iterator.shuffle()
 
             epoch_preds, epoch_labels, epoch_loss = _singletask_epoch(model, optimizer, loss_func, iterator, clip, gpu)
-            epoch_loss = sum(epoch_loss) / len(epoch_loss)
+            epoch_loss = np.mean(epoch_loss)
 
             preds.extend(epoch_preds)
             labels.extend(epoch_labels)
             loss.append(epoch_loss)
-
-            # try:
-            __import__('pdb').set_trace()
-            dev_loss = eval_torch_model(model, dev_iterator, loss_func, dev_metrics, gpu, **kwargs)
-            dev_loss = dev_loss / len(dev_loss)
-            dev_losses.append(dev_loss)
-            dev_score = dev_scores[metrics.display_metric]
-
-            if early_stopping is not None and early_stopping(model, dev_loss):
-                early_stopping.set_best_state(model)
-                break
-
-            # For displaying
             metrics.compute(epoch_labels, epoch_preds)
-            epoch_display = metrics.display()
 
-            loop.set_postfix(loss = f"{epoch_loss:.4f}", dev_loss = f"{dev_loss:.4f}",
-                             **epoch_display, dev_score = dev_score)
-            # except Exception:
-            #     # TODO Add logging of error
-            #     loop.set_postfix(loss = f"{epoch_loss:.4f}", **epoch_display)
+            try:
+                dev_loss = eval_torch_model(model, dev_iterator, loss_func, dev_metrics, gpu, **kwargs)
+                dev_losses.append(dev_loss)
+                dev_score = dev_scores[metrics.display_metric]
+
+                if early_stopping is not None and early_stopping(model, dev_loss):
+                    early_stopping.set_best_state(model)
+                    break
+
+                loop.set_postfix(loss = f"{epoch_loss:.4f}", dev_loss = f"{dev_loss:.4f}",
+                                 **metrics.display(), dev_score = dev_score)
+            except Exception:
+                # TODO Add logging of error
+                loop.set_postfix(loss = f"{epoch_loss:.4f}", **metrics.display())
 
     return loss, dev_losses, train_scores, dev_scores
 

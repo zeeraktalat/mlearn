@@ -26,7 +26,7 @@ def predict_torch_model(model: base.ModelType, iterator: base.DataType, loss_f: 
         loss.append(li.data.item())
 
         predicted.extend(torch.argmax(pred, dim = 1).tolist())
-        labels.extend(y.tolist())
+        labels.extend(y.cpu().tolist())
 
     return list(predicted), list(labels), torch.mean(torch.Tensor(loss)).item()
 
