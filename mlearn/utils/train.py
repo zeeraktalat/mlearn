@@ -1,8 +1,7 @@
 import torch
 import numpy as np
-from tqdm import tqdm, trange
 from mlearn import base
-from collections import defaultdict
+from tqdm import tqdm, trange
 from mlearn.utils.evaluate import eval_torch_model
 from mlearn.utils.pipeline import process_and_batch
 from mlearn.utils.early_stopping import EarlyStopping
@@ -98,10 +97,8 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
     """
     with trange(epochs, desc = "Training epochs") as loop:
         preds, labels, loss = [], [], []
-        train_scores = defaultdict(list)
 
         dev_losses = []
-        dev_scores = defaultdict(list)
 
         if patience > 0:
             early_stopping = EarlyStopping(save_path, patience, low_is_good = False)
@@ -138,7 +135,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
                 # TODO Add logging of error
                 loop.set_postfix(loss = f"{epoch_loss:.4f}", **metrics.display())
 
-    return loss, dev_losses, train_scores, dev_scores
+    return loss, dev_losses, metrics.scores, dev_metrics.scores
 
 
 def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: base.DataType, opt: base.Callable,
