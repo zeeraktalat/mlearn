@@ -47,7 +47,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
     predictions, labels = [], []
     epoch_loss = []
 
-    with tqdm(iterator, desc = "Batch") as loop:
+    with tqdm(iterator, desc = "Batch", leave = False) as loop:
 
         for X, y in loop:
             if gpu:
@@ -95,7 +95,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
     :shuffle (bool, default = True): Shuffle the dataset.
     :gpu (bool, default = True): Run on GPU
     """
-    with trange(epochs, desc = "Training epochs") as loop:
+    with trange(epochs, desc = "Training epochs", leave = False) as loop:
         preds, labels, loss = [], [], []
 
         dev_losses = []
@@ -119,7 +119,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
             metrics.compute(epoch_labels, epoch_preds)
 
             try:
-                dev_loss = eval_torch_model(model, dev_iterator, loss_func, dev_metrics, gpu, **kwargs)
+                dev_loss, _, _, _ = eval_torch_model(model, dev_iterator, loss_func, dev_metrics, gpu, **kwargs)
                 dev_losses.append(dev_loss)
                 dev_score = dev_metrics[dev_metrics.display_metric][-1]
 
@@ -154,7 +154,7 @@ def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: ba
     """
     epoch_loss = []
 
-    with tqdm(range(batch_count, desc = 'Batch')) as b:
+    with tqdm(range(batch_count, desc = 'Batch', leave = False)) as b:
 
         # Select task and get batch
         task_id = np.random.choice(range(len(batchers)), p = dataset_weights)
