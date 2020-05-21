@@ -121,6 +121,8 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
             loss.append(epoch_loss)
             metrics.compute(epoch_labels, epoch_preds)
 
+            __import__('pdb').set_trace()
+
             try:
                 dev_loss = eval_torch_model(model, dev_iterator, loss_func, dev_metrics, gpu, **kwargs)
                 dev_losses.append(dev_loss)
