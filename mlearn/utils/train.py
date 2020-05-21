@@ -131,10 +131,11 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
                     break
 
                 __import__('pdb').set_trace()
-                loop.set_postfix(loss = epoch_loss, dev_loss = dev_loss, **epoch_display, dev_score = dev_score)
+                loop.set_postfix(loss = f"{epoch_loss:.4f}", dev_loss = f"{dev_loss:.4f}",
+                                 **epoch_display, dev_score = dev_score)
             except Exception:
                 # TODO Add logging of error
-                loop.set_postfix(loss = epoch_loss, **epoch_display)
+                loop.set_postfix(loss = f"{epoch_loss:.4f}", **epoch_display)
 
         train_scores = metrics.compute(preds, labels)
 
