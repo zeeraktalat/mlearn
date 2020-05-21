@@ -3,14 +3,14 @@ from tqdm import tqdm
 from mlearn import base
 
 
-def predict_torch_model(model: base.ModelType, iterator: base.DataType, loss_f: base.Callable, gpu: bool,
+def predict_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: base.Callable, gpu: bool,
                         **kwargs) -> base.Tuple[list, list, float]:
     """
     Predict using trained model.
 
     :model (base.ModelType): Trained model to be trained.
     :iterator (base.DataType): Batched dataset to predict on.
-    :loss_f (base.Callable): Loss function.
+    :loss_func (base.Callable): Loss function.
     :gpu (bool): True if run on GPU else false.
     :returns (base.Tuple[list, list, float]): Predictions, true labels, mean loss.
     """
@@ -22,7 +22,7 @@ def predict_torch_model(model: base.ModelType, iterator: base.DataType, loss_f: 
             X = X.cuda()
 
         pred = model(X, **kwargs).cpu()
-        li = loss_f(pred, y.cpu())
+        li = loss_func(pred, y.cpu())
         loss.append(li.data.item())
 
         predicted.extend(torch.argmax(pred, dim = 1).tolist())
@@ -31,14 +31,14 @@ def predict_torch_model(model: base.ModelType, iterator: base.DataType, loss_f: 
     return list(predicted), list(labels), torch.mean(torch.Tensor(loss)).item()
 
 
-def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_f: base.Callable,
+def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: base.Callable,
                      metrics: object, gpu: bool, mtl: bool = False, task_id: int = None, **kwargs):
     """
     Evalute pytorch model.
 
     :model (base.ModelType): Trained model to be trained.
     :iterator (base.DataType): Batched dataset to predict on.
-    :loss_f (base.Callable): Loss function.
+    :loss_func (base.Callable): Loss function.
     :metrics (object): Initialized Metrics object.
     :gpu (bool): True if running on a GPU else false.
     :mtl (bool, default = False): Is it a Multi-task Learning problem?
@@ -49,9 +49,9 @@ def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_f: bas
         model.eval()
 
         if mtl and task_id is not None:
-            predicted, true, loss = predict_torch_model(model, iterator, loss_f, gpu, task_id = task_id)
+            predicted, true, loss = predict_torch_model(model, iterator, loss_func, gpu, task_id = task_id)
         else:
-            predicted, true, loss = predict_torch_model(model, iterator, loss_f, gpu)
+            predicted, true, loss = predict_torch_model(model, iterator, loss_func, gpu)
 
         metrics.compute(true, predicted)
 
