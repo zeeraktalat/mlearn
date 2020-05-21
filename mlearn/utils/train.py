@@ -70,7 +70,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
             predictions.extend(torch.argmax(scores, 1).cpu().tolist())
             labels.extend(y.cpu().tolist())
 
-            loop.set_postfix(loss = f"{epoch_loss[-1] / len(y):.5f}")
+            loop.set_postfix(loss = f"{epoch_loss[-1] / len(y)}")
 
     return predictions, labels, epoch_loss
 
@@ -130,10 +130,10 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
                     early_stopping.set_best_state(model)
                     break
 
-                ep.set_postfix(loss = epoch_loss, dev_loss = dev_loss, **epoch_display, dev_score = dev_score)
+                loop.set_postfix(loss = epoch_loss, dev_loss = dev_loss, **epoch_display, dev_score = dev_score)
             except Exception:
                 # TODO Add logging of error
-                ep.set_postfix(loss = epoch_loss, **epoch_display)
+                loop.set_postfix(loss = epoch_loss, **epoch_display)
             finally:
                 loop.refresh()
 
