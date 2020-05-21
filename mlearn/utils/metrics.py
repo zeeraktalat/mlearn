@@ -15,7 +15,7 @@ class Metrics:
         :early_stop (str, default = None): Metric to evaluate whether to perform early stopping.
         """
         self.scores, self.metrics = {}, OrderedDict()
-        self.display_metrc = display_metric
+        self.display_metric = display_metric
 
         self.select_metrics(metrics)  # Initialize the metrics dict.
 

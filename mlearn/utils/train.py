@@ -114,7 +114,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
             epoch_preds, epoch_labels, epoch_loss = _singletask_epoch(model, optimizer, loss_func, iterator, clip, gpu)
             epoch_loss = epoch_loss / len(epoch_loss)
             metrics.compute(epoch_labels, epoch_preds)
-            epoch_display = metrics.display_metric()
+            epoch_display = metrics.display()
 
             preds.extend(epoch_preds)
             labels.extend(epoch_labels)
@@ -124,7 +124,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
                 dev_loss, _, dev_scores, _ = eval_torch_model(model, dev_iterator, loss_func, metrics, **kwargs)
                 dev_loss = dev_loss / len(dev_loss)
                 dev_losses.append(dev_loss)
-                dev_score = dev_scores[metrics.display]
+                dev_score = dev_scores[metrics.display_metric]
 
                 if early_stopping is not None and early_stopping(model, dev_loss):
                     early_stopping.set_best_state(model)
@@ -132,7 +132,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
 
                 ep.set_postfix(loss = epoch_loss, dev_loss = dev_loss, **epoch_display, dev_score = dev_score)
             except Exception:
-                # Add logging of error
+                # TODO Add logging of error
                 ep.set_postfix(loss = epoch_loss, **epoch_display)
             finally:
                 loop.refresh()
