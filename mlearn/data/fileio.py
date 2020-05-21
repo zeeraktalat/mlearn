@@ -98,9 +98,11 @@ def write_results(writer: base.Callable, train_scores: dict, train_loss: list, d
     for i in range(epochs):
         try:
             out = [data_name, main_name] + [i] + model_info  # Base info
-            out += [train_scores[m][i] for m in metrics] + [train_loss[i]]  # Train info
+            out += [train_scores[m][i] for m in metrics.list()] + [train_loss[i]]  # Train info
+
             if dev_scores:
-                out += [dev_scores[m][i] for m in metrics] + [dev_loss[i]]  # Dev info
+                out += [dev_scores[m][i] for m in metrics.list()] + [dev_loss[i]]  # Dev info
+
         except IndexError:
             __import__('pdb').set_trace()
 
