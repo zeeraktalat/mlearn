@@ -25,12 +25,8 @@ def predict_torch_model(model: base.ModelType, iterator: base.DataType, loss_f: 
         li = loss_f(pred, y.cpu())
         loss.append(li.data.item())
 
-        predicted.extend(pred)
-        labels.extend(y)
-
-    predicted = torch.argmax(predicted, dim = 1)  # Get highest predicted label
-    predicted = torch.stack(predicted).data.numpy().reshape(-1)
-    labels = torch.stack(labels).data.numpy().reshape(-1)
+        predicted.extend(torch.argmax(pred, dim = 1).tolist())
+        labels.extend(y.tolist())
 
     return list(predicted), list(labels), torch.mean(torch.Tensor(loss)).item()
 
