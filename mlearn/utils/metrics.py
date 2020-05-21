@@ -41,6 +41,8 @@ class Metrics:
             elif 'f1' in m:
                 self.metrics['f1-score'] = f1_score
 
+            self.scores[m] = []
+
     def compute(self, labels: base.DataType, preds: base.DataType, **kwargs) -> base.Dict[str, float]:
         """
         Compute scores for the model.
@@ -50,7 +52,8 @@ class Metrics:
         :preds (base.DataType): Predicted labels.
         :returns (base.Dict[str, float]): Dict containing computed scores.
         """
-        self.scores = self._compute(labels, preds)
+        for metric, score in self._compute(labels, preds):
+            self.scores[metric].append(score)
         return self.scores
 
     def _compute(self, labels: base.DataType, preds: base.DataType, **kwargs) -> base.Dict[str, float]:
