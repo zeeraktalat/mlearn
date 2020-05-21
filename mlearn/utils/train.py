@@ -126,7 +126,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
             try:
                 dev_loss = eval_torch_model(model, dev_iterator, loss_func, dev_metrics, gpu, **kwargs)
                 dev_losses.append(dev_loss)
-                dev_score = dev_scores[metrics.display_metric]
+                dev_score = dev_metrics[dev_metrics.display_metric][-1]
 
                 if early_stopping is not None and early_stopping(model, dev_loss):
                     early_stopping.set_best_state(model)

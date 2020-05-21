@@ -81,14 +81,14 @@ class Metrics:
         """Return a list of all metrics."""
         return list(self.metrics.keys())
 
-    def __getitem__(self, metric: str) -> float:
+    def __getitem__(self, metric: str) -> list:
         """
         Get individual metric.
 
         :metric (str): Metric to get results for.
-        :returns (float): Score for desired metric.
+        :returns (list): Scores for desired metric.
         """
-        return self.metrics[metric]
+        return self.scores[metric]
 
     def copy(self):
         return {m: [] for m in self.scores}
