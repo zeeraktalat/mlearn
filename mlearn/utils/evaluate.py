@@ -53,7 +53,7 @@ def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_f: bas
         else:
             predicted, true, loss = predict_torch_model(model, iterator, loss_f, gpu)
 
-        metrics._compute(true, predicted)
+        metrics.compute(true, predicted)
 
     return loss
 
