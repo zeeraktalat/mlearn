@@ -94,7 +94,6 @@ def write_results(writer: base.Callable, train_scores: dict, train_loss: list, d
     :data_name (str): Name of the dataset that's being run on.
     :main_name (str): Name of the dataset the model is trained/being trained on.
     """
-    __import__('pdb').set_trace()
     for i in range(epochs):
         try:
             out = [data_name, main_name] + [i] + model_info  # Base info
