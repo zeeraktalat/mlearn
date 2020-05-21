@@ -122,7 +122,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
 
             # try:
             __import__('pdb').set_trace()
-            dev_loss = eval_torch_model(model, dev_iterator, loss_func, dev_metrics, **kwargs)
+            dev_loss = eval_torch_model(model, dev_iterator, loss_func, dev_metrics, gpu, **kwargs)
             dev_loss = dev_loss / len(dev_loss)
             dev_losses.append(dev_loss)
             dev_score = dev_scores[metrics.display_metric]
