@@ -95,7 +95,7 @@ def write_results(writer: base.Callable, train_scores: dict, train_loss: list, d
     :main_name (str): Name of the dataset the model is trained/being trained on.
     """
     if isinstance(train_loss, float):
-        train_loss = list(train_loss)
+        train_loss = [train_loss]
 
     for i in range(epochs):
         try:

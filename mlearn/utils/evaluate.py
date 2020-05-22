@@ -55,7 +55,7 @@ def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: 
 
         metrics.compute(true, predicted)
 
-    return list(loss), None, metrics.scores, None
+    return loss, None, metrics.scores, None
 
 
 """ Joachim's Code, including regression evaluation.
