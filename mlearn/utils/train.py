@@ -28,7 +28,7 @@ def run_singletask_model(library: str, train: bool, writer: base.Callable, model
                   **kwargs)
 
     if not train:
-        write_predictions(kwargs['iterator'], model_info = model_info, **kwargs)
+        write_predictions(kwargs['test_obj'], model_info = model_info, **kwargs)
 
 
 def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base.Callable,
