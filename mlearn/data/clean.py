@@ -8,13 +8,13 @@ from string import punctuation
 class Preprocessors(object):
     """A class to contain preprocessors and wrap preprocessing functions and their requirements."""
 
-    def __init__(self, liwc_path: str = None):
+    def __init__(self, liwc_dir: str = None):
         """Initialise cleaner class."""
         self.tagger = spacy.load('en_core_web_sm', disable = ['ner', 'parser'])
         self.liwc_dict = None
         self.slurs = None
         self.slur_window = None
-        self.liwc_path = liwc_path
+        self.liwc_path = liwc_dir + 'liwc-2015.csv'
 
     def word_length(self, doc: base.DocType) -> base.List[int]:
         """
