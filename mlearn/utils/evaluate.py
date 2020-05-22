@@ -32,7 +32,8 @@ def predict_torch_model(model: base.ModelType, iterator: base.DataType, loss_fun
 
 
 def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: base.Callable,
-                     metrics: object, gpu: bool, mtl: bool = False, task_id: int = None, **kwargs):
+                     metrics: object, gpu: bool, mtl: bool = False, task_id: int = None,
+                     store: bool = True, test_obj: base.DataType = None, **kwargs):
     """
     Evalute pytorch model.
 
@@ -43,6 +44,8 @@ def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: 
     :gpu (bool): True if running on a GPU else false.
     :mtl (bool, default = False): Is it a Multi-task Learning problem?
     :task_id (int, default = None): Task ID for MTL problem.
+    :store (bool, default = True): Store the prediction if true.
+    :test_obj (base.DataType, default = None): Data object to test on.
     :returns: TODO
     """
     with torch.no_grad():
@@ -52,6 +55,10 @@ def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: 
             predicted, true, loss = predict_torch_model(model, iterator, loss_func, gpu, task_id = task_id)
         else:
             predicted, true, loss = predict_torch_model(model, iterator, loss_func, gpu)
+
+        if store:
+            for doc, pred in zip(test_obj, predicted):
+                setattr(doc, 'pred', pred)
 
         metrics.compute(true, predicted)
 

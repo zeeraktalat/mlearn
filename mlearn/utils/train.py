@@ -119,7 +119,8 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
             metrics.compute(epoch_labels, epoch_preds)
 
             try:
-                dev_loss, _, _, _ = eval_torch_model(model, dev_iterator, loss_func, dev_metrics, gpu, **kwargs)
+                dev_loss, _, _, _ = eval_torch_model(model, dev_iterator, loss_func, dev_metrics, gpu, store = False,
+                                                     **kwargs)
                 dev_losses.append(dev_loss)
                 dev_score = dev_metrics[dev_metrics.display_metric][-1]
 

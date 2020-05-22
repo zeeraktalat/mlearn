@@ -71,7 +71,7 @@ def write_predictions(data: base.DataType, dataset: GeneralDataset, train_field:
                    data_name, main_name] + model_info
             pred_fn.writerow(out)
         except Exception:
-            breakpoint()
+            __import__('pdb').set_trace()
 
     pred_fn.writerow(len(out) * ['---'])
 
