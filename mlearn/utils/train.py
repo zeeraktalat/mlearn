@@ -69,7 +69,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
             labels.extend(y.cpu().tolist())
 
             loop.set_postfix(batch_loss = f"{epoch_loss[-1] / len(y):.4f}",
-                             epoch_loss = f"{sum(epoch_loss) / len(labels)}")
+                             epoch_loss = f"{sum(epoch_loss) / len(labels):.4f}")
 
     return predictions, labels, epoch_loss
 
@@ -208,7 +208,7 @@ def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: ba
 
             label_count += len(y.cpu().tolist())
             loop.set_postfix(batch_loss = f"{epoch_loss[-1] / len(y):.4f}",
-                             epoch_loss = f"{sum(epoch_loss) / label_count}",
+                             epoch_loss = f"{sum(epoch_loss) / label_count:.4f}",
                              **metrics.display(),
                              task = task_id)
 
