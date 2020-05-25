@@ -44,10 +44,9 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
     :gpu (bool, default = True): Run on GPU
     :returns: TODO
     """
-    predictions, labels = [], []
-    epoch_loss = []
-
     with tqdm(iterator, desc = "Batch", leave = False) as loop:
+        predictions, labels = [], []
+        epoch_loss = []
 
         for X, y in loop:
             if gpu:
@@ -69,7 +68,8 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
             predictions.extend(torch.argmax(scores, 1).cpu().tolist())
             labels.extend(y.cpu().tolist())
 
-            loop.set_postfix(batch_loss = f"{epoch_loss[-1] / len(y):.7f}", epoch_loss = f"{np.mean(epoch_loss)}")
+            loop.set_postfix(batch_loss = f"{epoch_loss[-1] / len(y):.7f}",
+                             epoch_loss = f"{sum(epoch_loss) / len(labels)}")
 
     return predictions, labels, epoch_loss
 
@@ -130,13 +130,38 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
                     early_stopping.set_best_state(model)
                     break
 
-                loop.set_postfix(loss = f"{epoch_loss:.4f}", dev_loss = f"{dev_loss:.4f}",
-                                 **metrics.display(), dev_score = dev_score)
+                loop.set_postfix(loss = f"{epoch_loss / len(epoch_preds):.4f}",
+                                 dev_loss = f"{dev_loss:.4f}",
+                                 **metrics.display(),
+                                 dev_score = dev_score)
             except Exception:
                 # TODO Add logging of error
                 loop.set_postfix(loss = f"{epoch_loss:.4f}", **metrics.display())
 
     return loss, dev_losses, metrics.scores, dev_metrics.scores
+
+
+def run_mtl_model(library: str, train: bool, writer: base.Callable, model_info: list, head_len: int, **kwargs):
+    """
+    Train or evaluate model.
+
+    :library (str): Library of the model.
+    :train (bool): Whether it's a train or test run.
+    :writer (csv.writer): File to output model performance to.
+    :model_info (list): Information about the model to be added to each line of the output.
+    :head_len (int): The length of the header.
+    """
+    if train:
+        func = train_mtl_model if library == 'pytorch' else train_sklearn_model
+    else:
+        func = eval_torch_model if library == 'pytorch' else evaluate_sklearn_model
+
+    train_loss, dev_loss, train_scores, dev_scores = func(**kwargs)
+    write_results(writer, train_scores, train_loss, dev_scores, dev_loss, model_info = model_info, exp_len = head_len,
+                  **kwargs)
+
+    if not train:
+        write_predictions(kwargs['test_obj'], model_info = model_info, **kwargs)
 
 
 def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: base.DataType, opt: base.Callable,
@@ -155,31 +180,37 @@ def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: ba
     :dataset_weights (base.List[float]): The probability with which each dataset is chosen to be trained on.
     :clip (float, default = None): Use gradient clipping.
     """
-    epoch_loss = []
+    with tqdm(range(batch_count, desc = 'Batch', leave = False)) as loop:
+        label_count = 0
+        epoch_loss = []
 
-    with tqdm(range(batch_count, desc = 'Batch', leave = False)) as b:
+        for b in loop:
 
-        # Select task and get batch
-        task_id = np.random.choice(range(len(batchers)), p = dataset_weights)
-        X, y = next(iter(batchers[task_id]))
+            # Select task and get batch
+            task_id = np.random.choice(range(len(batchers)), p = dataset_weights)
+            X, y = next(iter(batchers[task_id]))
 
-        # Do model training
-        model.train()
-        opt.zero_grad()
+            # Do model training
+            model.train()
+            opt.zero_grad()
 
-        preds = model(X, task_id, **kwargs)
-        loss = loss_func(preds, y) * loss_weights[task_id]
-        loss.backwards()
+            preds = model(X, task_id, **kwargs)
+            loss = loss_func(preds, y) * loss_weights[task_id]
+            loss.backwards()
 
-        if clip is not None:
-            torch.nn.utils.clip_grad_norm(model.parameters(), clip)  # Prevent exploding gradients
+            if clip is not None:
+                torch.nn.utils.clip_grad_norm(model.parameters(), clip)  # Prevent exploding gradients
 
-        opt.step()
+            opt.step()
 
-        metrics.compute()
-        epoch_loss.append(loss.data.item().cpu())
+            metrics.compute()
+            epoch_loss.append(loss.data.item().cpu())
 
-        b.set_postfix(batch_loss = epoch_loss[-1] / len(y), **metrics.display(), task = task_id)
+            label_count += len(y.cpu().tolist())
+            loop.set_postfix(batch_loss = f"{epoch_loss[-1] / len(y):.7f}",
+                             epoch_loss = f"{sum(epoch_loss) / label_count}",
+                             **metrics.display(),
+                             task = task_id)
 
     return epoch_loss
 
