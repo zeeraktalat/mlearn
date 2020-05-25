@@ -68,7 +68,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
             predictions.extend(torch.argmax(scores, 1).cpu().tolist())
             labels.extend(y.cpu().tolist())
 
-            loop.set_postfix(batch_loss = f"{epoch_loss[-1] / len(y):.7f}",
+            loop.set_postfix(batch_loss = f"{epoch_loss[-1] / len(y):.4f}",
                              epoch_loss = f"{sum(epoch_loss) / len(labels)}")
 
     return predictions, labels, epoch_loss
@@ -136,7 +136,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
                                  dev_score = dev_score)
             except Exception:
                 # TODO Add logging of error
-                loop.set_postfix(loss = f"{epoch_loss:.4f}", **metrics.display())
+                loop.set_postfix(loss = f"{epoch_loss / len(epoch_preds):.4f}", **metrics.display())
 
     return loss, dev_losses, metrics.scores, dev_metrics.scores
 
@@ -207,7 +207,7 @@ def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: ba
             epoch_loss.append(loss.data.item().cpu())
 
             label_count += len(y.cpu().tolist())
-            loop.set_postfix(batch_loss = f"{epoch_loss[-1] / len(y):.7f}",
+            loop.set_postfix(batch_loss = f"{epoch_loss[-1] / len(y):.4f}",
                              epoch_loss = f"{sum(epoch_loss) / label_count}",
                              **metrics.display(),
                              task = task_id)
