@@ -77,7 +77,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
 def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, iterator: base.DataType,
                            loss_func: base.Callable, optimizer: base.Callable, metrics: object,
                            dev_iterator: base.DataType = None, dev_metrics: object = None, clip: float = None,
-                           patience: int = 10, shuffle: bool = True, gpu: bool = True,
+                           patience: int = 10, low_is_good: bool = True, shuffle: bool = True, gpu: bool = True,
                            **kwargs) -> base.Union[list, int, dict, dict]:
     """
     Train a single task pytorch model.
@@ -91,7 +91,9 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
     :metrics (object): Initialized Metrics object.
     :dev_iterator (base.DataType, optional): Batched dev set.
     :dev_metrics (object): Initialized Metrics object.
-    :clip (float, default = None):
+    :clip (float, default = None): Clip gradients to prevent exploding gradient problem.
+    :patience (int, default = 10): Number of iterations to keep going before early stopping.
+    :low_is_good (bool, default = False): Lower scores indicate better performance.
     :shuffle (bool, default = True): Shuffle the dataset.
     :gpu (bool, default = True): Run on GPU
     """
@@ -101,7 +103,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
         dev_losses = []
 
         if patience > 0:
-            early_stopping = EarlyStopping(save_path, patience, low_is_good = False)
+            early_stopping = EarlyStopping(save_path, patience, low_is_good = low_is_good)
 
         for ep in loop:
             model.train()

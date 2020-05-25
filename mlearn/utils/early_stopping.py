@@ -5,7 +5,7 @@ import torch
 class EarlyStopping:
     """Early stopping module."""
 
-    def __init__(self, path_prefix: str, patience: int = 8, low_is_good: bool = False, verbose: bool = False) -> None:
+    def __init__(self, path_prefix: str, patience: int = 8, low_is_good: bool = True, verbose: bool = False) -> None:
         """
         Early stopping module to identify when a training loop can exit because a local optima is found.
 
