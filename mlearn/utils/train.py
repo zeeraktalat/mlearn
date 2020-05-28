@@ -64,13 +64,13 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
 
             predictions.extend(torch.argmax(scores, 1).cpu().tolist())
             labels.extend(y.cpu().tolist())
-            epoch_loss += loss.data.item() / len(labels)
+            epoch_loss += loss.data.item()
             batch_loss = loss.data.item() / len(y)
 
             loop.set_postfix(batch_loss = f"{batch_loss:.4f}",
-                             epoch_loss = f"{epoch_loss:.4f}")
+                             epoch_loss = f"{epoch_loss / len(labels):.4f}")
 
-    return predictions, labels, epoch_loss
+    return predictions, labels, epoch_loss / len(labels)
 
 
 def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, iterator: base.DataType,
