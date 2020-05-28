@@ -76,7 +76,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
 def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, iterator: base.DataType,
                            loss_func: base.Callable, optimizer: base.Callable, metrics: object,
                            dev_iterator: base.DataType = None, dev_metrics: object = None, clip: float = None,
-                           patience: int = 10, low_is_good: bool = True, shuffle: bool = True, gpu: bool = True,
+                           patience: int = 10, low_is_good: bool = False, shuffle: bool = True, gpu: bool = True,
                            **kwargs) -> base.Union[list, int, dict, dict]:
     """
     Train a single task pytorch model.
@@ -124,7 +124,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
                 dev_losses.append(dev_loss)
                 dev_score = dev_metrics[dev_metrics.display_metric][-1]
 
-                if early_stopping is not None and early_stopping(model, dev_loss):
+                if early_stopping is not None and early_stopping(model, dev_metrics.early_stopping()):
                     early_stopping.set_best_state(model)
                     break
 

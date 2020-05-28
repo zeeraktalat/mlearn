@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_a
 class Metrics:
     """Metrics data object, to contain methods for computing, extracting, and evaluating different metrics."""
 
-    def __init__(self, metrics: base.List[str], display_metric: str):
+    def __init__(self, metrics: base.List[str], display_metric: str, early_stop: str):
         """
         Intialize metrics computation class.
 
@@ -17,6 +17,7 @@ class Metrics:
         """
         self.scores, self.metrics = {}, OrderedDict()
         self.display_metric = display_metric
+        self.early_stop = early_stop
 
         self.select_metrics(metrics)  # Initialize the metrics dict.
 
@@ -77,6 +78,10 @@ class Metrics:
         """
         return {self.display_metric: np.mean(self.scores[self.display_metric])}
 
+    def early_stopping(self):
+        """Provide early stopping metrics."""
+        return self.scores[self.early_stop]
+
     def list(self) -> base.List:
         """Return a list of all metrics."""
         return list(self.metrics.keys())
@@ -89,6 +94,3 @@ class Metrics:
         :returns (list): Scores for desired metric.
         """
         return self.scores[metric]
-
-    def copy(self):
-        return {m: [] for m in self.scores}
