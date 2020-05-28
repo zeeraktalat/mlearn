@@ -43,7 +43,7 @@ class Metrics:
             elif 'f1' in m:
                 self.metrics['f1-score'] = f1_score
 
-            self.scores[m] = []
+            self.scores[m] = [0.0]
 
     def compute(self, labels: base.DataType, preds: base.DataType, **kwargs) -> base.Dict[str, float]:
         """
@@ -76,7 +76,8 @@ class Metrics:
 
         :returns (base.Dict[str, float]): display metric dict.
         """
-        return {self.display_metric: np.mean(self.scores[self.display_metric])}
+        difference = self.scores[self.display_metric][-1] - self.scores[self.display_metric][-2]
+        return {self.display_metric: np.mean(self.scores[self.display_metric]), 'diff': difference}
 
     def early_stopping(self):
         """Provide early stopping metrics."""
