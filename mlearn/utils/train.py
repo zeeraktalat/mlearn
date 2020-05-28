@@ -113,7 +113,6 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
                 iterator.shuffle()
 
             epoch_preds, epoch_labels, epoch_loss = _singletask_epoch(model, optimizer, loss_func, iterator, clip, gpu)
-            epoch_loss = np.mean(epoch_loss)
 
             preds.extend(epoch_preds)
             labels.extend(epoch_labels)
@@ -137,6 +136,8 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
             except Exception:
                 # TODO Add logging of error
                 loop.set_postfix(loss = f"{epoch_loss / len(epoch_preds):.4f}", **metrics.display())
+            finally:
+                loop.refresh()
 
     return loss, dev_losses, metrics.scores, dev_metrics.scores
 
@@ -212,7 +213,7 @@ def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: ba
                              **metrics.display(),
                              task = task_id)
 
-    return epoch_loss
+    return epoch_loss, label_count
 
 
 def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.DataType], save_path: str,
@@ -263,35 +264,36 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
 
         batchers.append(batches)
 
-    with trange(epochs, desc = "Training model") as t:
+    with trange(epochs, desc = "Training model") as loop:
         dev_scores = []
         dev_losses = []
         train_loss = []
 
-        for epoch in t:
+        for epoch in loop:
             epoch_loss = _mtl_epoch(model, loss_func, loss_weights, opt, batchers, batches_per_epoch,
                                     dataset_weights, clip)
-            epoch_loss = epoch_loss / len(epoch_loss)
             train_loss.append(epoch_loss)
 
             try:
-                dev_batches = process_and_batch(dev, dev.dev, len(dev.dev))
+                dev_batches, epoch_preds = process_and_batch(dev, dev.dev, len(dev.dev))
                 dev_loss, _, dev_score, _ = eval_torch_model(model, dev_batches, loss_func,
                                                               metrics, mtl = True,
                                                               task_id = dev_task_id)
                 dev_losses.append(dev_loss)
                 dev_scores.append(dev_score)
 
-                t.set_postfix(epoch_loss = epoch_loss, dev_loss = dev_loss)
+                loop.set_postfix(loss = f"{epoch_loss / epoch_preds:.4f}",
+                                 dev_loss = f"{dev_loss:.4f}",
+                                 dev_score = dev_score)
 
                 if early_stopping is not None and early_stopping(model, dev_scores.early_stopping()):
                     early_stopping.set_best_state(model)
                     break
 
             except Exception:
-                t.set_postfix(epoch_loss = epoch_loss)
+                loop.set_postfix(epoch_loss = epoch_loss)
             finally:
-                t.refresh()
+                loop.refresh()
     return train_loss, dev_losses, _, dev_scores
 
 
