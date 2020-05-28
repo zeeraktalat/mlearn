@@ -102,7 +102,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
         dev_losses = []
 
         if patience > 0:
-            early_stopping = EarlyStopping(save_path, patience, low_is_good = low_is_good)
+            early_stopping = EarlyStopping(save_path, model, patience, low_is_good = low_is_good)
 
         for ep in loop:
             model.train()
@@ -251,7 +251,7 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
         batches_per_epoch = sum([len(dataset) * batch_size for dataset in training_datasets]) // batch_size
 
     if patience > 0:
-        early_stopping = EarlyStopping(save_path, patience, low_is_good = False)
+        early_stopping = EarlyStopping(save_path, model, patience, low_is_good = False)
 
     batchers = []
 
