@@ -28,7 +28,7 @@ def predict_torch_model(model: base.ModelType, iterator: base.DataType, loss_fun
         predicted.extend(torch.argmax(pred, dim = 1).tolist())
         labels.extend(y.cpu().tolist())
 
-    return list(predicted), list(labels), torch.mean(torch.Tensor(loss)).item()
+    return list(predicted), list(labels), torch.sum(torch.Tensor(loss)).item()
 
 
 def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: base.Callable,
@@ -62,7 +62,7 @@ def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: 
 
         metrics.compute(true, predicted)
 
-    return loss, None, metrics.scores, None
+    return loss / len(true), None, metrics.scores, None
 
 
 """ Joachim's Code, including regression evaluation.

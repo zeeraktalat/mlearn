@@ -279,7 +279,6 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
                 dev_loss, _, dev_score, _ = eval_torch_model(model, dev_batches, loss_func,
                                                               metrics, mtl = True,
                                                               task_id = dev_task_id)
-                dev_loss = dev_loss / len(dev_loss)
                 dev_losses.append(dev_loss)
                 dev_scores.append(dev_score)
 
