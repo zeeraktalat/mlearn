@@ -46,7 +46,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
     """
     with tqdm(iterator, desc = "Batch", leave = False) as loop:
         predictions, labels = [], []
-        epoch_loss = []
+        epoch_loss = 0
 
         for X, y in loop:
             if gpu:
@@ -54,10 +54,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
                 y = y.cuda()
 
             scores = model(X, **kwargs)
-
             loss = loss_func(scores, y)
-            epoch_loss.append(float(loss.data.item()))
-
             loss.backward()
 
             if clip is not None:
@@ -67,9 +64,11 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
 
             predictions.extend(torch.argmax(scores, 1).cpu().tolist())
             labels.extend(y.cpu().tolist())
+            epoch_loss += loss.data.item() / len(labels)
+            batch_loss = loss.data.item() / len(y)
 
-            loop.set_postfix(batch_loss = f"{epoch_loss[-1] / len(y):.4f}",
-                             epoch_loss = f"{sum(epoch_loss) / len(labels):.4f}")
+            loop.set_postfix(batch_loss = f"{batch_loss:.4f}",
+                             epoch_loss = f"{epoch_loss:.4f}")
 
     return predictions, labels, epoch_loss
 
@@ -129,13 +128,12 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
                     early_stopping.set_best_state(model)
                     break
 
-                loop.set_postfix(loss = f"{epoch_loss / len(epoch_preds):.4f}",
+                loop.set_postfix(epoch_loss = f"{epoch_loss:.4f}",
                                  dev_loss = f"{dev_loss:.4f}",
                                  **metrics.display(),
                                  dev_score = dev_score)
             except Exception:
-                # TODO Add logging of error
-                loop.set_postfix(loss = f"{epoch_loss / len(epoch_preds):.4f}", **metrics.display())
+                loop.set_postfix(epoch_loss = f"{epoch_loss:.4f}", **metrics.display())
             finally:
                 loop.refresh()
 
@@ -183,7 +181,7 @@ def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: ba
     """
     with tqdm(range(batch_count, desc = 'Batch', leave = False)) as loop:
         label_count = 0
-        epoch_loss = []
+        epoch_loss = 0
 
         for b in loop:
 
@@ -195,8 +193,8 @@ def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: ba
             model.train()
             opt.zero_grad()
 
-            preds = model(X, task_id, **kwargs)
-            loss = loss_func(preds, y) * loss_weights[task_id]
+            scores = model(X, task_id, **kwargs)
+            loss = loss_func(scores, y) * loss_weights[task_id]
             loss.backwards()
 
             if clip is not None:
@@ -204,16 +202,17 @@ def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: ba
 
             opt.step()
 
-            metrics.compute()
-            epoch_loss.append(loss.data.item().cpu())
-
+            metrics.compute(scores, y)
             label_count += len(y.cpu().tolist())
-            loop.set_postfix(batch_loss = f"{epoch_loss[-1] / len(y):.4f}",
-                             epoch_loss = f"{sum(epoch_loss) / label_count:.4f}",
+            epoch_loss += loss.data.item().cpu()
+            batch_loss = loss.data.item().cpu() / len(y)
+
+            loop.set_postfix(batch_loss = f"{batch_loss:.4f}",
+                             epoch_loss = f"{epoch_loss / label_count:.4f}",
                              **metrics.display(),
                              task = task_id)
 
-    return epoch_loss, label_count
+    return epoch_loss / label_count
 
 
 def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.DataType], save_path: str,
@@ -271,18 +270,18 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
 
         for epoch in loop:
             epoch_loss = _mtl_epoch(model, loss_func, loss_weights, opt, batchers, batches_per_epoch,
-                                    dataset_weights, clip)
+                                                     dataset_weights, clip)
             train_loss.append(epoch_loss)
 
             try:
-                dev_batches, epoch_preds = process_and_batch(dev, dev.dev, len(dev.dev))
+                dev_batches = process_and_batch(dev, dev.dev, len(dev.dev))
                 dev_loss, _, dev_score, _ = eval_torch_model(model, dev_batches, loss_func,
                                                               metrics, mtl = True,
                                                               task_id = dev_task_id)
                 dev_losses.append(dev_loss)
                 dev_scores.append(dev_score)
 
-                loop.set_postfix(loss = f"{epoch_loss / epoch_preds:.4f}",
+                loop.set_postfix(loss = f"{epoch_loss:.4f}",
                                  dev_loss = f"{dev_loss:.4f}",
                                  dev_score = dev_score)
 
