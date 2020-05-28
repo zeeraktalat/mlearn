@@ -97,7 +97,7 @@ def write_results(writer: base.Callable, train_scores: dict, train_loss: list, d
     if isinstance(train_loss, float):
         train_loss = [train_loss]
 
-    iterations = epochs if epochs == len(train_loss) else train_loss
+    iterations = epochs if epochs == len(train_loss) else len(train_loss)
     for i in range(iterations):
         try:
             out = [data_name, main_name] + [i] + model_info  # Base info
