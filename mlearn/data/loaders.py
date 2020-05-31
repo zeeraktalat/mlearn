@@ -284,7 +284,7 @@ def hoover(cleaners: base.Callable, data_path: str, length: int = None, preproce
     return _loader(args, **kwargs)
 
 
-def guest_to_multiclass(label: str) -> str:
+def vidgen_to_multiclass(label: str) -> str:
     """
     Map Gues labels to multiclass.
 
@@ -303,7 +303,7 @@ def guest_to_multiclass(label: str) -> str:
         return 'negative'
 
 
-def guest(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
+def vidgen(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
           transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
     """
     Load the Vidgen et al. dataset.
@@ -326,7 +326,7 @@ def guest(cleaners: base.Callable, data_path: str, length: int = None, preproces
             'transformations': transformer,
             'length': length,
             'label_preprocessor': label_processor,
-            'name': 'Guest et al.'}
+            'name': 'Vidgen et al.'}
 
     text = base.Field('text', train = True, label = False, cname = 'text', ix = 3)
     label = base.Field('label', train = False, label = True, cname = 'label', ix = 3)
