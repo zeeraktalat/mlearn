@@ -71,6 +71,13 @@ class TestDataSet(torchtestcase.TorchTestCase):
         output = set(sorted(self.csv_dataset.stoi.keys()))
         self.assertSetEqual(output, expected, msg = 'Vocab building failed.')
 
+        # Use original as the data set.
+        expected = set(['<pad>', '<unk>'] + list(sorted("""me gusta comer en la cafeteria Give it to me
+                   No creo que sea una buena idea No it is not a good idea to get lost at sea""".split())))
+        self.csv_dataset.build_token_vocab(self.train, original = True)
+        output = set(sorted(self.csv_dataset.stoi.keys()))
+        self.assertSetEqual(output, expected, msg = 'Vocab building failed.')
+
     def test_extend_vocab(self):
         """Test extending vocab."""
         train = """<pad> <unk> me gusta comer en la cafeteria Give it to me
