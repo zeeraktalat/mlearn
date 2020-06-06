@@ -107,6 +107,9 @@ class TestDataSet(torchtestcase.TorchTestCase):
         output = self.csv_dataset.vocab_token_lookup('me')
         self.assertEqual(output, expected, msg = 'Vocab token lookup failed.')
 
+        self.assertEqual(self.csv_dataset.vocab_token_lookup('shaggy'), self.csv_dataset.unk_tok,
+                         msg = "UNK token not returned when unknown word is enountered.")
+
     def test_vocab_ix_lookup(self):
         '''Test looking up in vocab.'''
         self.csv_dataset.build_token_vocab(self.train)
