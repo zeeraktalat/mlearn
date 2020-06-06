@@ -7,17 +7,19 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_a
 class Metrics:
     """Metrics data object, to contain methods for computing, extracting, and evaluating different metrics."""
 
-    def __init__(self, metrics: base.List[str], display_metric: str, early_stop: str):
+    def __init__(self, metrics: base.List[str], display_metric: str, early_stop: str, avg: str = 'weighted'):
         """
         Intialize metrics computation class.
 
         :metrics (base.List[str]): List of strings containing metric names.
         :display_metric (str): Metric to display in TQDM loops.
         :early_stop (str, default = None): Metric to evaluate whether to perform early stopping.
+        :avg (str, default = 'weighted'): Averaging to use for metric functions.
         """
         self.scores, self.metrics = {}, OrderedDict()
         self.display_metric = display_metric
         self.early_stop = early_stop
+        self.average = avg
 
         self.select_metrics(metrics)  # Initialize the metrics dict.
 
@@ -44,6 +46,7 @@ class Metrics:
                 self.metrics['f1-score'] = f1_score
 
             self.scores[m] = [0.0]
+        self.scores['loss'] = []
 
     def compute(self, labels: base.DataType, preds: base.DataType, **kwargs) -> base.Dict[str, float]:
         """
@@ -54,7 +57,7 @@ class Metrics:
         :preds (base.DataType): Predicted labels.
         :returns (base.Dict[str, float]): Dict containing computed scores.
         """
-        for metric, score in self._compute(labels, preds).items():
+        for metric, score in self._compute(labels, preds, **kwargs).items():
             self.scores[metric].append(score)
         return self.scores
 
@@ -67,8 +70,19 @@ class Metrics:
         :preds (base.DataType): Predicted labels.
         :returns (base.Dict[str, float]): Dict containing computed scores.
         """
-        scores = {name: float(metric(preds, labels, **kwargs)) for name, metric in self.metrics.items()}
+        scores = {}
+        for name, metric in self.metrics.items():
+            try:
+                scores[name] = float(metric(preds, labels, average = self.average, **kwargs))
+            except TypeError:
+                scores[name] = float(metric(preds, labels, **kwargs))
         return scores
+
+    def loss(self, value: float) -> None:
+        """Add latest loss value to scores.
+        :value (float): Loss value of latest run.
+        """
+        self.scores['loss'].append(value)
 
     def display(self) -> base.Dict[str, float]:
         """
@@ -79,9 +93,9 @@ class Metrics:
         difference = self.scores[self.display_metric][-1] - self.scores[self.display_metric][-2]
         return {self.display_metric: np.mean(self.scores[self.display_metric]), 'diff': difference}
 
-    def early_stopping(self):
+    def early_stopping(self) -> float:
         """Provide early stopping metrics."""
-        return self.scores[self.early_stop]
+        return self.scores[self.early_stop][-1]
 
     def list(self) -> base.List:
         """Return a list of all metrics."""
