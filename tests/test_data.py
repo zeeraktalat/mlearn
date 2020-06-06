@@ -353,3 +353,33 @@ class TestDataSet(torchtestcase.TorchTestCase):
 
         self.assertEqual(sum(output), len(loaded_train), msg = f"The splits ([0.8, 0.1, 0.1]) != len(loaded_train)")
         self.assertListEqual(expected, output, msg = 'Three split values in list failed.')
+
+    def test_properties(self):
+        """Test setters and getters."""
+        # Test train
+        train = self.csv_dataset.train_set
+        self.assertListEqual(train, self.csv_dataset.data, msg = "train_set does not return train data.")
+        train.extend([1])
+        self.csv_datase.train_set = train
+        self.assertListEqual(train, self.csv_dataset.data, msg = "train_set does not set training data.")
+
+        # Test dev
+        dev = self.csv_dataset.dev_set
+        self.assertListEqual(dev, self.csv_dataset.data, msg = "dev_set does not return dev data.")
+        dev.extend([1])
+        self.csv_datase.dev_set = dev
+        self.assertListEqual(dev, self.csv_dataset.data, msg = "dev_set does not set deving data.")
+
+        # Test test
+        test = self.csv_dataset.test_set
+        self.assertListEqual(test, self.csv_dataset.data, msg = "test_set does not return test data.")
+        test.extend([1])
+        self.csv_datase.test_set = test
+        self.assertListEqual(test, self.csv_dataset.data, msg = "test_set does not set testing data.")
+
+        # Test document length
+        length = self.csv_dataset.modify_length  # TODO Replace with hardcoded number.
+        self.assertEqual(length, self.csv_dataset.length, msg = "Retrieving length failed.")
+        length += 1
+        self.modify_length = length
+        self.assertEqual(length, self.csv_dataset.length, msg = "Modifying length failed.")
