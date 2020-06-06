@@ -151,6 +151,7 @@ class GeneralDataset(IterableDataset):
         :label_ix (int, str): Index or name of column containing labels.
         :label_name (str): Name of the label column/field.
         """
+        raise NotImplementedError
         path = label_path if label_path is not None else self.path
         ftype = ftype if ftype is not None else self.ftype
         sep = sep if sep is not None else self.sep
