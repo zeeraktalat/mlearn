@@ -261,7 +261,7 @@ class GeneralDataset(IterableDataset):
 
         for doc in tqdm(data, desc = "Building vocabulary"):
             if original:
-                self.token_counts.update(doc.original)
+                self.token_counts.update(self.tokenizer(doc.original.replace('\n', ' ')))
             else:
                 for f in train_fields:
                     self.token_counts.update(getattr(doc, getattr(f, 'name')))
