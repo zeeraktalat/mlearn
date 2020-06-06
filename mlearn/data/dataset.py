@@ -440,10 +440,8 @@ class GeneralDataset(IterableDataset):
         :length (int, optional): The sequence length to be applied.
         :returns (list): Return list of padded datapoints.
         """
-        if not self.length and length is not None:
-            self.length = length
-        elif not self.length and length is None:
-            raise AttributeError("A length must be given to pad tokens.")
+        if length is None:
+            length = self.length
 
         padded = []
         for doc in data:
