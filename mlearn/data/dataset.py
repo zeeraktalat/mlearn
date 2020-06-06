@@ -585,17 +585,9 @@ class GeneralDataset(IterableDataset):
 
         if dev_size is not None:
             dev = self._stratify_helper(data, labels, dev_size, label_probs, idx_maps)
-
-        if test_size is None:
-            if dev_size is not None:
-                test_size = len(data) - (train_size + dev_size)
-            else:
-                test_size = len(data) - train_size
+            test_size += len(data) - (train_size + dev_size + test_size)
         else:
-            if dev_size is not None:
-                test_size += len(data) - (train_size + dev_size + test_size)
-            else:
-                test_size += len(data) - (train_size + test_size)
+            test_size += len(data) - (train_size + test_size)
 
         indices = []
         for label in idx_maps:
