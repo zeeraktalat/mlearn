@@ -100,6 +100,12 @@ class TestDataSet(torchtestcase.TorchTestCase):
         self.assertListEqual(test[0].text, expected[0])
         self.assertListEqual(test[1].text, expected[1])
 
+    @torchtestcase.skip("Not implemented yet.")
+    def test_load_labels_from_file(self):
+        """Test loading of labels from a labelfile."""
+        with self.assertRaises(NotImplementedError):
+            self.csv_dataset.load_labels('test')
+
     def test_vocab_token_lookup(self):
         '''Test looking up in vocab.'''
         self.csv_dataset.build_token_vocab(self.train)
