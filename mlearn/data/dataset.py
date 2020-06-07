@@ -352,7 +352,7 @@ class GeneralDataset(IterableDataset):
         labels = set(getattr(l, getattr(f, 'name')) for l in labels for f in self.label_fields)
         self.itol, self.ltoi = {}, {}
 
-        for ix, l in enumerate(tqdm(sorted(labels, reverse = True), desc = "Encode label vocab")):
+        for ix, l in enumerate(tqdm(sorted(labels), desc = "Encode label vocab")):
             self.itol[ix] = l
             self.ltoi[l] = ix
 
