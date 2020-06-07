@@ -679,7 +679,7 @@ class GeneralDataset(IterableDataset):
         return self.data[idx]
 
     def __len__(self):
-        """Get the number of batches."""
+        """Get the number of documents."""
         try:
             return len(self.data)
         except TypeError:
