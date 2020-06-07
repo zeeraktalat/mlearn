@@ -284,9 +284,24 @@ def hoover(cleaners: base.Callable, data_path: str, length: int = None, preproce
     return _loader(args, **kwargs)
 
 
+def vidgen_to_binary(label: str) -> str:
+    """
+    Map Vidgen labels to multiclass.
+
+    :label (str): Raw label.
+    :return (str): Mapped label.
+    """
+    positive = ['entity_directed_hostility', 'counter_speech', 'discussion_of_eastasian_prejudice',
+                'entity_directed_criticism']
+    if label in positive:
+        return 'abuse'
+    else:
+        return 'not-abuse'
+
+
 def vidgen_to_multiclass(label: str) -> str:
     """
-    Map Gues labels to multiclass.
+    Map Vidgen labels to multiclass.
 
     :label (str): Raw label.
     :return (str): Mapped label.
@@ -304,7 +319,7 @@ def vidgen_to_multiclass(label: str) -> str:
 
 
 def vidgen(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-          transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
+           transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
     """
     Load the Vidgen et al. dataset.
 
