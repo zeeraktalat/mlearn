@@ -44,15 +44,17 @@ class Preprocessors(object):
         count = 0
         vowels = 'aeiouy'
         exceptions = ['le', 'es', 'e']
-        prev_char = None
+        prev_char = '<s>'
 
-        for i in tok:
-            if i == len(tok) and (prev_char + tok[i] in exceptions or tok[i] in exceptions):
-                prev_char = tok[i]
-                continue
-            if (tok[i] in vowels) and (prev_char not in vowels and not prev_char):
-                prev_char = tok[i]
+        for i, char in enumerate(tok):
+            if i == len(tok) and (prev_char + char in exceptions or char in exceptions):
+                pass
+            if (char in vowels) and (prev_char not in vowels and char != prev_char):
                 count += 1
+            prev_char = char
+        if count == 0:
+            breakpoint()
+        return count
 
     def load_slurs(self):
         """Load slurs file."""
@@ -188,7 +190,7 @@ class Cleaner(object):
 
         :processes base.List[str]: Cleaning operations to be taken.
         """
-        self.processes = processes
+        self.processes = processes if processes is not None else []
         self.tagger = spacy.load('en_core_web_sm', disable = ['ner', 'parser', 'textcats'])
         self.liwc_dict = None
 
@@ -200,6 +202,8 @@ class Cleaner(object):
         :processes (List[str]): The cleaning processes to be undertaken.
         :returns cleaned: Return the cleaned text.
         """
+        if processes is None:
+            process = []
         process = processes if processes is not None else self.processes
         cleaned = str(text)
         if 'lower' in process:

@@ -330,7 +330,7 @@ class GeneralDataset(IterableDataset):
         """
         try:
             ix = self.stoi[tok]
-        except IndexError:
+        except KeyError:
             ix = self.stoi['<unk>']
         return ix
 
