@@ -97,7 +97,8 @@ class GeneralDataset(IterableDataset):
             next(fp)
 
         data = []
-        for line in tqdm(self.reader(fp), desc = f'Loading {self.name} ({dataset})'):
+        for line in tqdm(self.reader(fp), desc = f'Loading {self.name} ({dataset})',
+                         disable = os.environ.get('TQDM_DISABLE', False)):
 
             data_line, datapoint = {}, base.Datapoint()  # TODO Look at moving all of this to the datapoint class.
 
@@ -260,7 +261,7 @@ class GeneralDataset(IterableDataset):
         train_fields = self.train_fields
         self.token_counts = Counter()
 
-        for doc in tqdm(data, desc = "Building vocabulary"):
+        for doc in tqdm(data, desc = "Building vocabulary", disable = os.environ.get('TQDM_DISABLE', False)):
             if original:
                 self.token_counts.update(self.tokenizer(doc.original.replace('\n', ' ')))
             else:
@@ -286,7 +287,8 @@ class GeneralDataset(IterableDataset):
         self.stoi['<pad>'] = self.pad_tok
         self.itos[self.unk_tok] = '<unk>'
         self.itos[self.pad_tok] = '<pad>'
-        for ix, (tok, _) in enumerate(tqdm(self.token_counts.most_common(), desc = "Encoding vocabulary")):
+        for ix, (tok, _) in enumerate(tqdm(self.token_counts.most_common(), desc = "Encoding vocabulary",
+                                           disable = os.environ.get('TQDM_DISABLE', False))):
             self.itos[ix] = tok
             self.stoi[tok] = ix
 
@@ -356,7 +358,8 @@ class GeneralDataset(IterableDataset):
         labels = set(getattr(l, getattr(f, 'name')) for l in labels for f in self.label_fields)
         self.itol, self.ltoi = {}, {}
 
-        for ix, l in enumerate(tqdm(sorted(labels), desc = "Encode label vocab")):
+        for ix, l in enumerate(tqdm(sorted(labels), desc = "Encode label vocab",
+                                    disable = os.environ.get("TQDM_DISABLE", False))):
             self.itol[ix] = l
             self.ltoi[l] = ix
 
