@@ -1,7 +1,7 @@
 import os
 import unittest
 from mlearn.base import Field, Datapoint
-from mlearn.data_processing.data import GeneralDataset
+from mlearn.data.dataset import GeneralDataset
 
 
 class TestDataPoint(unittest.TestCase):

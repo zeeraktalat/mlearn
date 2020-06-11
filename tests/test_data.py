@@ -1,8 +1,9 @@
 import os
 import torch
+import unittest
 import torchtestcase
 from mlearn.base import Field, Datapoint
-from mlearn.data_processing.data import GeneralDataset
+from mlearn.data.dataset import GeneralDataset
 
 
 class TestDataSet(torchtestcase.TorchTestCase):

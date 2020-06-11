@@ -3,8 +3,8 @@ import torch
 import unittest
 import torchtestcase
 from mlearn.base import Field, Datapoint
-from mlearn.data_processing.data import GeneralDataset
-from mlearn.data_processing.batching import Batch, BatchExtractor
+from mlearn.data.dataset import GeneralDataset
+from mlearn.data.batching import Batch, BatchExtractor
 
 
 class TestBatch(torchtestcase.TorchTestCase):
