@@ -101,7 +101,7 @@ class TestDataSet(torchtestcase.TorchTestCase):
         self.assertListEqual(test[0].text, expected[0])
         self.assertListEqual(test[1].text, expected[1])
 
-    @torchtestcase.skip("Not implemented yet.")
+    @unittest.skip("Not implemented yet.")
     def test_load_labels_from_file(self):
         """Test loading of labels from a labelfile."""
         with self.assertRaises(NotImplementedError):
@@ -154,14 +154,14 @@ class TestDataSet(torchtestcase.TorchTestCase):
         """Test looking up in label."""
         self.csv_dataset.build_label_vocab(self.train)
         output = self.csv_dataset.label_name_lookup('SPANISH')
-        expected = 0
+        expected = 1
         self.assertEqual(output, expected, msg = 'label name lookup failed.')
 
     def test_label_ix_lookup(self):
         '''Test looking up in label.'''
         self.csv_dataset.build_label_vocab(self.train)
         output = self.csv_dataset.label_ix_lookup(1)
-        expected = 'ENGLISH'
+        expected = 'SPANISH'
         self.assertEqual(output, expected, msg = 'label ix lookup failed.')
 
     def test_label_count(self):
@@ -174,7 +174,7 @@ class TestDataSet(torchtestcase.TorchTestCase):
     def test_process_label(self):
         """Test label processing."""
         self.csv_dataset.build_label_vocab(self.train)
-        expected = [0]
+        expected = [1]
         output = self.csv_dataset._process_label('SPANISH')
         self.assertEqual(output, expected, msg = 'Labelprocessor failed without custom processor')
 
@@ -377,7 +377,7 @@ class TestDataSet(torchtestcase.TorchTestCase):
         train = self.csv_dataset.train_set
         self.assertListEqual(train, self.csv_dataset.data, msg = "train_set does not return train data.")
         train.extend([1])
-        self.csv_datase.train_set = train
+        self.csv_dataset.train_set = train
         self.assertListEqual(train, self.csv_dataset.data, msg = "train_set does not set training data.")
 
         # Test dev
