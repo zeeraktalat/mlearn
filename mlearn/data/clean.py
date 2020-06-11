@@ -224,28 +224,3 @@ class Cleaner(object):
         """
         toks = [tok.text for tok in self.tagger(self.clean_document(document, processes = processes))]
         return toks
-
-    def ptb_tokenize(self, document: base.DocType, processes: base.List[str] = None):
-        """
-        Tokenize the document using SpaCy, get PTB tags and clean it as it is processed.
-
-        :document: Document to be parsed.
-        :processes: The cleaning processes to engage in.
-        :returns toks: Document that has been passed through spacy's tagger.
-        """
-        toks = [tok.tag_ for tok in self.tagger(self.clean_document(document, processes = processes))]
-        return " ".join(toks)
-
-    def sentiment_tokenize(self, document: base.DocType, processes: base.List[str] = None):
-        """
-        Tokenize the document using SpaCy, get sentiment and clean it as it is processed.
-
-        :document: Document to be parsed.
-        :processes: The cleaning processes to engage in.
-        :returns toks: Document that has been passed through spacy's tagger.
-        """
-        raise NotImplementedError
-        # self.processes = processes if processes else self.processes
-        # toks = [tok.sentiment for tok in self.tagger(self.clean_document(document))]
-        # pdb.set_trace()
-        # return toks
