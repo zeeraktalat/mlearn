@@ -341,7 +341,11 @@ class GeneralDataset(IterableDataset):
         :ix (int): Index to look up.
         :return tok (str): Returns token
         """
-        return self.itos[ix]
+        try:
+            tok = self.itos[ix]
+        except KeyError:
+            tok = self.itos[self.unk_tok]
+        return tok
 
     def build_label_vocab(self, labels: base.DataType) -> None:
         """
