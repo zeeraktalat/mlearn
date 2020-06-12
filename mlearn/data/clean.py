@@ -51,8 +51,6 @@ class Preprocessors(object):
             if (char in vowels) and (prev_char not in vowels and char != prev_char):
                 count += 1
             prev_char = char
-        if count == 0:
-            breakpoint()
         return count
 
     def load_slurs(self):
