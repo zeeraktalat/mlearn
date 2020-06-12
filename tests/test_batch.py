@@ -18,7 +18,7 @@ class TestBatch(torchtestcase.TorchTestCase):
 
         fields = [ignore_field, ignore_field, ignore_field, ignore_field, text_field, label_field]
 
-        cls.dataset = GeneralDataset(data_dir = os.getcwd() + '/tests/',
+        cls.dataset = GeneralDataset(data_dir = os.getcwd() + '/tests/data/',
                                      ftype = 'csv', fields = fields, train = 'garcia_stormfront_test.tsv', dev = None,
                                      test = None, train_labels = None, tokenizer = lambda x: x.split(),
                                      preprocessor = None, transformations = None,
@@ -101,7 +101,7 @@ class TestBatchGenerator(torchtestcase.TorchTestCase):
 
         fields = [ignore_field, ignore_field, ignore_field, ignore_field, text_field, label_field]
 
-        cls.dataset = GeneralDataset(data_dir = os.getcwd() + '/tests/',
+        cls.dataset = GeneralDataset(data_dir = os.getcwd() + '/tests/data/',
                                      ftype = 'csv', fields = fields, train = 'garcia_stormfront_test.tsv', dev = None,
                                      test = None, train_labels = None, tokenizer = lambda x: x.split(),
                                      preprocessor = None, transformations = None,
