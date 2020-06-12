@@ -16,7 +16,10 @@ about,PREP
 abuse*,AFFECT
 abuse*,NEGEMO
 abuse*,ANGER
+abus*,ANGER
 on,RELATIV
 on,FUNCTION
 on,SPACE
 on,PREP
+@zeerakw,USER
+zeerakw,USER

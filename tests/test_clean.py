@@ -58,7 +58,10 @@ class TestPreprocessor(unittest.TestCase):
     def test_liwc_tokenize(self):
         """Test computation of LIWC tokenisation."""
         expected = ['FUNCTION_IPRON_PRONOUN', 'AUXVERB_FUNCTION_VERB_FOCUSPRESENT', 'FOCUSPAST_WORK_VERB',
-                    'FUNCTION_PREP', 'UNK', 'FUNCTION_ADVERB_PREP', 'AFFECT_NEGEMO_ANGER',
+                    'FUNCTION_PREP', 'USER', 'FUNCTION_ADVERB_PREP', 'AFFECT_NEGEMO_ANGER',
                     'RELATIV_FUNCTION_SPACE_PREP', 'UNK']
         result = self.preprocess.compute_unigram_liwc(self.original.lower().split())
-        self.assertListEqual(expected, result, msg = "Unigram LIWC tokenization failed.")
+        self.assertListEqual(expected, result, msg = "List-based unigram LIWC tokenization failed.")
+
+        result = self.preprocess.compute_unigram_liwc(self.original.lower())
+        self.assertListEqual(expected, result, msg = "Str-based unigram LIWC tokenization failed.")
