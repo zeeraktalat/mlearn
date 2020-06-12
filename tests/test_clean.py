@@ -29,7 +29,7 @@ class TestPreprocessor(unittest.TestCase):
     def setUp(cls):
         """Set up class with data as well."""
         cls.original = "This is written by @zeerakw about #Onlineabuse on http://www.google.com"
-        cls.preprocess = Preprocessors('/Users/zeerakw/Documents/PhD/projects/active/Generalisable_abuse/data/')
+        cls.preprocess = Preprocessors('tests/data/')
 
     def test_length_tokenize(self):
         """Test the word length."""
