@@ -1,5 +1,4 @@
 import re
-import pdb
 import spacy
 from mlearn import base
 from string import punctuation
@@ -169,10 +168,7 @@ class Preprocessors(object):
 
         liwc_doc = [self._compute_liwc_token(tok, kleene_star) for tok in doc]
 
-        try:
-            assert(len(liwc_doc) == len(doc))
-        except AssertionError:
-            pdb.set_trace()
+        assert(len(liwc_doc) == len(doc))
 
         return liwc_doc
 
