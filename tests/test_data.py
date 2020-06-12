@@ -340,7 +340,7 @@ class TestDataSet(torchtestcase.TorchTestCase):
         fields = [Field('text', train = True, label = False, ignore = False, ix = 5, cname = 'text'),
                   Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 4)]
 
-        data = GeneralDataset(data_dir = os.getcwd() + '/tests/',
+        data = GeneralDataset(data_dir = os.getcwd() + '/tests/data/',
                               ftype = 'csv', fields = fields, train = 'garcia_stormfront_train.tsv',
                               dev = None, test = None, train_labels = None,
                               tokenizer = lambda x: x.split(),
