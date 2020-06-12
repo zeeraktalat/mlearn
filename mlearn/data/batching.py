@@ -60,15 +60,15 @@ class Batch(base.Batch):
         """
         return self.batches[idx]
 
-    def __getattr__(self, data: base.DataType, attr: str):
-        """
-        Get attribute from the batch.
-
-        :data (base.DataType): Dataset to get attributes from.
-        :attr (str): Attribute to extract from the data.
-        """
-        for doc in data:
-            yield doc[attr]
+    # def __getattr__(self, attr: str):
+    #     """
+    #     Get attribute from the batch.
+    #
+    #     :data (base.DataType): Dataset to get attributes from.
+    #     :attr (str): Attribute to extract from the data.
+    #     """
+    #     for batch in self.batches:
+    #         yield [getattr(doc, attr) for doc in batch]
 
 
 class BatchExtractor(base.Batch):
@@ -106,12 +106,16 @@ class BatchExtractor(base.Batch):
         :idx (int): Get an individual batch given and index.
         :returns (base.DataType): Batch.
         """
-        return self.batcher[idx]
+        X = torch.cat([doc for doc in self.data.encode(self.batcher[idx], onehot = self.onehot)], dim = 0)
+        y = torch.tensor([getattr(doc, self.lf) for doc in self.batcher[idx]]).flatten()
+        return (X, y)
 
     def shuffle(self):
         """Shuffle dataset."""
         self.batcher = self.batcher.shuffle()
+        return self
 
     def shuffle_batches(self):
         """Shuffle the batch order."""
         self.batcher = self.batcher.shuffle_batches()
+        return self

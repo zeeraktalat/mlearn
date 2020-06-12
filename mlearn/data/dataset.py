@@ -97,7 +97,8 @@ class GeneralDataset(IterableDataset):
             next(fp)
 
         data = []
-        for line in tqdm(self.reader(fp), desc = f'Loading {self.name} ({dataset})'):
+        for line in tqdm(self.reader(fp), desc = f'Loading {self.name} ({dataset})',
+                         disable = os.environ.get('TQDM_DISABLE', False)):
 
             data_line, datapoint = {}, base.Datapoint()  # TODO Look at moving all of this to the datapoint class.
 
@@ -170,8 +171,8 @@ class GeneralDataset(IterableDataset):
 
         labels = [line[label_ix.rstrip()] for line in self.reader(fp, ftype, sep)]
 
-        for l, doc in zip(labels, data):
-            setattr(doc, label_name, l)
+        for label, doc in zip(labels, data):
+            setattr(doc, label_name, label)
 
     def set_labels(self, data: base.DataType, labels: base.DataType) -> None:
         """
@@ -260,7 +261,7 @@ class GeneralDataset(IterableDataset):
         train_fields = self.train_fields
         self.token_counts = Counter()
 
-        for doc in tqdm(data, desc = "Building vocabulary"):
+        for doc in tqdm(data, desc = "Building vocabulary", disable = os.environ.get('TQDM_DISABLE', False)):
             if original:
                 self.token_counts.update(self.tokenizer(doc.original.replace('\n', ' ')))
             else:
@@ -272,21 +273,17 @@ class GeneralDataset(IterableDataset):
         self.unk_tok = len(self.token_counts)
         self.pad_tok = len(self.token_counts) + 1
 
-        try:
+        if '<pad>' in self.token_counts:
             del self.token_counts['<pad>']
-        except KeyError:
-            pass
-
-        try:
+        if '<unk>' in self.token_counts:
             del self.token_counts['<unk>']
-        except KeyError:
-            pass
 
         self.stoi['<unk>'] = self.unk_tok
         self.stoi['<pad>'] = self.pad_tok
         self.itos[self.unk_tok] = '<unk>'
         self.itos[self.pad_tok] = '<pad>'
-        for ix, (tok, _) in enumerate(tqdm(self.token_counts.most_common(), desc = "Encoding vocabulary")):
+        for ix, (tok, _) in enumerate(tqdm(self.token_counts.most_common(), desc = "Encoding vocabulary",
+                                           disable = os.environ.get('TQDM_DISABLE', False))):
             self.itos[ix] = tok
             self.stoi[tok] = ix
 
@@ -330,7 +327,7 @@ class GeneralDataset(IterableDataset):
         """
         try:
             ix = self.stoi[tok]
-        except IndexError:
+        except KeyError:
             ix = self.stoi['<unk>']
         return ix
 
@@ -341,7 +338,11 @@ class GeneralDataset(IterableDataset):
         :ix (int): Index to look up.
         :return tok (str): Returns token
         """
-        return self.itos[ix]
+        try:
+            tok = self.itos[ix]
+        except KeyError:
+            tok = self.itos[self.unk_tok]
+        return tok
 
     def build_label_vocab(self, labels: base.DataType) -> None:
         """
@@ -349,10 +350,11 @@ class GeneralDataset(IterableDataset):
 
         :labels (base.DataType): List of datapoints to process.
         """
-        labels = set(getattr(l, getattr(f, 'name')) for l in labels for f in self.label_fields)
+        labels = set(getattr(lab, getattr(f, 'name')) for lab in labels for f in self.label_fields)
         self.itol, self.ltoi = {}, {}
 
-        for ix, l in enumerate(tqdm(sorted(labels), desc = "Encode label vocab")):
+        for ix, l in enumerate(tqdm(sorted(labels), desc = "Encode label vocab",
+                                    disable = os.environ.get("TQDM_DISABLE", False))):
             self.itol[ix] = l
             self.ltoi[l] = ix
 
@@ -409,7 +411,7 @@ class GeneralDataset(IterableDataset):
         if not isinstance(label, list):
             label = [label]
         processor = processor if processor is not None else self.label_processor
-        return [processor(l) for l in label]
+        return [processor(lab) for lab in label]
 
     def process_doc(self, doc: base.DocType) -> list:
         """

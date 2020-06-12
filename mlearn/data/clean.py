@@ -1,5 +1,4 @@
 import re
-import pdb
 import spacy
 from mlearn import base
 from string import punctuation
@@ -44,15 +43,15 @@ class Preprocessors(object):
         count = 0
         vowels = 'aeiouy'
         exceptions = ['le', 'es', 'e']
-        prev_char = None
+        prev_char = '<s>'
 
-        for i in tok:
-            if i == len(tok) and (prev_char + tok[i] in exceptions or tok[i] in exceptions):
-                prev_char = tok[i]
-                continue
-            if (tok[i] in vowels) and (prev_char not in vowels and not prev_char):
-                prev_char = tok[i]
+        for i, char in enumerate(tok):
+            if i == len(tok) and (prev_char + char in exceptions or char in exceptions):
+                pass
+            if (char in vowels) and (prev_char not in vowels and char != prev_char):
                 count += 1
+            prev_char = char
+        return count
 
     def load_slurs(self):
         """Load slurs file."""
@@ -167,10 +166,7 @@ class Preprocessors(object):
 
         liwc_doc = [self._compute_liwc_token(tok, kleene_star) for tok in doc]
 
-        try:
-            assert(len(liwc_doc) == len(doc))
-        except AssertionError:
-            pdb.set_trace()
+        assert(len(liwc_doc) == len(doc))
 
         return liwc_doc
 
@@ -188,7 +184,7 @@ class Cleaner(object):
 
         :processes base.List[str]: Cleaning operations to be taken.
         """
-        self.processes = processes
+        self.processes = processes if processes is not None else []
         self.tagger = spacy.load('en_core_web_sm', disable = ['ner', 'parser', 'textcats'])
         self.liwc_dict = None
 
@@ -200,6 +196,8 @@ class Cleaner(object):
         :processes (List[str]): The cleaning processes to be undertaken.
         :returns cleaned: Return the cleaned text.
         """
+        if processes is None:
+            process = []
         process = processes if processes is not None else self.processes
         cleaned = str(text)
         if 'lower' in process:
@@ -224,28 +222,3 @@ class Cleaner(object):
         """
         toks = [tok.text for tok in self.tagger(self.clean_document(document, processes = processes))]
         return toks
-
-    def ptb_tokenize(self, document: base.DocType, processes: base.List[str] = None):
-        """
-        Tokenize the document using SpaCy, get PTB tags and clean it as it is processed.
-
-        :document: Document to be parsed.
-        :processes: The cleaning processes to engage in.
-        :returns toks: Document that has been passed through spacy's tagger.
-        """
-        toks = [tok.tag_ for tok in self.tagger(self.clean_document(document, processes = processes))]
-        return " ".join(toks)
-
-    def sentiment_tokenize(self, document: base.DocType, processes: base.List[str] = None):
-        """
-        Tokenize the document using SpaCy, get sentiment and clean it as it is processed.
-
-        :document: Document to be parsed.
-        :processes: The cleaning processes to engage in.
-        :returns toks: Document that has been passed through spacy's tagger.
-        """
-        raise NotImplementedError
-        # self.processes = processes if processes else self.processes
-        # toks = [tok.sentiment for tok in self.tagger(self.clean_document(document))]
-        # pdb.set_trace()
-        # return toks

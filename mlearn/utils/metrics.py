@@ -79,7 +79,9 @@ class Metrics:
         return scores
 
     def loss(self, value: float) -> None:
-        """Add latest loss value to scores.
+        """
+        Add latest loss value to scores.
+
         :value (float): Loss value of latest run.
         """
         self.scores['loss'].append(value)
