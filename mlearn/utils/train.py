@@ -97,9 +97,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
     :gpu (bool, default = True): Run on GPU
     """
     with trange(epochs, desc = "Training epochs", leave = False) as loop:
-        preds, labels, loss = [], [], []
-
-        dev_losses = []
+        preds, labels = [], []
 
         if patience > 0:
             early_stopping = EarlyStopping(save_path, model, patience, low_is_good = low_is_good)
@@ -115,13 +113,13 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
 
             preds.extend(epoch_preds)
             labels.extend(epoch_labels)
-            loss.append(epoch_loss)
             metrics.compute(epoch_labels, epoch_preds)
+            metrics.loss(epoch_loss)
 
             try:
                 dev_loss, _, _, _ = eval_torch_model(model, dev_iterator, loss_func, dev_metrics, gpu, store = False,
                                                      **kwargs)
-                dev_losses.append(dev_loss)
+                dev_metrics.loss(dev_loss)
                 dev_score = dev_metrics[dev_metrics.display_metric][-1]
 
                 if early_stopping is not None and early_stopping(model, dev_metrics.early_stopping()):
@@ -137,7 +135,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
             finally:
                 loop.refresh()
 
-    return loss, dev_losses, metrics.scores, dev_metrics.scores
+    return metrics.scores['loss'], dev_metrics.scores['dev_loss'], metrics.scores, dev_metrics.scores
 
 
 def run_mtl_model(library: str, train: bool, writer: base.Callable, model_info: list, head_len: int, **kwargs):

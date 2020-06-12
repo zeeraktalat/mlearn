@@ -71,6 +71,13 @@ class TestDataSet(torchtestcase.TorchTestCase):
         output = set(sorted(self.csv_dataset.stoi.keys()))
         self.assertSetEqual(output, expected, msg = 'Vocab building failed.')
 
+        # Use original as the data set.
+        expected = set(['<pad>', '<unk>'] + list(sorted("""me gusta comer en la cafeteria Give it to me
+                   No creo que sea una buena idea No it is not a good idea to get lost at sea""".split())))
+        self.csv_dataset.build_token_vocab(self.train, original = True)
+        output = set(sorted(self.csv_dataset.stoi.keys()))
+        self.assertSetEqual(output, expected, msg = 'Vocab building failed.')
+
     def test_extend_vocab(self):
         """Test extending vocab."""
         train = """<pad> <unk> me gusta comer en la cafeteria Give it to me
@@ -93,12 +100,21 @@ class TestDataSet(torchtestcase.TorchTestCase):
         self.assertListEqual(test[0].text, expected[0])
         self.assertListEqual(test[1].text, expected[1])
 
+    @torchtestcase.skip("Not implemented yet.")
+    def test_load_labels_from_file(self):
+        """Test loading of labels from a labelfile."""
+        with self.assertRaises(NotImplementedError):
+            self.csv_dataset.load_labels('test')
+
     def test_vocab_token_lookup(self):
         '''Test looking up in vocab.'''
         self.csv_dataset.build_token_vocab(self.train)
         expected = 0
         output = self.csv_dataset.vocab_token_lookup('me')
         self.assertEqual(output, expected, msg = 'Vocab token lookup failed.')
+
+        self.assertEqual(self.csv_dataset.vocab_token_lookup('shaggy'), self.csv_dataset.unk_tok,
+                         msg = "UNK token not returned when unknown word is enountered.")
 
     def test_vocab_ix_lookup(self):
         '''Test looking up in vocab.'''

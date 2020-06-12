@@ -151,6 +151,7 @@ class GeneralDataset(IterableDataset):
         :label_ix (int, str): Index or name of column containing labels.
         :label_name (str): Name of the label column/field.
         """
+        raise NotImplementedError
         path = label_path if label_path is not None else self.path
         ftype = ftype if ftype is not None else self.ftype
         sep = sep if sep is not None else self.sep
@@ -261,7 +262,7 @@ class GeneralDataset(IterableDataset):
 
         for doc in tqdm(data, desc = "Building vocabulary"):
             if original:
-                self.token_counts.update(doc.original)
+                self.token_counts.update(self.tokenizer(doc.original.replace('\n', ' ')))
             else:
                 for f in train_fields:
                     self.token_counts.update(getattr(doc, getattr(f, 'name')))
@@ -351,7 +352,7 @@ class GeneralDataset(IterableDataset):
         labels = set(getattr(l, getattr(f, 'name')) for l in labels for f in self.label_fields)
         self.itol, self.ltoi = {}, {}
 
-        for ix, l in enumerate(tqdm(sorted(labels, reverse = True), desc = "Encode label vocab")):
+        for ix, l in enumerate(tqdm(sorted(labels), desc = "Encode label vocab")):
             self.itol[ix] = l
             self.ltoi[l] = ix
 
@@ -440,10 +441,8 @@ class GeneralDataset(IterableDataset):
         :length (int, optional): The sequence length to be applied.
         :returns (list): Return list of padded datapoints.
         """
-        if not self.length and length is not None:
-            self.length = length
-        elif not self.length and length is None:
-            raise AttributeError("A length must be given to pad tokens.")
+        if length is None:
+            length = self.length
 
         padded = []
         for doc in data:
@@ -586,17 +585,9 @@ class GeneralDataset(IterableDataset):
 
         if dev_size is not None:
             dev = self._stratify_helper(data, labels, dev_size, label_probs, idx_maps)
-
-        if test_size is None:
-            if dev_size is not None:
-                test_size = len(data) - (train_size + dev_size)
-            else:
-                test_size = len(data) - train_size
+            test_size += len(data) - (train_size + dev_size + test_size)
         else:
-            if dev_size is not None:
-                test_size += len(data) - (train_size + dev_size + test_size)
-            else:
-                test_size += len(data) - (train_size + test_size)
+            test_size += len(data) - (train_size + test_size)
 
         indices = []
         for label in idx_maps:
