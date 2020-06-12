@@ -15,7 +15,7 @@ class TestDataSet(torchtestcase.TorchTestCase):
                   Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 1)]
 
         cls.csv_dataset = GeneralDataset(data_dir = os.getcwd() + '/tests/',
-                                         ftype = 'csv', fields = fields, train = 'train.csv', dev = None,
+                                         ftype = 'csv', fields = fields, train = 'train.csv', dev = 'dev.csv',
                                          test = 'test.csv', train_labels = None, tokenizer = lambda x: x.split(),
                                          preprocessor = None, transformations = None,
                                          label_processor = None, sep = ',', name = 'test')
@@ -28,6 +28,7 @@ class TestDataSet(torchtestcase.TorchTestCase):
                                           preprocessor = None, transformations = None,
                                           label_processor = lambda x: x, sep = ',', name = 'test',
                                           length = 200)
+        cls.csv_dataset.load('dev')
         cls.csv_dataset.load('test')
         cls.test = cls.csv_dataset.test
 
@@ -382,21 +383,50 @@ class TestDataSet(torchtestcase.TorchTestCase):
 
         # Test dev
         dev = self.csv_dataset.dev_set
-        self.assertListEqual(dev, self.csv_dataset.data, msg = "dev_set does not return dev data.")
+        self.assertListEqual(dev, self.csv_dataset.dev, msg = "dev_set does not return dev data.")
         dev.extend([1])
-        self.csv_datase.dev_set = dev
-        self.assertListEqual(dev, self.csv_dataset.data, msg = "dev_set does not set deving data.")
+        self.csv_dataset.dev_set = dev
+        self.assertListEqual(dev, self.csv_dataset.dev, msg = "dev_set does not set deving data.")
 
         # Test test
         test = self.csv_dataset.test_set
-        self.assertListEqual(test, self.csv_dataset.data, msg = "test_set does not return test data.")
+        self.assertListEqual(test, self.csv_dataset.test, msg = "test_set does not return test data.")
         test.extend([1])
-        self.csv_datase.test_set = test
-        self.assertListEqual(test, self.csv_dataset.data, msg = "test_set does not set testing data.")
+        self.csv_dataset.test_set = test
+        self.assertListEqual(test, self.csv_dataset.test, msg = "test_set does not set testing data.")
 
         # Test document length
         length = self.csv_dataset.modify_length  # TODO Replace with hardcoded number.
         self.assertEqual(length, self.csv_dataset.length, msg = "Retrieving length failed.")
         length += 1
-        self.modify_length = length
+        self.csv_dataset.modify_length = length
         self.assertEqual(length, self.csv_dataset.length, msg = "Modifying length failed.")
+
+    def test_getitem(self):
+        """Test that getting single item works."""
+        expected = Datapoint()
+        expected.text = "me gusta comer en la cafeteria".split()
+        expected.original = "me gusta comer en la cafeteria"
+        expected.label = 'SPANISH'
+        result = self.csv_dataset[0]
+        self.assertDictEqual(expected.__dict__, result.__dict__, msg = "GeneralDataset.__getitem__ does not work.")
+
+    def test_iter(self):
+        """Test that iterator works."""
+        expected = 4
+        result = 0
+        for dp in self.csv_dataset:
+            result += 1
+            self.assertIsInstance(dp, Datapoint, msg = "GeneralDataset.__iter__ collected non Datapoint type.")
+        self.assertEqual(expected, result, msg = "GeneralDataset.__iter__ does not work.")
+
+    def test_getattr(self):
+        """Test that accessing a given attribute for the data works."""
+        expected = ['SPANISH', 'ENGLISH', 'SPANISH', 'ENGLISH']
+        self.assertListEqual(expected, list(getattr(self.csv_dataset, 'label', None)))
+
+    def test_len(self):
+        """Test that len works."""
+        self.assertEqual(4, len(self.csv_dataset), msg = "Unexpected failure on valid len operation on Dataset object.")
+        self.csv_dataset.data = 23
+        self.assertEqual(2**32, len(self.csv_dataset), msg = "Unexpected failure on invalid len operation on Dataset.")
