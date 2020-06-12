@@ -5,6 +5,10 @@ os: [
 
 dist: "xenial"
 
+env:
+  global:
+    - TQDM_DSIABLE=True
+
 services:
   - mongodb
 
