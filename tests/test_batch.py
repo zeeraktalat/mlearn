@@ -188,7 +188,7 @@ class TestBatchGenerator(torchtestcase.TorchTestCase):
         """Test shuffling data."""
         batches = BatchExtractor('label', self.batches, self.dataset, onehot = False)
         expected = [batch for batch in batches]
-        result = [batch for batch in batches.shuffle_batches()]
+        result = [batch for batch in batches.shuffle()]
 
         expected_ys = []
         result_ys = []
