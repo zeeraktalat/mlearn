@@ -25,6 +25,7 @@ class EarlyStopping:
         self.low_is_good = low_is_good
         self.path_prefix = path_prefix + f'_{model.name}.pkl'
         self.verbose = verbose
+        self.model = model
 
     def __call__(self, model: base.ModelType, score: float) -> bool:
         """
