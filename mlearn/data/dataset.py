@@ -171,8 +171,8 @@ class GeneralDataset(IterableDataset):
 
         labels = [line[label_ix.rstrip()] for line in self.reader(fp, ftype, sep)]
 
-        for l, doc in zip(labels, data):
-            setattr(doc, label_name, l)
+        for label, doc in zip(labels, data):
+            setattr(doc, label_name, label)
 
     def set_labels(self, data: base.DataType, labels: base.DataType) -> None:
         """
@@ -355,7 +355,7 @@ class GeneralDataset(IterableDataset):
 
         :labels (base.DataType): List of datapoints to process.
         """
-        labels = set(getattr(l, getattr(f, 'name')) for l in labels for f in self.label_fields)
+        labels = set(getattr(lab, getattr(f, 'name')) for lab in labels for f in self.label_fields)
         self.itol, self.ltoi = {}, {}
 
         for ix, l in enumerate(tqdm(sorted(labels), desc = "Encode label vocab",
@@ -416,7 +416,7 @@ class GeneralDataset(IterableDataset):
         if not isinstance(label, list):
             label = [label]
         processor = processor if processor is not None else self.label_processor
-        return [processor(l) for l in label]
+        return [processor(lab) for lab in label]
 
     def process_doc(self, doc: base.DocType) -> list:
         """

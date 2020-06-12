@@ -353,7 +353,7 @@ class TestDataSet(torchtestcase.TorchTestCase):
         train, _, test = data.split(loaded_train, splits = [0.8], stratify = 'label', store = False)
         output = [len(train), len(test)]
 
-        self.assertEqual(sum(output), len(loaded_train), msg = f"The splits ([0.8]) != len(self.train)")
+        self.assertEqual(sum(output), len(loaded_train), msg = "The splits ([0.8]) != len(self.train)")
         self.assertListEqual(expected, output, msg = 'Splitting with just float failed.')
 
         expected = [1531, 383]
@@ -361,7 +361,7 @@ class TestDataSet(torchtestcase.TorchTestCase):
         train, _, test = self.csv_dataset.split(loaded_train, [0.8, 0.2], stratify = 'label', store = False)
         output = [len(train), len(test)]
 
-        self.assertEqual(sum(output), len(loaded_train), msg = f"The splits ([0.8, 0.2]) != len(loaded_train)")
+        self.assertEqual(sum(output), len(loaded_train), msg = "The splits ([0.8, 0.2]) != len(loaded_train)")
         self.assertListEqual(expected, output, msg = 'Two split values in list failed.')
 
         expected = [1531, 191, 192]
@@ -369,7 +369,7 @@ class TestDataSet(torchtestcase.TorchTestCase):
         train, dev, test = self.csv_dataset.split(loaded_train, [0.8, 0.1, 0.1], stratify = 'label', store = False)
         output = [len(train), len(dev), len(test)]
 
-        self.assertEqual(sum(output), len(loaded_train), msg = f"The splits ([0.8, 0.1, 0.1]) != len(loaded_train)")
+        self.assertEqual(sum(output), len(loaded_train), msg = "The splits ([0.8, 0.1, 0.1]) != len(loaded_train)")
         self.assertListEqual(expected, output, msg = 'Three split values in list failed.')
 
     def test_properties(self):

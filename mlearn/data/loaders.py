@@ -304,7 +304,7 @@ def vidgen_to_multiclass(label: str) -> str:
 
 
 def vidgen(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-          transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
+           transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
     """
     Load the Vidgen et al. dataset.
 
