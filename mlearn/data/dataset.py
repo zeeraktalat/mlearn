@@ -273,15 +273,10 @@ class GeneralDataset(IterableDataset):
         self.unk_tok = len(self.token_counts)
         self.pad_tok = len(self.token_counts) + 1
 
-        try:
+        if '<pad>' in self.token_counts:
             del self.token_counts['<pad>']
-        except KeyError:
-            pass
-
-        try:
+        if '<unk>' in self.token_counts:
             del self.token_counts['<unk>']
-        except KeyError:
-            pass
 
         self.stoi['<unk>'] = self.unk_tok
         self.stoi['<pad>'] = self.pad_tok
