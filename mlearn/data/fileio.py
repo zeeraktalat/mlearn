@@ -19,17 +19,17 @@ def read_json(fh: str, enc, doc_key: str, label_key: str, secondary_keys: dict =
     :kwargs: Other keys to access.
     :return (tuple): Document, label, and other indexed items.
     """
-    for line in open(fh, 'r', encoding = enc):
-        try:
-            dict_in = json.loads(line)
-        except Exception as e:
-            print("Error occurred: {0}".format(e))
-            dict_in = ast.literal_eval(line)
-        finally:
+    with open(fh, 'r', encoding = enc) as inf:
+        for line in inf:
+            try:
+                dict_in = json.loads(line)
+            except Exception as e:
+                print("Error occurred: {0}".format(e))
+                dict_in = ast.literal_eval(line)
             out_dict = {doc_key: dict_in.get(doc_key), label_key: dict_in.get(label_key)}
 
             if secondary_keys is not None:
-                for key, vals in secondary_keys:
+                for key, vals in secondary_keys.items():
                     out_dict.update({key: get_deep_dict_value(dict_in, vals, None)})
             yield out_dict
 
