@@ -22,6 +22,7 @@ def process_and_batch(dataset: GeneralDataset, data: base.DataType, batch_size: 
     batches = BatchExtractor('label', batch, dataset, onehot)
     return batches
 
+
 def get_deep_dict_value(source: dict, keys: str, default = None):
     """
     Get values from deeply nested dicts.
@@ -29,6 +30,6 @@ def get_deep_dict_value(source: dict, keys: str, default = None):
     :source (dict): Dictionary to get data from.
     :keys (str): Keys split by '|'. E.g. outerkey|middlekey|innerkey.
     :default: Default return value.
-    """"
-    value = reduce(lambda d, key: d.get(key, default) if isinstance(d, dict) else default, keys.split("|"), dictionary)
+    """
+    value = reduce(lambda d, key: d.get(key, default) if isinstance(d, dict) else default, keys.split("|"), source)
     return value
