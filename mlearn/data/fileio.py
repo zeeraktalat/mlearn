@@ -54,8 +54,8 @@ def write_predictions(data: base.DataType, dataset: GeneralDataset, train_field:
                    dataset.label_ix_lookup(getattr(doc, label_field)), dataset.label_ix_lookup(doc.pred),
                    data_name, main_name] + model_info
             pred_fn.writerow(out)
-        except Exception as e:
-            __import__('pdb').set_trace()
+        except (IndexError, KeyError) as e:
+            raise(e)
 
     pred_fn.writerow(len(out) * ['---'])
 
