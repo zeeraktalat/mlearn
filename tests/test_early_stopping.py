@@ -24,6 +24,8 @@ class TestEarlyStopping(torchtestcase.TorchTestCase):
         cls.initialised = {'patience': None, 'best_model': None, 'best_score': None, 'best_epoch': 0, 'epoch': 0,
                            'low_is_good': None, 'path_prefix': f'{cls.path_prefix}_{cls.model.name}.pkl',
                            'verbose': False, 'model': cls.model}
+        if os.path.exists('tests/earlystop_rnn.pkl'):
+            os.remove('tests/earlystop_rnn.pkl')
 
     def test_initalize(self):
         """Test EarlyStopping.__init__()."""
