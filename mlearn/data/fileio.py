@@ -54,7 +54,7 @@ def write_predictions(data: base.DataType, dataset: GeneralDataset, train_field:
                    dataset.label_ix_lookup(getattr(doc, label_field)), dataset.label_ix_lookup(doc.pred),
                    data_name, main_name] + model_info
             pred_fn.writerow(out)
-        except Exception:
+        except Exception as e:
             __import__('pdb').set_trace()
 
     pred_fn.writerow(len(out) * ['---'])
@@ -90,13 +90,16 @@ def write_results(writer: base.Callable, train_scores: dict, train_loss: list, d
             if dev_scores:
                 out += [dev_scores[m][i] for m in metrics.list()] + [dev_loss[i]]  # Dev info
 
-        except IndexError:
-            __import__('pdb').set_trace()
+        except (IndexError, KeyError) as e:
+            # __import__('pdb').set_trace()
+            raise(e)
 
         row_len = len(out)
         if row_len < exp_len:
             out += [''] * (row_len - exp_len)
         elif row_len > exp_len:
-            __import__('pdb').set_trace()
+            # __import__('pdb').set_trace()
+            raise(AssertionError(f'Row length ({row_len}) > expected length ({exp_len}).\nRow: {out}'))
 
         writer.writerow(out)
+    return True
