@@ -58,6 +58,7 @@ def write_predictions(data: base.DataType, dataset: GeneralDataset, train_field:
             raise(e)
 
     pred_fn.writerow(len(out) * ['---'])
+    return True
 
 
 def write_results(writer: base.Callable, train_scores: dict, train_loss: list, dev_scores: dict, dev_loss: list,

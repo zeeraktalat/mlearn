@@ -10,6 +10,12 @@ from mlearn.data.dataset import GeneralDataset
 class TestFileIO(unittest.TestCase):
     """Test FileIO.py."""
 
+    @classmethod
+    def tearDown(cls):
+        """Tear down objects."""
+        if os.path.exists('test'):
+            os.remove('test')
+
     def test_read_json(self):
         """Test fileio.read_json()"""
         filepath = 'tests/data/traindeep.json'
@@ -60,7 +66,7 @@ class TestFileIO(unittest.TestCase):
                                              data_name  = 'test', main_name = 'test222'),
                             msg = "Successful run of write_results failed.")
 
-            with self.assertRaises((IndexError, KeyError, AssertionError), msg = "Does not invoke errors."):
+            with self.assertRaises((IndexError, KeyError, AssertionError), msg = "Does not invoke Exceptions."):
                 # Index Error
                 io.write_results(writer = writer, train_scores = train_scores, train_loss = train_loss,
                                  dev_scores = dev_scores, dev_loss = dev_loss, epochs = 20,
@@ -79,8 +85,38 @@ class TestFileIO(unittest.TestCase):
                                  dev_scores = dev_scores, dev_loss = dev_loss, epochs = 1,
                                  model_info = model_info, metrics = train_scores, exp_len = 10,
                                  data_name  = 'test', main_name = 'test222')
-            os.remove('tests')
 
     def test_write_predictions(self):
         """Test fileio.write_predictions()"""
-        pass
+        fields = [Field('text', train = True, label = False, ignore = False, ix = 0, cname = 'text'),
+                  Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 1)]
+
+        dataset = GeneralDataset(data_dir = os.getcwd() + '/tests/data/',
+                                 ftype = 'csv', fields = fields, train = 'train.csv', dev = 'dev.csv',
+                                 test = 'test.csv', train_labels = None, tokenizer = lambda x: x.split(),
+                                 preprocessor = None, transformations = None, label_processor = None,
+                                 sep = ',', name = 'test')
+        dataset.load('train')
+        dataset.itol = {}
+
+        for obj in dataset.data:
+            setattr(obj, 'pred', 0)
+
+        with open('test', 'w', encoding = 'utf-8') as inf:
+            writer = csv.writer(inf, delimiter = '\t')
+            model_info = ['NotModel', 200, 300]
+
+            with self.assertRaises((IndexError, KeyError), msg = "Exception not raised."):
+                io.write_predictions(data = dataset.data, dataset = dataset, train_field = 'text',
+                                     label_field = 'label', data_name = 'test1', main_name = 'test2', pred_fn = writer,
+                                     model_info = model_info)
+
+            dataset.build_token_vocab(dataset.data)
+            dataset.build_label_vocab(dataset.data)
+            for obj in dataset.data:
+                setattr(obj, 'label', dataset.label_name_lookup(obj.label))
+
+            self.assertTrue(io.write_predictions(data = dataset.data, dataset = dataset, model_info = model_info,
+                                                 train_field = 'text', label_field = 'label', data_name = 'test1',
+                                                 main_name = 'test2', pred_fn = writer),
+                            msg = "Writing of predictions file failed.")
