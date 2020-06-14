@@ -1,5 +1,10 @@
+import os
+import csv
 import unittest
+from mlearn.base import Field
 from mlearn.data import fileio as io
+from mlearn.utils.metrics import Metrics
+from mlearn.data.dataset import GeneralDataset
 
 
 class TestFileIO(unittest.TestCase):
@@ -27,7 +32,54 @@ class TestFileIO(unittest.TestCase):
 
     def test_write_results(self):
         """Test fileio.write_results()"""
-        pass
+        fields = [Field('text', train = True, label = False, ignore = False, ix = 0, cname = 'text'),
+                  Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 1)]
+
+        dataset = GeneralDataset(data_dir = os.getcwd() + '/tests/data/',
+                                 ftype = 'csv', fields = fields, train = 'train.csv', dev = 'dev.csv',
+                                 test = 'test.csv', train_labels = None, tokenizer = lambda x: x.split(),
+                                 preprocessor = None, transformations = None, label_processor = None,
+                                 sep = ',', name = 'test')
+        dataset.load('train')
+
+        with open('test', 'w', encoding = 'utf-8') as inf:
+            writer = csv.writer(inf, delimiter = '\t')
+            train_scores = Metrics(['accuracy'], 'accuracy', 'accuracy')
+            train_scores.scores = {'accuracy': [0.5]}
+            train_loss = 0.2
+
+            dev_scores = Metrics(['accuracy'], 'accuracy', 'accuracy')
+            dev_scores.scores = {'accuracy': [0.2]}
+            dev_loss = [0.2]
+
+            model_info = ['NotModel', 200, 300]
+
+            self.assertTrue(io.write_results(writer = writer, train_scores = train_scores, train_loss = train_loss,
+                                             dev_scores = dev_scores, dev_loss = dev_loss, epochs = 1,
+                                             model_info = model_info, metrics = train_scores, exp_len = 10,
+                                             data_name  = 'test', main_name = 'test222'),
+                            msg = "Successful run of write_results failed.")
+
+            with self.assertRaises((IndexError, KeyError, AssertionError), msg = "Does not invoke errors."):
+                # Index Error
+                io.write_results(writer = writer, train_scores = train_scores, train_loss = train_loss,
+                                 dev_scores = dev_scores, dev_loss = dev_loss, epochs = 20,
+                                 model_info = model_info, metrics = train_scores, exp_len = 10,
+                                 data_name  = 'test', main_name = 'test222')
+
+                # Assertion Error
+                io.write_results(writer = writer, train_scores = train_scores, train_loss = train_loss,
+                                 dev_scores = dev_scores, dev_loss = dev_loss, epochs = 20,
+                                 model_info = model_info, metrics = train_scores, exp_len = 7,
+                                 data_name  = 'test', main_name = 'test222')
+
+                # Key error
+                train_scores.scores = {'precision': 0.2}
+                io.write_results(writer = writer, train_scores = train_scores, train_loss = train_loss,
+                                 dev_scores = dev_scores, dev_loss = dev_loss, epochs = 1,
+                                 model_info = model_info, metrics = train_scores, exp_len = 10,
+                                 data_name  = 'test', main_name = 'test222')
+            os.remove('tests')
 
     def test_write_predictions(self):
         """Test fileio.write_predictions()"""
