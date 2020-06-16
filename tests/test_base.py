@@ -22,16 +22,16 @@ class TestDataPoint(unittest.TestCase):
 
     def test_datapoint_creation(self):
         """Test that datapoints are created consistently."""
-        expected = [{'text': 'me gusta comer en la cafeteria'.lower().split(),
+        expected = [{'text': 'me gusta comer en la cafeteria'.split(),
                      'label': 'SPANISH',
                      'original': 'me gusta comer en la cafeteria'},
-                    {'text': 'Give it to me'.lower().split(),
+                    {'text': 'Give it to me'.split(),
                      'label': 'ENGLISH',
                      'original': 'Give it to me'},
-                    {'text': 'No creo que sea una buena idea'.lower().split(),
+                    {'text': 'No creo que sea una buena idea'.split(),
                      'label': 'SPANISH',
                      'original': 'No creo que sea una buena idea'},
-                    {'text': 'No it is not a good idea to get lost at sea'.lower().split(),
+                    {'text': 'No it is not a good idea to get lost at sea'.split(),
                      'label': 'ENGLISH',
                      'original': 'No it is not a good idea to get lost at sea'}
                     ]
