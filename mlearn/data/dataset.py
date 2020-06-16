@@ -19,7 +19,7 @@ class GeneralDataset(IterableDataset):
                  test_labels: str = None, sep: str = None, tokenizer: base.Union[base.Callable, str] = 'spacy',
                  preprocessor: base.Callable = None, transformations: base.Callable = None,
                  label_processor: base.Callable = None, label_preprocessor: base.Callable = None,
-                 length: int = None, lower: bool = True, gpu: bool = True) -> None:
+                 length: int = None, gpu: bool = True) -> None:
         """
         Initialize the variables required for the dataset loading.
 
@@ -39,8 +39,7 @@ class GeneralDataset(IterableDataset):
         :preprocessor (base.Callable, default = None): Preprocessing step to apply.
         :transformations (base.Callable, default = None): Method changing from one representation to another.
         :label_processor(base.Callable, default = None): Function to process labels with.
-        :label_preprocessor(base.Callable, default = None): Function to preprocess labels.
-        :lower (bool, default = True): Lowercase the document.
+        :label_preprocessor(base.Callable, default = None): Function to modify string of label before creating indices.
         :gpu (bool, default = True): Run on GPU.
         :length (int, default = None): Max length of documents.
         """
@@ -58,16 +57,19 @@ class GeneralDataset(IterableDataset):
         assert([getattr(f, 'label') is not None for f in fields])
 
         self.sep = sep
-        self.fields = fields
         self.fields_dict = defaultdict(list)
-        self.label_counts = defaultdict(int)
+        self.train_fields = []
+        self.label_fields = []
 
-        for field in self.fields:
+        for field in fields:
             for key in field.__dict__:
                 self.fields_dict[key].append(getattr(field, key))
 
-        self.train_fields = [f for f in self.fields if f.train]
-        self.label_fields = [f for f in self.fields if f.label]
+            if field.train:
+                self.train_fields.append(field)
+            if field.label:
+                self.label_fields.append(field)
+
         self.data_files = {key: os.path.join(self.data_dir, f) for f, key in zip([train, dev, test],
                                                                                  ['train', 'dev', 'test'])
                                                                                  if f is not None}
@@ -76,12 +78,10 @@ class GeneralDataset(IterableDataset):
 
         self.tokenizer = tokenizer
         self.preprocessor = preprocessor
-        self.data_dir = data_dir
         self.repr_transform = transformations
         self.label_processor = label_processor if label_processor else self.label_name_lookup
         self.label_preprocessor = label_preprocessor
         self.length = length
-        self.lower = lower
         self.gpu = gpu
 
     def load(self, dataset: str = 'train', skip_header = True, **kwargs) -> None:
@@ -113,8 +113,6 @@ class GeneralDataset(IterableDataset):
                     data_line[field.name] = self.label_preprocessor(line[idx].rstrip())
                 else:
                     data_line[field.name] = line[idx].rstrip()
-
-                self.label_counts[data_line[field.name]] += 1
 
             for key, val in data_line.items():
                 setattr(datapoint, key, val)
@@ -422,8 +420,6 @@ class GeneralDataset(IterableDataset):
         """
         if isinstance(doc, list):
             doc = " ".join(doc)
-
-        doc = doc.lower() if self.lower else doc
 
         doc = self.tokenizer(doc.replace("\n", " "))
 
