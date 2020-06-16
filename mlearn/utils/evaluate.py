@@ -1,6 +1,7 @@
 import torch
 from tqdm import tqdm
 from mlearn import base
+from mlearn.utils import metrics
 
 
 def predict_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: base.Callable, gpu: bool,
@@ -63,6 +64,41 @@ def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: 
         metrics.compute(true, predicted)
 
     return loss / len(true), None, metrics.scores, None
+
+
+def predict_sklearn_model(model: base.ModelType, iterator: base.DataType, metrics: metrics.Metrics = None,
+                          labels: base.DataType = None) -> base.Tuple[base.DataType, metrics.Metrics]:
+    """
+    Predict using trained Scikit-learn model.
+
+    :model (base.ModelType): Trained model to be trained.
+    :iterator (base.DataType): Dataset to predict on.
+    :metrics (metrics.Metrics, default = None): Initialized Metrics object.
+    :labels (base.DataType, default = None): For applying hte data
+    :returns (Metrics.metrics): Metrics
+    """
+    preds = model.predict(iterator)
+    if labels:
+        metrics.compute(labels, preds)
+    return preds, metrics
+
+
+def eval_sklearn_model(model: base.ModelType, iterator: base.DataType, metrics: Metrics, labels: base.DataType,
+                       store: bool = True, evalset: base.DataType = None):
+    """
+    Evaluate Scikit-learn model.
+
+    :model (base.ModelType): Trained model to be trained.
+    :iterator (base.DataType): Dataset to predict on.
+    :metrics (object): Initialized Metrics object.
+    :evalset (base.DataType): Data object being predicted on.
+    :store (bool, default = True): Store the prediction if true.
+    :returns (metrics.Metrics): Return evaluation metrics.
+    """
+    preds, metrics = predict_sklearn_model(model, iterator, metrics, labels)
+    if store:
+        for doc, lab, pred in zip(evalset, labels, preds):
+            setattr(doc, 'pred', pred)
 
 
 """ Joachim's Code, including regression evaluation.
