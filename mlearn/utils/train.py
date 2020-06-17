@@ -2,10 +2,12 @@ import torch
 import numpy as np
 from mlearn import base
 from tqdm import tqdm, trange
-from mlearn.utils.evaluate import eval_torch_model
-from mlearn.utils.pipeline import process_and_batch
+from mlearn.utils.metrics import Metrics
 from mlearn.utils.early_stopping import EarlyStopping
+from mlearn.utils.pipeline import process_and_batch, vectorize
 from mlearn.data.fileio import write_predictions, write_results
+from mlearn.utils.evaluate import eval_torch_model, eval_sklearn_model
+from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV
 
 
 def run_singletask_model(library: str, train: bool, writer: base.Callable, model_info: list, head_len: int, **kwargs):
@@ -19,9 +21,9 @@ def run_singletask_model(library: str, train: bool, writer: base.Callable, model
     :head_len (int): The length of the header.
     """
     if train:
-        func = train_singletask_model if library == 'pytorch' else train_sklearn_model
+        func = train_singletask_model if library == 'pytorch' else select_sklearn_training_regiment
     else:
-        func = eval_torch_model if library == 'pytorch' else evaluate_sklearn_model
+        func = eval_torch_model if library == 'pytorch' else eval_sklearn_model
 
     train_loss, dev_loss, train_scores, dev_scores = func(**kwargs)
     write_results(writer, train_scores, train_loss, dev_scores, dev_loss, model_info = model_info, exp_len = head_len,
@@ -149,9 +151,9 @@ def run_mtl_model(library: str, train: bool, writer: base.Callable, model_info: 
     :head_len (int): The length of the header.
     """
     if train:
-        func = train_mtl_model if library == 'pytorch' else train_sklearn_model
+        func = train_mtl_model if library == 'pytorch' else select_sklearn_training_regiment
     else:
-        func = eval_torch_model if library == 'pytorch' else evaluate_sklearn_model
+        func = eval_torch_model if library == 'pytorch' else eval_sklearn_model
 
     train_loss, dev_loss, train_scores, dev_scores = func(**kwargs)
     write_results(writer, train_scores, train_loss, dev_scores, dev_loss, model_info = model_info, exp_len = head_len,
@@ -294,27 +296,140 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
     return train_loss, dev_losses, _, dev_scores
 
 
-def train_sklearn_model(arg1):
+def train_sklearn_cv_model(model: base.ModelType, vectorizer: base.VectType, dataset: base.DataType,
+                           cross_validate: int = None, stratified: bool = True, metrics: Metrics = None,
+                           dev: base.DataType = None, dev_metrics: Metrics = None, **kwargs
+                           ) -> base.Tuple[Metrics, Metrics]:
     """
-    TODO: Docstring for train_sklearn_model.
+    Train sklearn cv model.
 
-    :arg1: TODO
-    :returns: TODO
-
+    :model (base.ModelType): An untrained scikit-learn model.
+    :vectorizer (base.VectType): An unfitted vectorizer.
+    :dataset (GeneralDataset): The dataset object containing the training set.
+    :cross_validate (int, default = None): The number of folds for cross-validation.
+    :stratified (bool, default = True): Stratify data across the folds.
+    :metrics (Metrics, default = None): An initialized metrics object.
+    :dev (base.DataType, default = None): The development data.
+    :dev_metrcs (Metrics, default = None): An initialized metrics object for the dev data.
+    :returns (model, metrics, dev_metrics): Returns trained model object, metrics and dev_metrics objects.
     """
-    train_scores, dev_scores = None, None
-    raise NotImplementedError
-    return None, None, train_scores, dev_scores
+    # Load data
+    train = vectorize(dataset.train, dataset, vectorizer)
+    labels = [doc.label for doc in dataset.train]
+
+    if stratified:
+        folds = StratifiedKFold(cross_validate)
+    else:
+        folds = KFold(cross_validate)
+
+    with trange(folds, desc = "Training model") as loop:
+        for train_idx, test_idx in folds.split(train, labels):
+            trainX, trainY = train[train_idx], labels[train_idx]
+            testX, testY = train[test_idx], labels[test_idx]
+
+            model.fit(trainX, trainY)
+            eval_sklearn_model(model, testX, metrics, testY)
+
+        try:
+            devX = vectorize(dev, dataset, vectorizer)
+            devY = [getattr(doc, getattr(f, 'name')) for f in dataset.label_fields for doc in dev]
+            eval_sklearn_model(model, devX, dev_metrics, devY)
+
+            loop.set_postfix(**metrics.display(), **dev_metrics.display())
+        except Exception:
+            loop.set_postfix(**metrics.display())
+        finally:
+            loop.refresh()
+
+    return model, metrics, dev_metrics
 
 
-def evaluate_sklearn_model(arg1):
+def train_sklearn_gridsearch_model(model: base.ModelType, vectorizer: base.VectType, dataset: base.DataType,
+                                   grid_search: dict, cross_validate: int = None, metrics: Metrics = None,
+                                   dev: base.DataType = None, dev_metrics: Metrics = None, scoring: str = 'f1_weighted',
+                                   n_jobs: int = -1, **kwargs) -> base.Tuple[base.ModelType, Metrics, Metrics]:
     """
-    TODO: Docstring for evaluate_sklearn_model.
+    Train sklearn model using grid-search.
 
-    :arg1: TODO
-    :returns: TODO
-
+    :model (base.ModelType): An untrained scikit-learn model.
+    :vectorizer (base.VectType): An unfitted vectorizer.
+    :dataset (base.DataType): The dataset object containing train data.
+    :grid_search (dict): The parameter grid to explore.
+    :cross_validate (int, default = None): The number of folds for cross-validation.
+    :metrics (Metrics, default = None): An initialized metrics object.
+    :dev (base.DataType, default = None): The development data.
+    :dev_metrcs (Metrics, default = None): An initialized metrics object for the dev data.
+    :scoring (str, default = 'f1_weighted'): The scoring metrics used to define best functioning model.
+    :n_jobs (int, default = -1): The number of processors to use (-1 == all processors).
+    :returns (model, metrics, dev_metrics): Returns grid-search object, metrics and dev_metrics objects.
     """
-    train_scores, dev_scores = None, None
-    raise NotImplementedError
-    return None, None, train_scores, dev_scores
+    train = vectorize(dataset.train, dataset, vectorizer)
+    labels = [doc.label for doc in dataset.train]
+
+    with trange(1, desc = "Training model") as loop:
+        model = GridSearchCV(model, grid_search, scoring, n_jobs = n_jobs, cv = cross_validate, refit = True)
+        model.fit(train, labels)
+
+        try:
+            devX = vectorize(dev, dataset, vectorizer)
+            devY = [getattr(doc, getattr(f, 'name')) for f in dataset.label_fields for doc in dev]
+            eval_sklearn_model(model, devX, dev_metrics, devY)
+
+            loop.set_postfix(f1_score = model.best_score_, **dev_metrics.display())
+        except Exception:
+            loop.set_postfix(f1_score = model.best_score_)
+        finally:
+            loop.refresh()
+
+    return model, metrics, dev_metrics
+
+
+def train_sklearn_model(model: base.ModelType, vectorizer: base.VectType, dataset: base.DataType, metrics: Metrics,
+                        dev: base.DataType = None, dev_metrics: Metrics = None, **kwargs):
+    """
+    Train bare sci-kit learn model.
+
+    :model (base.ModelType): An untrained scikit-learn model.
+    :vectorizer (base.VectType): An unfitted vectorizer.
+    :dataset (base.DataType): The dataset object containing train data.
+    :grid_search (dict): The parameter grid to explore.
+    :cross_validate (int, default = None): The number of folds for cross-validation.
+    :metrics (Metrics, default = None): An initialized metrics object.
+    :dev (base.DataType, default = None): The development data.
+    :dev_metrcs (Metrics, default = None): An initialized metrics object for the dev data.
+    :returns (model, metrics, dev_metrics): Returns trained model object, metrics and dev_metrics objects.
+    """
+    with trange(1, desc = "Training model") as loop:
+        trainX = vectorize(dataset.train, dataset, vectorizer)
+        trainY = [doc.label for doc in dataset.train]
+
+        model.fit(trainX, trainY)
+
+        try:
+            devX = vectorize(dev, dataset, vectorizer)
+            devY = [getattr(doc, getattr(f, 'name')) for f in dataset.label_fields for doc in dev]
+            eval_sklearn_model(model, devX, dev_metrics, devY)
+
+            loop.set_postfix(**metrics.display(), **dev_metrics.display())
+        except Exception:
+            loop.set_postfix(**metrics.display())
+        finally:
+            loop.refresh()
+
+    return model, metrics, dev_metrics
+
+
+def select_sklearn_training_regiment(model: base.ModelType, cross_validate: int = None, grid_search: dict = None,
+                                     **kwargs):
+    """Select the type of sklearn training regime.
+
+    :model (base.ModelType): The model to be trained.
+    :cross_validate (int, default = None): The number of folds to use for cross validation.
+    :grid_search (dict, default = None): The parameters to search over.
+    """
+    if grid_search is not None:
+        train_sklearn_gridsearch_model(model, cross_validate = cross_validate, grid_search = grid_search, **kwargs)
+    elif cross_validate is not None:
+        train_sklearn_cv_model(model, cross_validate = cross_validate, **kwargs)
+    else:
+        train_sklearn_model(**kwargs)

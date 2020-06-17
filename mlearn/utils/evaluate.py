@@ -15,6 +15,7 @@ def predict_torch_model(model: base.ModelType, iterator: base.DataType, loss_fun
     :gpu (bool): True if run on GPU else false.
     :returns (base.Tuple[list, list, float]): Predictions, true labels, mean loss.
     """
+    # TODO Modify this so it ONLY does the predictions and nothing else.
     predicted, labels = [], []
     loss = []
 
