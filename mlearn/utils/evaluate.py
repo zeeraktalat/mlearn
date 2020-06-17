@@ -83,7 +83,7 @@ def predict_sklearn_model(model: base.ModelType, iterator: base.DataType, metric
     return preds, metrics
 
 
-def eval_sklearn_model(model: base.ModelType, iterator: base.DataType, metrics: Metrics, labels: base.DataType,
+def eval_sklearn_model(model: base.ModelType, iterator: base.DataType, metrics: metrics.Metrics, labels: base.DataType,
                        store: bool = True, evalset: base.DataType = None):
     """
     Evaluate Scikit-learn model.

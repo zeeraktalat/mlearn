@@ -1,3 +1,4 @@
+import mlearn.data.dataset as data
 from collections import OrderedDict
 from sklearn.preprocessing import LabelEncoder
 from mlearn.modeling.metrics import select_metrics
@@ -5,29 +6,6 @@ from sklearn.feature_extraction import DictVectorizer
 from mlearn.data.fileio import write_results, print_results
 from mlearn.custom_types import NPData, ModelType, VectType, List, Tuple, Callable
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, HashingVectorizer
-
-
-def select_vectorizer(vectorizer: str) -> VectType:
-    """
-    Identify vectorizer used and return it to be used.
-
-    :param vectorizer: Vectorizer to be used.
-    :return v: Vectorizer function.
-    """
-    if not any(vec in vectorizer for vec in ['dict', 'count', 'hash', 'tfidf']):
-        print("You need to select from the options: dict, count, hash, tfidf. Defaulting to Dict.")
-        return DictVectorizer
-
-    vect = vectorizer.lower()
-    if 'dict' in vect:
-        v = DictVectorizer
-    elif 'tfidf' in vect:
-        v = TfidfVectorizer
-    elif 'hash' in vect:
-        v = HashingVectorizer
-    elif 'count' in vect:
-        v = CountVectorizer
-    return v
 
 
 def train(model: ModelType, dataX: NPData, dataY: NPData,

@@ -100,7 +100,7 @@ class GeneralDataset(IterableDataset):
         for line in tqdm(self.reader(fp), desc = f'Loading {self.name} ({dataset})',
                          disable = os.environ.get('TQDM_DISABLE', False)):
 
-            data_line, datapoint = {}, base.Datapoint()  # TODO Look at moving all of this to the datapoint class.
+            data_line, datapoint = {}, base.Datapoint()  # TODO Look at moving all load processing into datapoint class.
 
             for field in self.train_fields:
                 idx = field.index if self.ftype in ['CSV', 'TSV'] else field.cname
@@ -119,13 +119,8 @@ class GeneralDataset(IterableDataset):
             data.append(datapoint)
         fp.close()
 
-        if self.length is None:
-            # Get the max length
-            lens = []
-            for doc in data:
-                for f in self.train_fields:
-                    lens.append(len([tok for tok in getattr(doc, getattr(f, 'name'))]))
-            self.length = max(lens)
+        if self.length is None:  # Get the max length of the input
+            self.length = max([len(getattr(doc, getattr(f, 'name'))) for f in self.train_fields for doc in data])
 
         if dataset == 'train':
             self.data = data

@@ -63,6 +63,7 @@ def vectorize(data: base.DataType, dataset: GeneralDataset, vect: base.VectType)
     else:
         vect.fit(data)
         vectorized = vect.transform(data)
+        vect.fitted = True
     return vectorized
 
 
