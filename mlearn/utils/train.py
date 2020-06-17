@@ -101,6 +101,8 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
 
         if patience > 0:
             early_stopping = EarlyStopping(save_path, model, patience, low_is_good = low_is_good)
+        else:
+            early_stopping = None
 
         for ep in loop:
             model.train()
@@ -130,7 +132,8 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
                                  dev_loss = f"{dev_loss:.4f}",
                                  **metrics.display(),
                                  dev_score = dev_score)
-            except Exception:
+            except Exception as e:
+                print(f"THROWN EXCEPTION IS {e}")
                 loop.set_postfix(epoch_loss = f"{epoch_loss:.4f}", **metrics.display())
             finally:
                 loop.refresh()
@@ -250,6 +253,8 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
 
     if patience > 0:
         early_stopping = EarlyStopping(save_path, model, patience, low_is_good = False)
+    else:
+        early_stopping = None
 
     batchers = []
 
@@ -267,8 +272,8 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
         train_loss = []
 
         for epoch in loop:
-            epoch_loss = _mtl_epoch(model, loss_func, loss_weights, opt, batchers, batches_per_epoch,
-                                                     dataset_weights, clip)
+            epoch_loss = _mtl_epoch(model, loss_func, loss_weights, opt, metrics, batchers, batches_per_epoch,
+                                    dataset_weights, clip)
             train_loss.append(epoch_loss)
 
             try:

@@ -522,7 +522,7 @@ class GeneralDataset(IterableDataset):
             setattr(doc, 'encoded', encoded)
         return encoded
 
-    def split(self, data: base.DataType = None, splits: base.List[float] = [0.8, 0.1, 0.1],
+    def split(self, data: base.DataType = None, splits: base.List[float] = None,
               store: bool = True, stratify: str = None, **kwargs) -> base.Tuple[base.DataType]:
         """
         Split the datasebase.
@@ -533,6 +533,8 @@ class GeneralDataset(IterableDataset):
         :stratify (str): The field to stratify the data along.
         :return (base.Tuple[base.DataType]): Return splitted data.
         """
+        if splits is None:
+            splits = [0.8, 0.1, 0.1]
         data = self.data if data is None else data
         split_sizes = list(map(lambda x: floor(len(data) * x), splits))  # Get the actual sizes of the splits.
 
