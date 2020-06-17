@@ -4,33 +4,15 @@ from mlearn import base
 from mlearn.utils import metrics
 
 
-def predict_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: base.Callable, gpu: bool,
-                        **kwargs) -> base.Tuple[list, list, float]:
+def predict_torch_model(model: base.ModelType, X, **kwargs) -> list:
     """
     Predict using trained model.
 
     :model (base.ModelType): Trained model to be trained.
-    :iterator (base.DataType): Batched dataset to predict on.
-    :loss_func (base.Callable): Loss function.
-    :gpu (bool): True if run on GPU else false.
-    :returns (base.Tuple[list, list, float]): Predictions, true labels, mean loss.
+    :X (base.DataType): Batch to predict on.
+    :returns (list): Predictions.
     """
-    # TODO Modify this so it ONLY does the predictions and nothing else.
-    predicted, labels = [], []
-    loss = []
-
-    for X, y in tqdm(iterator, desc = "Evaluating model", leave = False):
-        if gpu:
-            X = X.cuda()
-
-        pred = model(X, **kwargs).cpu()
-        li = loss_func(pred, y.cpu())
-        loss.append(li.data.item())
-
-        predicted.extend(torch.argmax(pred, dim = 1).tolist())
-        labels.extend(y.cpu().tolist())
-
-    return list(predicted), list(labels), torch.sum(torch.Tensor(loss)).item()
+    return torch.argmax(model(X, **kwargs).cpu(), dim = 1).tolist()
 
 
 def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: base.Callable,
@@ -52,17 +34,29 @@ def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: 
     """
     with torch.no_grad():
         model.eval()
+        preds, labels = [], []
+        loss = []
 
-        if mtl and task_id is not None:
-            predicted, true, loss = predict_torch_model(model, iterator, loss_func, gpu, task_id = task_id)
-        else:
-            predicted, true, loss = predict_torch_model(model, iterator, loss_func, gpu)
+        with tqdm(iterator, desc = "Evaluating model", leave = False) as loop:
 
-        if store:
-            for doc, pred in zip(test_obj, predicted):
-                setattr(doc, 'pred', pred)
+            for X, y in loop:
+                if gpu:
+                    X = X.cuda()
 
-        metrics.compute(true, predicted)
+                if mtl and task_id is not None:
+                    predicted = predict_torch_model(model, X, task_id = task_id)
+                else:
+                    predicted = predict_torch_model(model, X)
+
+                metrics.loss = loss_func(predicted, y).data.item()
+                preds.extend(predicted)
+                labels.extend(predicted)
+
+            if store:
+                for doc, pred in zip(test_obj, predicted):
+                    setattr(doc, 'pred', pred)
+
+            metrics.compute(true, predicted)
 
     return loss / len(true), None, metrics.scores, None
 
