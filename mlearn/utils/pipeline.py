@@ -1,6 +1,10 @@
+import numpy as np
 from mlearn import base
+from collections import defaultdict, Counter
 from mlearn.data.dataset import GeneralDataset
 from mlearn.data.batching import Batch, BatchExtractor
+from sklearn.feature_extraction import DictVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, HashingVectorizer, TfidfVectorizer
 
 
 def process_and_batch(dataset: GeneralDataset, data: base.DataType, batch_size: int, onehot: bool = True):
@@ -67,5 +71,59 @@ def vectorize(data: base.DataType, dataset: GeneralDataset, vect: base.VectType)
     return vectorized
 
 
-def top_features():
+def top_sklearn_features(model: base.ModelType, dataset: GeneralDataset, vect: base.VectType):
+    """
+    Identify top features for scikit-learn model.
+
+    :model (base.ModelType): Trained model to identify features for.
+    :dataset (GeneralDataset): Dataset holding the label information.
+    :vect (base.VectType): Fitted vectorizer.
+    """
+    if dataset.label_count == 2:
+        coefs = binary_sklearn_features(model, dataset, vect)
+    elif dataset.label_count > 2:
+        coefs = multinomial_sklearn_features(model, dataset, vect)
+    return coefs
+
+
+def binary_sklearn_features(model: base.ModelType, dataset: GeneralDataset, vect: base.VectType) -> dict:
+    """
+    Identify top features for binary scikit-learn model.
+
+    :model (base.ModelType): Trained model to identify features for.
+    :dataset (GeneralDataset): Dataset holding the label information.
+    :vect (base.VectType): Fitted vectorizer.
+    :return coefs (dict): Returns coefficient dictionary.
+    """
+    coefs = defaultdict(Counter())
+
+    if 'RandomForest' in model.name:
+        coefs[0].update({vect.feature_names_[f]: model.feature_importances_[f]
+                         for f in np.argsort(model.feature_importances_)})
+    elif 'SVM' in model.name:
+        coefs[0].update({vect.feature_names_[v]: model.coef_[0, v] for v in range(model.coef_.shape[1])})
+    elif 'LogisticRegression' in model.name:
+        coefs[0].update({vect.feature_names_[f]: model.coef_[0, f] for f in np.argsort(model.coef_[0])})
+    return coefs
+
+
+def multinomial_sklearn_features(model: base.ModelType, dataset: GeneralDataset, vect: base.VectType) -> dict:
+    """
+    Identify top features for multiclass scikit-learn model.
+
+    :model (base.ModelType): Trained model to identify features for.
+    :dataset (GeneralDataset): Dataset holding the label information.
+    :vect (base.VectType): Fitted vectorizer.
+    """
     raise NotImplementedError
+
+    coefs = defaultdict(Counter)
+    if 'RandomForest' in model.name:
+        pass
+    elif 'SVM' in model.name:
+        pass
+    elif 'LogisticRegression' in model.name:
+        for i, c in enumerate(dataset.label_count()):
+            coefs[i].update({vect.feature_names_[f]: model.coef_[i, f] for f in np.argsort(model.coef_[i])})
+
+    return coefs
