@@ -4,7 +4,7 @@ from collections import defaultdict, Counter
 from mlearn.data.dataset import GeneralDataset
 from mlearn.data.batching import Batch, BatchExtractor
 from sklearn.feature_extraction import DictVectorizer
-from sklearn.feature_extraction.text import CountVectorizer, HashingVectorizer, TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
 
 def process_and_batch(dataset: GeneralDataset, data: base.DataType, batch_size: int, onehot: bool = True):
@@ -33,19 +33,17 @@ def select_vectorizer(vectorizer: str) -> base.VectType:
     :param vectorizer: Vectorizer to be used.
     :return v: Vectorizer function.
     """
-    if not any(vec in vectorizer for vec in ['dict', 'count', 'hash', 'tfidf']):
-        print("You need to select from the options: dict, count, hash, tfidf. Defaulting to Dict.")
+    if not any(vec in vectorizer for vec in ['dict', 'count', 'tfidf']):
+        print("You need to select from the options: dict, count, tfidf. Defaulting to Dict.")
         return DictVectorizer
 
     vect = vectorizer.lower()
     if 'dict' in vect:
-        v = DictVectorizer
+        v = DictVectorizer()
     elif 'tfidf' in vect:
-        v = TfidfVectorizer
-    elif 'hash' in vect:
-        v = HashingVectorizer
+        v = TfidfVectorizer()
     elif 'count' in vect:
-        v = CountVectorizer
+        v = CountVectorizer()
     setattr(v, 'fitted', False)
 
     return v
@@ -79,51 +77,19 @@ def top_sklearn_features(model: base.ModelType, dataset: GeneralDataset, vect: b
     :dataset (GeneralDataset): Dataset holding the label information.
     :vect (base.VectType): Fitted vectorizer.
     """
-    if dataset.label_count == 2:
-        coefs = binary_sklearn_features(model, dataset, vect)
-    elif dataset.label_count > 2:
-        coefs = multinomial_sklearn_features(model, dataset, vect)
-    return coefs
-
-
-def binary_sklearn_features(model: base.ModelType, dataset: GeneralDataset, vect: base.VectType) -> dict:
-    """
-    Identify top features for binary scikit-learn model.
-
-    :model (base.ModelType): Trained model to identify features for.
-    :dataset (GeneralDataset): Dataset holding the label information.
-    :vect (base.VectType): Fitted vectorizer.
-    :return coefs (dict): Returns coefficient dictionary.
-    """
-    coefs = defaultdict(Counter())
-
-    if 'RandomForest' in model.name:
-        coefs[0].update({vect.feature_names_[f]: model.feature_importances_[f]
-                         for f in np.argsort(model.feature_importances_)})
-    elif 'SVM' in model.name:
-        coefs[0].update({vect.feature_names_[v]: model.coef_[0, v] for v in range(model.coef_.shape[1])})
-    elif 'LogisticRegression' in model.name:
-        coefs[0].update({vect.feature_names_[f]: model.coef_[0, f] for f in np.argsort(model.coef_[0])})
-    return coefs
-
-
-def multinomial_sklearn_features(model: base.ModelType, dataset: GeneralDataset, vect: base.VectType) -> dict:
-    """
-    Identify top features for multiclass scikit-learn model.
-
-    :model (base.ModelType): Trained model to identify features for.
-    :dataset (GeneralDataset): Dataset holding the label information.
-    :vect (base.VectType): Fitted vectorizer.
-    """
-    raise NotImplementedError
-
     coefs = defaultdict(Counter)
-    if 'RandomForest' in model.name:
-        pass
-    elif 'SVM' in model.name:
-        pass
-    elif 'LogisticRegression' in model.name:
-        for i, c in enumerate(dataset.label_count()):
-            coefs[i].update({vect.feature_names_[f]: model.coef_[i, f] for f in np.argsort(model.coef_[i])})
+    ix2feat = {ix: feat for feat, ix in vect.vocabulary_.items()}
 
+    for i, c in enumerate(range(dataset.label_count())):
+        if i == 1 and dataset.label_count() == 2:
+            break  # Task is binary so only class dimension in the feature matrices.
+
+        if 'RandomForest' in model.name:
+            update = {ix2feat[f]: model.feature_importances_[f] for f in np.argsort(model.feature_importances_)}
+        elif 'SVM' in model.name:
+            update = {ix2feat[v]: model.coef_[i, v] for v in range(model.coef_.shape[1])}
+        elif 'LogisticRegression' in model.name:
+            update = {ix2feat[f]: model.coef_[i, f] for f in np.argsort(model.coef_[i])}
+
+        coefs[i].update(update)
     return coefs
