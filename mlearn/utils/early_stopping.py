@@ -23,7 +23,7 @@ class EarlyStopping:
         self.best_epoch = 0
         self.epoch = 0
         self.low_is_good = low_is_good
-        self.path_prefix = f'{path_prefix}_{model.name}.pkl'
+        self.path_prefix = path_prefix + f'_{model.name}.pkl'
         self.verbose = verbose
 
     def __call__(self, model: base.ModelType, score: float) -> bool:
@@ -44,6 +44,7 @@ class EarlyStopping:
             self.best_score = score
             self.best_epoch = self.epoch
             return False
+
         elif self.epoch > self.best_epoch + self.patience:
             print("Early stopping: Terminate")
             return True

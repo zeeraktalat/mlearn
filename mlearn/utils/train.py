@@ -133,7 +133,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
                                  **metrics.display(),
                                  dev_score = dev_score)
             except Exception as e:
-                print(f"THROWN EXCEPTION IS {e}")
+                print(f"Caught exception but continuing: {e}")
                 loop.set_postfix(epoch_loss = f"{epoch_loss:.4f}", **metrics.display())
             finally:
                 loop.refresh()
