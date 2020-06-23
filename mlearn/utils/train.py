@@ -421,7 +421,8 @@ def train_sklearn_model(model: base.ModelType, vectorizer: base.VectType, datase
 
 def select_sklearn_training_regiment(model: base.ModelType, cross_validate: int = None, grid_search: dict = None,
                                      **kwargs):
-    """Select the type of sklearn training regime.
+    """
+    Select the type of sklearn training regime.
 
     :model (base.ModelType): The model to be trained.
     :cross_validate (int, default = None): The number of folds to use for cross validation.

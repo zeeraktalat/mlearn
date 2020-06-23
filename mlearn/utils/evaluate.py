@@ -56,9 +56,9 @@ def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: 
                 for doc, pred in zip(test_obj, predicted):
                     setattr(doc, 'pred', pred)
 
-            metrics.compute(true, predicted)
+            metrics.compute(labels, preds)
 
-    return loss / len(true), None, metrics.scores, None
+    return loss / len(labels), None, metrics.scores, None
 
 
 def predict_sklearn_model(model: base.ModelType, iterator: base.DataType, metrics: metrics.Metrics = None,

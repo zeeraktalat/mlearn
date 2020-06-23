@@ -80,9 +80,7 @@ class Metrics:
 
     @property
     def loss(self):
-        """
-        Add or get mean loss.
-        """
+        """Add or get mean loss."""
         return np.mean(self.scores['loss'])
 
     @loss.setter

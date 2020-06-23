@@ -1,11 +1,9 @@
-import mlearn.data.dataset as data
 from collections import OrderedDict
 from sklearn.preprocessing import LabelEncoder
 from mlearn.modeling.metrics import select_metrics
-from sklearn.feature_extraction import DictVectorizer
+from mlearn.utils.pipeline import select_vectorizer
 from mlearn.data.fileio import write_results, print_results
 from mlearn.custom_types import NPData, ModelType, VectType, List, Tuple, Callable
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, HashingVectorizer
 
 
 def train(model: ModelType, dataX: NPData, dataY: NPData,
