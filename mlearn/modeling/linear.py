@@ -10,7 +10,7 @@ def train(model: ModelType, dataX: NPData, dataY: NPData,
           testX: NPData, testY: NPData,
           featurizer: Callable,
           vectorizer: str,
-          devX: NPData = [], devY: NPData = []) -> Tuple[ModelType, VectType, VectType]:
+          devX: NPData = None, devY: NPData = None) -> Tuple[ModelType, VectType, VectType]:
     """
     Train a model and return the fitted model, vectorizer, and labelencoder.
 
@@ -22,6 +22,10 @@ def train(model: ModelType, dataX: NPData, dataY: NPData,
     :param featurizer: function to transform documents into features.
     :return out_tuple: Fitted classifier, vectorizer, and labelencoder.
     """
+    if devX is None:
+        devX = []
+    if devY is None:
+        devY = []
     # Initialise things
     le = LabelEncoder()
     vect = select_vectorizer(vectorizer)
@@ -45,7 +49,7 @@ def train(model: ModelType, dataX: NPData, dataY: NPData,
 
 def evaluate_model(model: ModelType, label_encoder: VectType, vect: VectType,
                    metrics: List[str], featurizer: Callable, result_fh: str,
-                   dataX: NPData, dataY: NPData, params: dict = {}) -> dict:
+                   dataX: NPData, dataY: NPData, params: dict = None) -> dict:
     """
     Evaluate model on the data.
 
@@ -60,6 +64,8 @@ def evaluate_model(model: ModelType, label_encoder: VectType, vect: VectType,
     :param params: Parameters for the model.
     :return performance: Dictionary containing evaluations.
     """
+    if params is None:
+        params = {}
     performance = OrderedDict()
 
     # Get metric functions and generate features

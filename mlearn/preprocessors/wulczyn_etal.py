@@ -1,12 +1,20 @@
+import argparse
 import csv
+import os
 from numpy import mean
 from collections import defaultdict
 
-base_path = '/Users/zeerakw/PhD/projects/active/Generalisable_abuse/data/'
+parser = argparse.ArgumentParser('Raw to test/dev/train for Wulczyn et al')
+parser.add_argument('--datapath', default='/Users/zeerakw/PhD/projects/active/Generalisable_abuse/data/')
+args = parser.parse_args()
 
-train_f = csv.writer(open(base_path + 'wulczyn_train.tsv', 'w', encoding = 'utf-8'), delimiter = '\t')
-dev_f = csv.writer(open(base_path + 'wulczyn_dev.tsv', 'w', encoding = 'utf-8'), delimiter = '\t')
-test_f = csv.writer(open(base_path + 'wulczyn_test.tsv', 'w', encoding = 'utf-8'), delimiter = '\t')
+base_path = args.datapath
+if not (os.path.exists(base_path) and os.path.isdir(base_path)):
+    raise Exception(f"--datapath should exist and be a directory; given {base_path}")
+
+train_f = csv.writer(open(os.path.join(base_path, 'wulczyn_train.tsv'), 'w', encoding = 'utf-8'), delimiter = '\t')
+dev_f = csv.writer(open(os.path.join(base_path, 'wulczyn_dev.tsv'), 'w', encoding = 'utf-8'), delimiter = '\t')
+test_f = csv.writer(open(os.path.join(base_path, 'wulczyn_test.tsv'), 'w', encoding = 'utf-8'), delimiter = '\t')
 
 # Write headers
 header = ['rev_id', 'comment', 'label', 'raw_label']
@@ -15,7 +23,7 @@ dev_f.writerow(header)
 test_f.writerow(header)
 
 # Load the labels
-annotation_fp = open(base_path + 'toxicity_annotations.tsv')
+annotation_fp = open(os.path.join(base_path, 'toxicity_annotations.tsv'))
 next(annotation_fp)
 
 raw_annotations, annotations = defaultdict(list), {}
@@ -29,7 +37,7 @@ for idx, vals in raw_annotations.items():
     annotations[idx] = 'abuse' if mean(vals) > 0.50 else 'not-abuse'
 
 # Write documents to files
-raw_docs = open(base_path + 'toxicity_annotated_comments.tsv', 'r', encoding = 'utf-8')
+raw_docs = open(os.path.join(base_path, 'toxicity_annotated_comments.tsv'), 'r', encoding = 'utf-8')
 next(raw_docs)  # Skip header
 
 for line in csv.reader(raw_docs, delimiter = '\t'):
