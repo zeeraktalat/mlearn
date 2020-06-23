@@ -66,9 +66,7 @@ class EarlyStopping:
 
     @property
     def best_state(self):
-        """
-        Load/save the best model state prior to early stopping being activated.
-        """
+        """Load/save the best model state prior to early stopping being activated."""
         print("Loading weights from epoch {0}".format(self.best_epoch))
         self.model.load_state_dict(torch.load(self.path_prefix)['model_state_dict'])
         return self.model
