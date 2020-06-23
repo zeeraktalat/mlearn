@@ -123,7 +123,7 @@ class Preprocessors(object):
         if tok in self.liwc_dict:
             term = self.liwc_dict[tok]
         else:
-            liwc_cands = [r for r in kleene_star if r in tok]
+            liwc_cands = [r for r in kleene_star if tok.startswith(r)]
             num_cands = len(liwc_cands)
 
             if num_cands == 0:

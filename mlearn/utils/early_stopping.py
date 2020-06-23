@@ -25,6 +25,7 @@ class EarlyStopping:
         self.low_is_good = low_is_good
         self.path_prefix = path_prefix + f'_{model.name}.pkl'
         self.verbose = verbose
+        self.model = model
 
     def __call__(self, model: base.ModelType, score: float) -> bool:
         """
@@ -39,8 +40,7 @@ class EarlyStopping:
             self.best_score = score
 
         if self.new_best(score):
-            torch.save({'model_state_dict': model.state_dict()},
-                       self.path_prefix)
+            self.best_state = model
             self.best_score = score
             self.best_epoch = self.epoch
             return False
@@ -64,11 +64,18 @@ class EarlyStopping:
         else:
             return score >= self.best_score
 
-    def set_best_state(self, model: base.ModelType):
-        """
-        Load the best model state prior to early stopping being activated.
-
-        :model (base.ModelType): The model in its current state.
-        """
+    @property
+    def best_state(self):
+        """Load/save the best model state prior to early stopping being activated."""
         print("Loading weights from epoch {0}".format(self.best_epoch))
-        model.load_state_dict(torch.load(self.path_prefix)['model_state_dict'])
+        self.model.load_state_dict(torch.load(self.path_prefix)['model_state_dict'])
+        return self.model
+
+    @best_state.setter
+    def best_state(self, model: base.ModelType) -> None:
+        """
+        Save best model thus far.
+
+        :model (base.ModelType): Model being trained.
+        """
+        torch.save({'model_state_dict': model.state_dict()}, self.path_prefix)

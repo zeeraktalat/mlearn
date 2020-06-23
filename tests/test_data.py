@@ -41,19 +41,19 @@ class TestDataSet(torchtestcase.TorchTestCase):
 
     def test_load(self):
         """Test GeneralDataset.load()."""
-        expected = [("me gusta comer en la cafeteria".lower().split(), "SPANISH"),
-                    ("Give it to me".lower().split(), "ENGLISH"),
-                    ("No creo que sea una buena idea".lower().split(), "SPANISH"),
-                    ("No it is not a good idea to get lost at sea".lower().split(), "ENGLISH")]
+        expected = [("me gusta comer en la cafeteria".split(), "SPANISH"),
+                    ("Give it to me".split(), "ENGLISH"),
+                    ("No creo que sea una buena idea".split(), "SPANISH"),
+                    ("No it is not a good idea to get lost at sea".split(), "ENGLISH")]
 
         csv_train = self.train
         result = [(doc.text, doc.label) for doc in csv_train]
         self.assertListEqual(result, expected, msg = 'Data Loading failed.')
 
-        expected_label_preprocessed = [("me gusta comer en la cafeteria".lower().split(), "SPA"),
-                                       ("Give it to me".lower().split(), "ENG"),
-                                       ("No creo que sea una buena idea".lower().split(), "SPA"),
-                                       ("No it is not a good idea to get lost at sea".lower().split(), "ENG")]
+        expected_label_preprocessed = [("me gusta comer en la cafeteria".split(), "SPA"),
+                                       ("Give it to me".split(), "ENG"),
+                                       ("No creo que sea una buena idea".split(), "SPA"),
+                                       ("No it is not a good idea to get lost at sea".split(), "ENG")]
 
         self.json_dataset.load('train', skip_header = False)
         json_train = self.json_dataset.data
@@ -74,7 +74,7 @@ class TestDataSet(torchtestcase.TorchTestCase):
     def test_build_token_vocab(self):
         """Test vocab building method."""
         expected = set(['<pad>', '<unk>'] + list(sorted("""me gusta comer en la cafeteria Give it to me
-                   No creo que sea una buena idea No it is not a good idea to get lost at sea""".lower().split())))
+                   No creo que sea una buena idea No it is not a good idea to get lost at sea""".split())))
         self.csv_dataset.build_token_vocab(self.train)
         result = set(sorted(self.csv_dataset.stoi.keys()))
         self.assertSetEqual(result, expected, msg = 'Vocab building failed.')
@@ -89,8 +89,8 @@ class TestDataSet(torchtestcase.TorchTestCase):
     def test_extend_vocab(self):
         """Test extending vocab."""
         train = """<pad> <unk> me gusta comer en la cafeteria Give it to me
-                No creo que sea una buena idea No it is not a good idea to get lost at sea""".lower().split()
-        test = "Yo creo que si it is lost on me".lower().split()
+                No creo que sea una buena idea No it is not a good idea to get lost at sea""".split()
+        test = "Yo creo que si it is lost on me".split()
         expected = set(train + test)
         self.csv_dataset.load('test')
         test = self.csv_dataset.test
@@ -103,8 +103,8 @@ class TestDataSet(torchtestcase.TorchTestCase):
         """Test loading a secondary dataset (test/dev set) from a different file."""
         self.csv_dataset.load('test')
         test = self.csv_dataset.test
-        expected  = ["Yo creo que si".lower().split(),
-                     "it is lost on me".lower().split()]
+        expected  = ["Yo creo que si".split(),
+                     "it is lost on me".split()]
         self.assertListEqual(test[0].text, expected[0])
         self.assertListEqual(test[1].text, expected[1])
 
@@ -151,7 +151,7 @@ class TestDataSet(torchtestcase.TorchTestCase):
 
         self.csv_dataset.limit_vocab(limiter, n = 2)
         result = [tok for tok in self.csv_dataset.stoi]
-        expected = ['me', 'it', 'to', 'no', 'sea', 'idea', '<pad>', '<unk>']
+        expected = ['me', 'it', 'to', 'No', 'sea', 'idea', '<pad>', '<unk>']
         self.assertListEqual(result, expected, msg = "Limiting vocab failed.")
 
     def test_build_label_vocab(self):
@@ -209,26 +209,13 @@ class TestDataSet(torchtestcase.TorchTestCase):
         self.assertListEqual(result, expected, msg = 'Process Document failed.')
         self.assertIsInstance(result, list, msg = 'Process document returned wrong type.')
 
-    def test_lower_doc(self):
-        """Test lowercasing processing."""
-        setattr(self.csv_dataset, 'lower', True)
-        setattr(self.csv_dataset, 'preprocessor', None)
-        setattr(self.csv_dataset, 'repr_transform', None)
-
-        inputs = "Give it to me, baby. Uhuh! Uhuh!"
-        expected = inputs.lower().split()
-        result = self.csv_dataset.process_doc(inputs)
-        self.assertListEqual(result, expected, msg = 'Process Document failed with lowercasing.')
-        self.assertIsInstance(result, list, msg = 'Process document with lowercasing produces wrong type.')
-
     def test_list_process_doc(self):
-        """Test lowercasing processing."""
-        setattr(self.csv_dataset, 'lower', True)
+        """Test list processing."""
         setattr(self.csv_dataset, 'preprocessor', None)
         setattr(self.csv_dataset, 'repr_transform', None)
 
         inputs = "Give it to me, baby. Uhuh! Uhuh!"
-        expected = inputs.lower().split()
+        expected = inputs.split()
         result = self.csv_dataset.process_doc(inputs.split())
         self.assertListEqual(result, expected, msg = 'Process Document failed with input type list.')
         self.assertIsInstance(result, list, msg = 'Process document with input type list produces wrong type.')
@@ -237,12 +224,11 @@ class TestDataSet(torchtestcase.TorchTestCase):
         """Test using a custom processor."""
 
         inputs = "Give it to me, baby. Uhuh! Uhuh!"
-        expected = ["TEST" if '!' in tok else tok for tok in inputs.lower().split()]
+        expected = ["TEST" if '!' in tok else tok for tok in inputs.split()]
 
         def preprocessor(doc):
             return ["TEST" if '!' in tok else tok for tok in doc]
 
-        setattr(self.csv_dataset, 'lower', True)
         setattr(self.csv_dataset, 'preprocessor', preprocessor)
         result = self.csv_dataset.process_doc(inputs)
         self.assertListEqual(result, expected, msg = 'Process Document failed with preprocessor')
@@ -261,15 +247,15 @@ class TestDataSet(torchtestcase.TorchTestCase):
 
         setattr(self.csv_dataset, 'repr_transform', transform)
         result = self.csv_dataset.process_doc(inputs)
-        self.assertListEqual(result, expected, msg = 'Process Document failed with represntation transformation.')
+        self.assertListEqual(result, expected, msg = 'Process Document failed with representation transformation.')
         self.assertIsInstance(result, list, msg = 'Process Document with representation transformation returned wrong')
 
     def test_pad(self):
         """Test padding of document."""
         exp = ["me gusta comer en la cafeteria".split() + 6 * ['<pad>']]
-        exp.append(['give', 'it', 'to', 'me'] + 8 * ['<pad>'])
-        exp.append(['no', 'creo', 'que', 'sea', 'una', 'buena', 'idea'] + 5 * ['<pad>'])
-        exp.append(['no', 'it', 'is', 'not', 'a', 'good', 'idea', 'to', 'get', 'lost', 'at', 'sea'] + 0 * ['<pad>'])
+        exp.append(['Give', 'it', 'to', 'me'] + 8 * ['<pad>'])
+        exp.append(['No', 'creo', 'que', 'sea', 'una', 'buena', 'idea'] + 5 * ['<pad>'])
+        exp.append(['No', 'it', 'is', 'not', 'a', 'good', 'idea', 'to', 'get', 'lost', 'at', 'sea'] + 0 * ['<pad>'])
         result = [dp.text for dp in self.csv_dataset.pad(self.train, length = 12)]
         self.assertListEqual(result, exp, msg = 'Padding doc failed.')
 
@@ -278,7 +264,7 @@ class TestDataSet(torchtestcase.TorchTestCase):
 
     def test_trim(self):
         """Test that trimming of the document works."""
-        expected = 0 * ['<pad>'] + ['no', 'it', 'is', 'not', 'a', 'good', 'idea', 'to', 'get', 'lost'][:5]
+        expected = 0 * ['<pad>'] + ['No', 'it', 'is', 'not', 'a', 'good', 'idea', 'to', 'get', 'lost'][:5]
         result = list(self.csv_dataset.pad(self.train, length = 5))[-1]
         self.assertListEqual(result.text, expected, msg = 'Zero padding failed.')
 
