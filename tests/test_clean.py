@@ -40,7 +40,7 @@ class TestPreprocessor(unittest.TestCase):
     def test_PTB_tokenize(self):
         """Test tokenisation using PTB tags."""
 
-        expected = ['DT', 'VBZ', 'VBN', 'IN', 'NNP', 'RB', '$', 'NNP', 'IN', 'ADD']
+        expected = ['DT', 'VBZ', 'VBN', 'IN', 'NN', 'IN', '$', 'NN', 'IN', 'ADD']
         result = self.preprocess.ptb_tokenize(self.original.split(), ['lower', 'url', 'hashtag', 'username'])
         self.assertEqual(expected, result, msg = "PTB tokenisation failed.")
 
