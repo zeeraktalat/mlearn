@@ -25,8 +25,8 @@ class Batch(base.Batch):
         data = self.data if not data else data
 
         self.batches = []  # clear previously created batches (allows shuffling)
-        for i in range(0, len(data), self.batch_size):
-            batch = data[i:i+self.batch_size]
+        for start_ix in range(0, len(data), self.batch_size):
+            batch = data[start_ix:start_ix + self.batch_size]
             self.batches.append(batch)
 
     def shuffle(self):
