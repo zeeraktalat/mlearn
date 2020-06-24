@@ -147,3 +147,22 @@ def load_model(model: base.ModelType, base_path: str, library: str = None) -> ba
         return torch.load_statedict(torch.load(f'{base_path}_{model.name}.mdl'))
     else:
         return joblib.load(f'{base_path}.mdl'), joblib.load(f'{base_path}.vct')
+
+
+def store_features(features: dict, base_path: str):
+    """
+    Store features.
+
+    :feaures (dict): The feature dict to store.
+    :base_path (str): Path to store the model in.
+    """
+    joblib.dump(features, f'{base_path}.fts')
+
+
+def load_features(base_path) -> dict:
+    """
+    Load features.
+
+    :base_path (str): Path to store the model in.
+    """
+    return joblib.load(f'{base_path}.fts')

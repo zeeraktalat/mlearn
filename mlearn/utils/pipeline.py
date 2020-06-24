@@ -67,29 +67,3 @@ def vectorize(data: base.DataType, dataset: GeneralDataset, vect: base.VectType)
         vectorized = vect.transform(data)
         vect.fitted = True
     return vectorized
-
-
-def top_sklearn_features(model: base.ModelType, dataset: GeneralDataset, vect: base.VectType):
-    """
-    Identify top features for scikit-learn model.
-
-    :model (base.ModelType): Trained model to identify features for.
-    :dataset (GeneralDataset): Dataset holding the label information.
-    :vect (base.VectType): Fitted vectorizer.
-    """
-    coefs = defaultdict(Counter)
-    ix2feat = {ix: feat for feat, ix in vect.vocabulary_.items()}
-
-    for i, c in enumerate(range(dataset.label_count())):
-        if i == 1 and dataset.label_count() == 2:
-            break  # Task is binary so only class dimension in the feature matrices.
-
-        if 'RandomForest' in model.name:
-            update = {ix2feat[f]: model.feature_importances_[f] for f in np.argsort(model.feature_importances_)}
-        elif 'SVM' in model.name:
-            update = {ix2feat[v]: model.coef_[i, v] for v in range(model.coef_.shape[1])}
-        elif 'LogisticRegression' in model.name:
-            update = {ix2feat[f]: model.coef_[i, f] for f in np.argsort(model.coef_[i])}
-
-        coefs[i].update(update)
-    return coefs

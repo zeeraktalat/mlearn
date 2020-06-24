@@ -3,7 +3,7 @@ import numpy as np
 from mlearn import base
 from collections import defaultdict, Counter
 from mlearn.data.dataset import GeneralDataset
-from mlearn.data.fileio import load_model, store_model
+from mlearn.data.fileio import load_model, store_model, store_features
 
 
 class LinearModel(object):
@@ -19,14 +19,14 @@ class LinearModel(object):
         self.model = model(**kwargs)
         self.name = model_name
         self.vect = vectorizer
-        self.library = 'sklearn'
 
-    def top_features(self, dataset: GeneralDataset) -> dict:
+    def top_features(self, dataset: GeneralDataset, base_path: str) -> dict:
         """
         Identify top features for scikit-learn model.
 
         :model (base.ModelType): Trained model to identify features for.
         :dataset (GeneralDataset): Dataset holding the label information.
+        :base_path (str): Base path to the features.
         """
         coefs = defaultdict(Counter)
         ix2feat = {ix: feat for feat, ix in self.vect.vocabulary_.items()}
@@ -44,6 +44,8 @@ class LinearModel(object):
                 update = {ix2feat[f]: self.model.coef_[i, f] for f in np.argsort(self.model.coef_[i])}
 
             coefs[i].update(update)
+
+        store_features(coefs, f'{base_path}_{self.name}')
         return coefs
 
     def load_model(self, base_path: str):
