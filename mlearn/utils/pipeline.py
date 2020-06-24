@@ -47,23 +47,3 @@ def select_vectorizer(vectorizer: str) -> base.VectType:
     setattr(v, 'fitted', False)
 
     return v
-
-
-def vectorize(data: base.DataType, dataset: GeneralDataset, vect: base.VectType) -> base.DataType:
-    """
-    Vectorise documents.
-
-    :dataset (data.GeneralDataset): Dataset object.
-    :data (base.DataType): Dataset to vectorize.
-    :vect (base.VectType): Vectorizer to use.
-    :returns vectorized (base.DataType): Return vectorized dataset.
-    """
-    data = [getattr(doc, getattr(f, 'name')) for f in dataset.train_fields for doc in data]
-
-    if vect.fitted:
-        vectorized = vect.transform(data)
-    else:
-        vect.fit(data)
-        vectorized = vect.transform(data)
-        vect.fitted = True
-    return vectorized

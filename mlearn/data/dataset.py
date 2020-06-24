@@ -457,6 +457,24 @@ class GeneralDataset(IterableDataset):
         padded = text[:delta] if delta < 0 else text + ['<pad>'] * delta
         return padded
 
+    def vectorize(self, data: base.DataType, vectorizer: base.VectType) -> base.VectType:
+        """
+        Fit a vectorizer or vectorize documents.
+
+        :data (base.DataType): Dataset to vectorize.
+        :vect (base.VectType): Vectorizer to use.
+        :returns vectorized (base.DataType): Return vectorized dataset.
+        """
+        data = [getattr(doc, getattr(f, 'name')) for f in self.train_fields for doc in data]
+
+        if vectorizer.fitted:
+            vectorized = vectorizer.transform(data)
+        else:
+            vectorizer.fit(data)
+            vectorized = vectorizer.transform(data)
+            vectorizer.fitted = True
+        return vectorized
+
     def encode(self, data: base.DataType, onehot: bool = True) -> base.Iterator[base.DataType]:
         """
         Encode a documenbase.
