@@ -144,7 +144,7 @@ def load_model(model: base.ModelType, base_path: str, library: str = None) -> ba
     :library (str, default = None)
     """
     if library is None:
-        return torch.load_statedict(torch.load(f'{base_path}_{model.name}.mdl')['model_state_dict'])
+        return model.load_state_dict(torch.load(f'{base_path}_{model.name}.mdl')['model_state_dict'])
     else:
         return joblib.load(f'{base_path}.mdl'), joblib.load(f'{base_path}.vct')
 

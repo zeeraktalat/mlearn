@@ -15,17 +15,17 @@ class TestEarlyStopping(torchtestcase.TorchTestCase):
         cls.path_prefix = 'tests/earlystop'
         cls.model = RNNClassifier(20, 20, 20, 20, 0.1, True)
         cls.initialised = {'patience': None, 'best_model': None, 'best_score': None, 'best_epoch': 0, 'epoch': 0,
-                           'low_is_good': None, 'path_prefix': f'{cls.path_prefix}_{cls.model.name}.pkl',
+                           'low_is_good': None, 'path_prefix': f'{cls.path_prefix}',
                            'verbose': False, 'model': cls.model}
 
     @classmethod
     def tearDown(cls):
         """Tear down class between each test."""
         cls.initialised = {'patience': None, 'best_model': None, 'best_score': None, 'best_epoch': 0, 'epoch': 0,
-                           'low_is_good': None, 'path_prefix': f'{cls.path_prefix}_{cls.model.name}.pkl',
+                           'low_is_good': None, 'path_prefix': f'{cls.path_prefix}',
                            'verbose': False, 'model': cls.model}
-        if os.path.exists('tests/earlystop_rnn.pkl'):
-            os.remove('tests/earlystop_rnn.pkl')
+        if os.path.exists('tests/earlystop_rnn.mdl'):
+            os.remove('tests/earlystop_rnn.mdl')
 
     def test_initalize(self):
         """Test EarlyStopping.__init__()."""
@@ -39,7 +39,8 @@ class TestEarlyStopping(torchtestcase.TorchTestCase):
         """Test EarlyStopping.best_state."""
         early_stop = EarlyStopping(self.path_prefix, self.model, patience = 5, low_is_good = True)
         early_stop.best_state = self.model
-        self.assertTrue(os.path.exists(early_stop.path_prefix), msg = "Model is not saved properly.")
+        self.assertTrue(os.path.exists(f'{early_stop.path_prefix}_{self.model.name}.mdl'),
+                        msg = "Model is not saved properly.")
 
         model = early_stop.best_state
         self.assertEqual(self.model, model, msg = "Loaded model does not equal stored model.")

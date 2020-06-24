@@ -68,7 +68,7 @@ class EarlyStopping:
     def best_state(self):
         """Load/save the best model state prior to early stopping being activated."""
         print("Loading weights from epoch {0}".format(self.best_epoch))
-        self.model = load_model(self.model, self.base_path)
+        self.model = load_model(self.model, self.path_prefix)
         return self.model
 
     @best_state.setter
