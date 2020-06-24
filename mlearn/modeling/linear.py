@@ -7,6 +7,7 @@ from mlearn.data.fileio import load_model, store_model, store_features
 
 
 class LinearModel(object):
+    """Base class for linear model."""
 
     def __init__(self, model: base.ModelType, model_name: str, vectorizer: base.Callable, **kwargs) -> None:
         """

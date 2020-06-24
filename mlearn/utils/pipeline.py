@@ -1,6 +1,4 @@
-import numpy as np
 from mlearn import base
-from collections import defaultdict, Counter
 from mlearn.data.dataset import GeneralDataset
 from mlearn.data.batching import Batch, BatchExtractor
 from sklearn.feature_extraction import DictVectorizer
