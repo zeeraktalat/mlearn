@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_a
 class Metrics:
     """Metrics data object, to contain methods for computing, extracting, and evaluating different metrics."""
 
-    def __init__(self, metrics: base.List[str], display_metric: str, early_stop: str, avg: str = 'weighted'):
+    def __init__(self, metrics: base.List[str], display_metric: str, early_stop: str = None, avg: str = 'weighted'):
         """
         Intialize metrics computation class.
 
@@ -18,7 +18,7 @@ class Metrics:
         """
         self.scores, self.metrics = {}, OrderedDict()
         self.display_metric = display_metric
-        self.early_stop = early_stop
+        self.early_stop = early_stop if early_stop is not None else display_metric
         self.average = avg
 
         self.select_metrics(metrics)  # Initialize the metrics dict.
@@ -78,6 +78,12 @@ class Metrics:
                 scores[name] = float(metric(preds, labels, **kwargs))
         return scores
 
+    @property
+    def loss(self):
+        """Add or get mean loss."""
+        return np.mean(self.scores['loss'])
+
+    @loss.setter
     def loss(self, value: float) -> None:
         """
         Add latest loss value to scores.
