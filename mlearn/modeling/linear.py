@@ -1,88 +1,66 @@
-from collections import OrderedDict
-from sklearn.preprocessing import LabelEncoder
-from mlearn.modeling.metrics import select_metrics
-from mlearn.utils.pipeline import select_vectorizer
-from mlearn.data.fileio import write_results, print_results
-from mlearn.custom_types import NPData, ModelType, VectType, List, Tuple, Callable
+import os
+import numpy as np
+from mlearn import base
+from collections import defaultdict, Counter
+from mlearn.data.dataset import GeneralDataset
+from mlearn.data.fileio import load_model, store_model
 
 
-def train(model: ModelType, dataX: NPData, dataY: NPData,
-          testX: NPData, testY: NPData,
-          featurizer: Callable,
-          vectorizer: str,
-          devX: NPData = None, devY: NPData = None) -> Tuple[ModelType, VectType, VectType]:
-    """
-    Train a model and return the fitted model, vectorizer, and labelencoder.
+class LinearModel(object):
 
-    :param model: Uninitialised model
-    :param dataX: Training data.
-    :param dataY: Training labels.
-    :param devX: [Optional] Dev data.
-    :param devY: [Optional] Dev labels.
-    :param featurizer: function to transform documents into features.
-    :return out_tuple: Fitted classifier, vectorizer, and labelencoder.
-    """
-    if devX is None:
-        devX = []
-    if devY is None:
-        devY = []
-    # Initialise things
-    le = LabelEncoder()
-    vect = select_vectorizer(vectorizer)
+    def __init__(self, model: base.ModelType, model_name: str, vectorizer: base.Callable, **kwargs) -> None:
+        """
+        Initialize Linear model.
 
-    # Featurise data
-    train_feat = featurizer(dataX)
+        :model (base.ModelType): Untrained linear model.
+        :model_name (str): Name of the model.
+        :vectorizer (base.Callable): Vectorizer for the model.
+        """
+        self.model = model(**kwargs)
+        self.name = model_name
+        self.vect = vectorizer
+        self.library = 'sklearn'
 
-    # Fit things
-    le.fit(dataY)
-    vect.fit(train_feat)
+    def top_features(self, dataset: GeneralDataset) -> dict:
+        """
+        Identify top features for scikit-learn model.
 
-    # Transform and featurise
-    trainY = le.transform(dataY)
-    trainX = vect.transform(train_feat)
+        :model (base.ModelType): Trained model to identify features for.
+        :dataset (GeneralDataset): Dataset holding the label information.
+        """
+        coefs = defaultdict(Counter)
+        ix2feat = {ix: feat for feat, ix in self.vect.vocabulary_.items()}
 
-    # Fit model
-    model.fit(trainX, trainY)
+        for i, c in enumerate(range(dataset.label_count())):
+            if i == 1 and dataset.label_count() == 2:
+                break  # Task is binary so only class dimension in the feature matrices.
 
-    return model, vect, le
+            if 'RandomForest' in self.name:
+                update = {ix2feat[f]: self.model.feature_importances_[f] for f in
+                          np.argsort(self.model.feature_importances_)}
+            elif 'SVM' in self.name:
+                update = {ix2feat[v]: self.model.coef_[i, v] for v in range(self.model.coef_.shape[1])}
+            elif 'LogisticRegression' in self.name:
+                update = {ix2feat[f]: self.model.coef_[i, f] for f in np.argsort(self.model.coef_[i])}
 
+            coefs[i].update(update)
+        return coefs
 
-def evaluate_model(model: ModelType, label_encoder: VectType, vect: VectType,
-                   metrics: List[str], featurizer: Callable, result_fh: str,
-                   dataX: NPData, dataY: NPData, params: dict = None) -> dict:
-    """
-    Evaluate model on the data.
+    def load_model(self, base_path: str):
+        """
+        Load model and vectorizer.
 
-    :param model: Fitted model.
-    :param label_encoder: Fitted labelencoder.
-    :param vect: Fitted vectorizer.
-    :param metric: Metric to use to evaluate model.
-    :param featurizer: Function to transform data to featurised.
-    :param result_fh: File to write results to.
-    :param dataX: Data to predict on.
-    :param dataY: Labels to evaluate on.
-    :param params: Parameters for the model.
-    :return performance: Dictionary containing evaluations.
-    """
-    if params is None:
-        params = {}
-    performance = OrderedDict()
+        :base_path (str): Base path to the model.
+        """
+        if os.path.isfile(f'{base_path}.mdl'):
+            self.model, self.vect = load_model(base_path, library = 'sklearn')
+        else:
+            self.model, self.vect = load_model(f'{base_path}_{self.model.name}')
 
-    # Get metric functions and generate features
-    dataX_feats = featurizer(dataX)
-    eval_metrics = select_metrics(metrics, 'sklearn')
+    def save_model(self, base_path: str):
+        """
+        Save model and vectorizer.
 
-    # Do transformations
-    X = vect.transform(dataX_feats)
-    Y = label_encoder.transform(dataY)
-
-    # Get predictions
-    preds = model.predict(X)
-
-    for m in eval_metrics.keys():
-        performance[m] = eval_metrics[m](Y, preds)
-
-    write_results(performance, params, result_fh, 'w')
-    print_results(performance, params, iter_info = {}, first = True)
-
-    return performance
+        :base_path (str): Base path to the model.
+        """
+        store_model(self, f'{base_path}_{self.name}', library = 'sklearn')
