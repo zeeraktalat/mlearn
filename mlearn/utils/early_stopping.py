@@ -1,5 +1,5 @@
 from mlearn import base
-import torch
+from mlearn.data.fileio import store_model, load_model
 
 
 class EarlyStopping:
@@ -23,7 +23,7 @@ class EarlyStopping:
         self.best_epoch = 0
         self.epoch = 0
         self.low_is_good = low_is_good
-        self.path_prefix = path_prefix + f'_{model.name}.pkl'
+        self.path_prefix = path_prefix
         self.verbose = verbose
         self.model = model
 
@@ -68,7 +68,7 @@ class EarlyStopping:
     def best_state(self):
         """Load/save the best model state prior to early stopping being activated."""
         print("Loading weights from epoch {0}".format(self.best_epoch))
-        self.model.load_state_dict(torch.load(self.path_prefix)['model_state_dict'])
+        self.model = load_model(self.model, self.base_path)
         return self.model
 
     @best_state.setter
@@ -78,4 +78,4 @@ class EarlyStopping:
 
         :model (base.ModelType): Model being trained.
         """
-        torch.save({'model_state_dict': model.state_dict()}, self.path_prefix)
+        store_model(self.model, self.path_prefix)

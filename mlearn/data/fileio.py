@@ -129,7 +129,7 @@ def store_model(model: base.ModelType, base_path: str, library: str = None) -> N
     :library (str, default = None)
     """
     if library is None:
-        torch.save(model.state_dict(), f'{base_path}_{model.name}.mdl')
+        torch.save({'model_state_dict': model.state_dict()}, f'{base_path}_{model.name}.mdl')
     else:
         joblib.dump(model.model, f'{base_path}_{model.name}.mdl')
         joblib.dump(model.vect, f'{base_path}_{model.name}.vct')
@@ -144,7 +144,7 @@ def load_model(model: base.ModelType, base_path: str, library: str = None) -> ba
     :library (str, default = None)
     """
     if library is None:
-        return torch.load_statedict(torch.load(f'{base_path}_{model.name}.mdl'))
+        return torch.load_statedict(torch.load(f'{base_path}_{model.name}.mdl')['model_state_dict'])
     else:
         return joblib.load(f'{base_path}.mdl'), joblib.load(f'{base_path}.vct')
 

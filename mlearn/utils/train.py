@@ -291,7 +291,7 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
                                  dev_score = dev_score)
 
                 if early_stopping is not None and early_stopping(model, dev_scores.early_stopping()):
-                    model = early_stopping.get_best_state
+                    model = early_stopping.best_state
                     break
 
             except Exception:
