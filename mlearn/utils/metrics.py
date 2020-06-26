@@ -92,6 +92,10 @@ class Metrics:
         """
         self.scores['loss'].append(value)
 
+    def last_loss(self) -> float:
+        """Get last loss value."""
+        return self.scores['loss'][-1]
+
     def display(self) -> base.Dict[str, float]:
         """
         Get display metric dict.
@@ -108,6 +112,10 @@ class Metrics:
             prev_score, cur_score = self.scores[self.display_metric][-2], self.scores[self.display_metric][-1]
         difference = cur_score - prev_score
         return {self.display_metric: np.mean(self.scores[self.display_metric]), 'diff': difference}
+
+    def last_score(self) -> float:
+        """Get last display score."""
+        return self.scores[self.display_metric][-1]
 
     def early_stopping(self) -> float:
         """Provide early stopping metrics."""
