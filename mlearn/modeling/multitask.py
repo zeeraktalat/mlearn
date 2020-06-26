@@ -7,7 +7,7 @@ class EmbeddingLSTMClassifier(nn.Module):
 
     def __init__(self, input_dims: base.List[int], embedding_dim: int, shared_dim: int, hidden_dims: base.List[int],
                  output_dims: base.List[int], no_layers: int = 1, dropout: float = 0.2, batch_first = True,
-                 activation: str = 'tanh', **kwargs) -> None:
+                 **kwargs) -> None:
         """
         Initialise the Multitask LSTM.
 
@@ -21,6 +21,7 @@ class EmbeddingLSTMClassifier(nn.Module):
         """
         super(EmbeddingLSTMClassifier, self).__init__()
         self.name = "emb-mtl-lstm"
+        self.batch_first = batch_first
 
         # Initialise the hidden dim
         self.all_parameters = nn.ParameterList()
@@ -39,7 +40,6 @@ class EmbeddingLSTMClassifier(nn.Module):
 
             # Add parameters
             self.all_parameters.append(layer.weight)
-            self.all_parameters.append(layer.bias)
 
         self.shared = []
         for i in range(len(hidden_dims)):
@@ -55,7 +55,7 @@ class EmbeddingLSTMClassifier(nn.Module):
 
         self.lstm = {}
         for task_ix, hdim in enumerate(hidden_dims):  # TODO Double check this loop
-            layer = nn.LSTM(hdim, hdim, batch_first = batch_first)
+            layer = nn.LSTM(hdim, hdim, batch_first = batch_first, num_layers = no_layers)
             self.lstm[task_ix] = layer
 
             # Add parameters
@@ -89,7 +89,10 @@ class EmbeddingLSTMClassifier(nn.Module):
         :param task_id: The task on which to perform forward pass.
         :return (base.DataType): The "probability" distribution for the classes.
         """
-        res = self.dropout(self.inputs[task_id](sequence.float()))
+        if not self.batch_first:
+            sequence = sequence.transpose(0, 1)
+
+        res = self.dropout(self.inputs[task_id](sequence.long()))
 
         for layer in self.shared:
             res = self.dropout(layer(res))
@@ -122,6 +125,7 @@ class OnehotLSTMClassifier(nn.Module):
         """
         super(OnehotLSTMClassifier, self).__init__()
         self.name = "onehot-mtl-lstm"
+        self.batch_first = batch_first
 
         # Initialise the hidden dim
         self.all_parameters = nn.ParameterList()
@@ -153,7 +157,7 @@ class OnehotLSTMClassifier(nn.Module):
 
         self.lstm = {}
         for task_ix, hdim in enumerate(hidden_dims):
-            layer = nn.LSTM(hdim, hdim, batch_first = batch_first)  # Will go out of index.
+            layer = nn.LSTM(hdim, hdim, batch_first = batch_first, num_layers = no_layers)  # Will go out of index.
             self.lstm[task_ix] = layer
 
             # Add parameters
@@ -187,6 +191,9 @@ class OnehotLSTMClassifier(nn.Module):
         :param task_id: The task on which to perform forward pass.
         :return (base.DataType): The "probability" distribution for the classes.
         """
+        if not self.batch_first:
+            sequence = sequence.transpose(0, 1)
+
         res = self.dropout(self.inputs[task_id](sequence.float()))
 
         for layer in self.shared:
@@ -201,11 +208,11 @@ class OnehotLSTMClassifier(nn.Module):
         return prob_dist.squeeze(0)
 
 
-class OnehotMLPCLassifier(nn.Module):
+class OnehotMLPClassifier(nn.Module):
     """Onehot MLP MTL classifier."""
 
     def __init__(self, input_dims: base.List[int], shared_dim: int, hidden_dims: base.List[int],
-                 output_dims: base.List[int], no_layers: int = 1, dropout: float = 0.2, batch_first = True,
+                 output_dims: base.List[int], dropout: float = 0.2, batch_first = True,
                  **kwargs) -> None:
         """
         Initialise the Multitask LSTM.
@@ -214,12 +221,12 @@ class OnehotMLPCLassifier(nn.Module):
         :param shared_dim (int): The dimensionality of the shared layer.
         :param hidden_dims (base.List[int]): The dimensionality of the hidden dimensions for each task.
         :param output_dims (base.List[int]): Number of classes for to predict on.
-        :param no_layers (int, default = 1): The number of recurrent layers in the LSTM (1-3).
         :param dropout (float, default = 0.2): Value of dropout layer.
         :batch_first (boo, default = True): If input tensors have the batch dimension in the first dimensino.
         """
-        super(OnehotMLPCLassifier, self).__init__()
+        super(OnehotMLPClassifier, self).__init__()
         self.name = "onehot-mtl-mlp"
+        self.batch_first = batch_first
 
         # Initialise the hidden dim
         self.all_parameters = nn.ParameterList()
@@ -274,11 +281,15 @@ class OnehotMLPCLassifier(nn.Module):
         :param task_id: The task on which to perform forward pass.
         :return (base.DataType): The "probability" distribution for the classes.
         """
+        if self.batch_first:
+            sequence = sequence.transpose(0, 1)
+
         res = self.dropout(self.inputs[task_id](sequence.float()))
 
         for layer in self.shared:
             res = self.dropout(layer(res))
 
+        res = res.mean(0)
         res = self.outputs[task_id](res)
         prob_dist = self.softmax(res)
 
