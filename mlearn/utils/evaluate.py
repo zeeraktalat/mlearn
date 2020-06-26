@@ -15,22 +15,21 @@ def predict_torch_model(model: base.ModelType, X, **kwargs) -> list:
     return torch.argmax(model(X, **kwargs).cpu(), dim = 1).tolist()
 
 
-def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: base.Callable,
-                     metrics: object, gpu: bool, mtl: bool = False, task_id: int = None,
-                     store: bool = True, test_obj: base.DataType = None, **kwargs):
+def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: base.Callable, m: metrics.Metrics,
+                     gpu: bool, mtl: int = None, task_id: int = None, store: bool = True, test: base.DataType = None,
+                     **kwargs) -> None:
     """
     Evalute pytorch model.
 
     :model (base.ModelType): Trained model to be trained.
     :iterator (base.DataType): Batched dataset to predict on.
     :loss_func (base.Callable): Loss function.
-    :metrics (object): Initialized Metrics object.
+    :m (object): Initialized m object.
     :gpu (bool): True if running on a GPU else false.
-    :mtl (bool, default = False): Is it a Multi-task Learning problem?
-    :task_id (int, default = None): Task ID for MTL problem.
+    :mtl (int, default = None): Task ID for MTL problem. Only unset if MTL model is in use.
     :store (bool, default = True): Store the prediction if true.
-    :test_obj (base.DataType, default = None): Data object to test on.
-    :returns: TODO
+    :test (base.DataType, default = None): Data object to test on.
+    :returns: None.
     """
     with torch.no_grad():
         model.eval()
@@ -38,27 +37,25 @@ def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: 
         loss = []
 
         with tqdm(iterator, desc = "Evaluating model", leave = False) as loop:
-
             for X, y in loop:
                 if gpu:
                     X = X.cuda()
 
-                if mtl and task_id is not None:
-                    predicted = predict_torch_model(model, X, task_id = task_id)
+                if mtl is not None:
+                    predicted = predict_torch_model(model, X, task_id = mtl)
                 else:
                     predicted = predict_torch_model(model, X)
 
-                metrics.loss = loss_func(predicted, y).data.item()
+                loss.append(loss_func(predicted, y).data.item())
                 preds.extend(predicted)
                 labels.extend(predicted)
 
             if store:
-                for doc, pred in zip(test_obj, predicted):
+                for doc, pred in zip(test, predicted):
                     setattr(doc, 'pred', pred)
 
-            metrics.compute(labels, preds)
-
-    return loss / len(labels), None, metrics.scores, None
+            m.compute(labels, preds)
+            m.loss = sum(loss) / len(labels)
 
 
 def predict_sklearn_model(model: base.ModelType, iterator: base.DataType, metrics: metrics.Metrics = None,
