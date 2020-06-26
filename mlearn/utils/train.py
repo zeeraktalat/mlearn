@@ -4,7 +4,6 @@ from mlearn import base
 from tqdm import tqdm, trange
 from mlearn.utils.metrics import Metrics
 from mlearn.utils.early_stopping import EarlyStopping
-from mlearn.utils.pipeline import process_and_batch
 from mlearn.data.fileio import write_predictions, write_results
 from mlearn.utils.evaluate import eval_torch_model, eval_sklearn_model
 from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV
@@ -169,7 +168,7 @@ def run_mtl_model(train: bool, writer: base.Callable, model_info: list, head_len
 
 def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: base.DataType, opt: base.Callable,
                metrics: object, batchers: base.List[base.Batch], batch_count: int, dataset_weights: base.List[float],
-               clip: float = None, **kwargs):
+               clip: float = None, **kwargs) -> None:
     """
     Train one epoch of an MTL training loop.
 
@@ -215,20 +214,21 @@ def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: ba
                              epoch_loss = f"{epoch_loss / label_count:.4f}",
                              **metrics.display(),
                              task = task_id)
+        metrics.loss = batch_loss
 
-    return epoch_loss / label_count
 
-
-def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.DataType], save_path: str,
-                    opt: base.Callable, loss_func: base.Callable, metrics: object, batch_size: int = 64,
-                    epochs: int = 2, clip: float = None, patience: int = 10, dev: base.DataType = None,
-                    dev_task_id: int = 0, batches_per_epoch: int = None, shuffle_data: bool = True,
-                    dataset_weights: base.DataType = None, loss_weights: base.DataType = None, **kwargs) -> None:
+def train_mtl_model(model: base.ModelType, train_data: base.List[base.DataType], batchers: base.List[base.DataType],
+                    save_path: str, opt: base.Callable, loss_func: base.Callable, metrics: object, batch_size: int = 64,
+                    epochs: int = 2, clip: float = None, earlystop: int = None, dev: base.DataType = None,
+                    dev_metrics: object = None, dev_task_id: int = 0, batches_per_epoch: int = None, low: bool = True,
+                    shuffle: bool = True, dataset_weights: base.DataType = None, loss_weights: base.DataType = None,
+                    **kwargs) -> None:
     """
     Train a multi-task learning model.
 
     :model (base.ModelType): Untrained model.
-    :training_datasets (base.List[base.DataType]): List of tuples containing dense matrices.
+    :train_data (base.List[base.DataType]): List of tuples containing dense matrices.
+    :batchers (base.List[base.DataType]): Batched training data.
     :save_path (str): Path to save trained model to.
     :opt (base.Callable): Pytorch optimizer to train model.
     :loss_func (base.Callable): Loss function.
@@ -236,70 +236,52 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
     :batch_size (int): Training batch size.
     :epochs (int): Maximum number of epochs (if no early stopping).
     :clip (float, default = None): Use gradient clipping.
-    :patience (int, default = 10): Number of epochs to observe non-improving dev performance before early stopping.
-    :dev (base.DataType): Dev dataset object.
+    :earlystop (int, default = None): Number of epochs to observe non-improving dev performance before early stopping.
+    :dev (base.DataType): Batched dev object.
+    :dev_metrics (object): Initialized dev_metrics object.
     :dev_task_id (int, default = 0): Task ID for task to use for early stopping, in case of multitask learning.
     :batches_per_epoch (int, default = None): Set number of batches per epoch. If None, an epoch consists of all
                                               training examples.
-    :shuffle_data: Whether to shuffle data at training.
+    :low (bool, default = True): If lower value is to be interpreted as better by EarlyStopping.
+    :shuffle: Whether to shuffle data at training.
     :dataset_weights (base.DataType, default = None): Probability for each dataset to be chosen (must sum to 1.0).
     :loss_weights (base.DataType): Determines relative task importance When using multiple input/output functions.
     """
-    if loss_weights is None:
-        loss_weights = np.ones(len(training_datasets))
-
-    if dataset_weights is None:
-        dataset_weights = loss_weights / len(training_datasets)
-
-    if batches_per_epoch is None:
-        batches_per_epoch = sum([len(dataset) * batch_size for dataset in training_datasets]) // batch_size
-
-    if patience > 0:
-        early_stopping = EarlyStopping(save_path, model, patience, low_is_good = False)
-    else:
-        early_stopping = None
-
-    batchers = []
-
-    for train_data in training_datasets:
-        batches = process_and_batch(train_data, train_data.data, batch_size, **kwargs)
-
-        if shuffle_data:
-            batches.shuffle()
-
-        batchers.append(batches)
-
     with trange(epochs, desc = "Training model") as loop:
-        dev_scores = []
-        dev_losses = []
-        train_loss = []
+        if loss_weights is None:
+            loss_weights = np.ones(len(train_data))
+
+        if dataset_weights is None:
+            dataset_weights = loss_weights / len(train_data)
+
+        if batches_per_epoch is None:
+            batches_per_epoch = sum([len(dataset) * batch_size for dataset in train_data]) // batch_size
+
+        if earlystop is not None:
+            earlystop = EarlyStopping(save_path, model, earlystop, low_is_good = low)
 
         for epoch in loop:
-            epoch_loss = _mtl_epoch(model, loss_func, loss_weights, opt, metrics, batchers, batches_per_epoch,
-                                    dataset_weights, clip)
-            train_loss.append(epoch_loss)
+            if shuffle:
+                for batch in batchers:
+                    batch.shuffle()
+
+            _mtl_epoch(model, loss_func, loss_weights, opt, metrics, batchers, batches_per_epoch, dataset_weights, clip)
 
             try:
-                dev_batches = process_and_batch(dev, dev.dev, len(dev.dev))
-                dev_loss, _, dev_score, _ = eval_torch_model(model, dev_batches, loss_func,
-                                                              metrics, mtl = True,
-                                                              task_id = dev_task_id)
-                dev_losses.append(dev_loss)
-                dev_scores.append(dev_score)
+                eval_torch_model(model, dev, loss_func, dev_metrics, mtl = dev_task_id)
 
-                loop.set_postfix(loss = f"{epoch_loss:.4f}",
-                                 dev_loss = f"{dev_loss:.4f}",
-                                 dev_score = dev_score)
+                loop.set_postfix(loss = f"{metrics.get_last('loss'):.4f}",
+                                 dev_loss = f"{dev_metrics.get_last('loss'):.4f}",
+                                 dev_score = f"{dev_metrics.last_display():.4f}")
 
-                if early_stopping is not None and early_stopping(model, dev_scores.early_stopping()):
-                    model = early_stopping.get_best_state
+                if earlystop is not None and earlystop(model, dev_metrics.early_stopping()):
+                    model = earlystop.best_state
                     break
 
             except Exception:
-                loop.set_postfix(epoch_loss = epoch_loss)
+                loop.set_postfix(epoch_loss = metrics.last_loss)
             finally:
                 loop.refresh()
-    return train_loss, dev_losses, _, dev_scores
 
 
 def train_sklearn_cv_model(model: base.ModelType, vectorizer: base.VectType, dataset: base.DataType,
