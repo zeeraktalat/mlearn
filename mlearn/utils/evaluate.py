@@ -12,7 +12,7 @@ def predict_torch_model(model: base.ModelType, X, **kwargs) -> list:
     :X (base.DataType): Batch to predict on.
     :returns (list): Predictions.
     """
-    return torch.argmax(model(X, **kwargs).cpu(), dim = 1).tolist()
+    return model(X, **kwargs).cpu()
 
 
 def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: base.Callable, m: metrics.Metrics,
@@ -34,7 +34,7 @@ def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: 
     with torch.no_grad():
         model.eval()
         preds, labels = [], []
-        loss = []
+        loss = 0
 
         with tqdm(iterator, desc = "Evaluating model", leave = False) as loop:
             for X, y in loop:
@@ -42,20 +42,22 @@ def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: 
                     X = X.cuda()
 
                 if mtl is not None:
+                    if not isinstance(mtl, int):
+                        raise AssertionError(f"AssertionError: MTL is not an INT. It has type: {type(mtl)}")
                     predicted = predict_torch_model(model, X, task_id = mtl)
                 else:
                     predicted = predict_torch_model(model, X)
 
-                loss.append(loss_func(predicted, y).data.item())
-                preds.extend(predicted)
-                labels.extend(predicted)
+                loss += loss_func(predicted, y).data.item()
+                preds.extend(torch.argmax(predicted, dim = 1).tolist())
+                labels.extend(y.tolist())
 
             if store:
                 for doc, pred in zip(test, predicted):
                     setattr(doc, 'pred', pred)
 
             m.compute(labels, preds)
-            m.loss = sum(loss) / len(labels)
+            m.loss = loss / len(labels)
 
 
 def predict_sklearn_model(model: base.ModelType, iterator: base.DataType, metrics: metrics.Metrics = None,
