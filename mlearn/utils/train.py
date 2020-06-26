@@ -277,7 +277,6 @@ def train_mtl_model(model: base.ModelType, train_data: base.List[base.DataType],
                 if earlystop is not None and earlystop(model, dev_metrics.early_stopping()):
                     model = earlystop.best_state
                     break
-
             except Exception:
                 loop.set_postfix(epoch_loss = metrics.last_loss)
             finally:
@@ -302,7 +301,7 @@ def train_sklearn_cv_model(model: base.ModelType, vectorizer: base.VectType, dat
     :returns (model, metrics, dev_metrics): Returns trained model object, metrics and dev_metrics objects.
     """
     # Load data
-    train = vectorize(dataset.train, dataset, vectorizer)
+    train = dataset.vectorize(dataset.train, dataset, vectorizer)
     labels = [doc.label for doc in dataset.train]
 
     if stratified:
@@ -319,7 +318,7 @@ def train_sklearn_cv_model(model: base.ModelType, vectorizer: base.VectType, dat
             eval_sklearn_model(model, testX, metrics, testY)
 
         try:
-            devX = vectorize(dev, dataset, vectorizer)
+            devX = dataset.vectorize(dev, dataset, vectorizer)
             devY = [getattr(doc, getattr(f, 'name')) for f in dataset.label_fields for doc in dev]
             eval_sklearn_model(model, devX, dev_metrics, devY)
 
@@ -351,7 +350,7 @@ def train_sklearn_gridsearch_model(model: base.ModelType, vectorizer: base.VectT
     :n_jobs (int, default = -1): The number of processors to use (-1 == all processors).
     :returns (model, metrics, dev_metrics): Returns grid-search object, metrics and dev_metrics objects.
     """
-    train = vectorize(dataset.train, dataset, vectorizer)
+    train = dataset.vectorize(dataset.train, dataset, vectorizer)
     labels = [doc.label for doc in dataset.train]
 
     with trange(1, desc = "Training model") as loop:
@@ -359,7 +358,7 @@ def train_sklearn_gridsearch_model(model: base.ModelType, vectorizer: base.VectT
         model.fit(train, labels)
 
         try:
-            devX = vectorize(dev, dataset, vectorizer)
+            devX = dataset.vectorize(dev, dataset, vectorizer)
             devY = [getattr(doc, getattr(f, 'name')) for f in dataset.label_fields for doc in dev]
             eval_sklearn_model(model, devX, dev_metrics, devY)
 
@@ -388,13 +387,13 @@ def train_sklearn_model(model: base.ModelType, vectorizer: base.VectType, datase
     :returns (model, metrics, dev_metrics): Returns trained model object, metrics and dev_metrics objects.
     """
     with trange(1, desc = "Training model") as loop:
-        trainX = vectorize(dataset.train, dataset, vectorizer)
+        trainX = dataset.vectorize(dataset.train, dataset, vectorizer)
         trainY = [doc.label for doc in dataset.train]
 
         model.fit(trainX, trainY)
 
         try:
-            devX = vectorize(dev, dataset, vectorizer)
+            devX = dataset.vectorize(dev, dataset, vectorizer)
             devY = [getattr(doc, getattr(f, 'name')) for f in dataset.label_fields for doc in dev]
             eval_sklearn_model(model, devX, dev_metrics, devY)
 
