@@ -4,7 +4,7 @@ from mlearn import base
 from tqdm import tqdm, trange
 from mlearn.utils.metrics import Metrics
 from mlearn.utils.early_stopping import EarlyStopping
-from mlearn.utils.pipeline import process_and_batch, vectorize
+from mlearn.utils.pipeline import process_and_batch
 from mlearn.data.fileio import write_predictions, write_results
 from mlearn.utils.evaluate import eval_torch_model, eval_sklearn_model
 from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV
@@ -143,7 +143,8 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
     return metrics.scores['loss'], dev_metrics.scores['dev_loss'], metrics.scores, dev_metrics.scores
 
 
-def run_mtl_model(library: str, train: bool, writer: base.Callable, model_info: list, head_len: int, **kwargs):
+def run_mtl_model(train: bool, writer: base.Callable, model_info: list, head_len: int, library: str = 'pytorch',
+                  **kwargs):
     """
     Train or evaluate model.
 
@@ -182,7 +183,7 @@ def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: ba
     :dataset_weights (base.List[float]): The probability with which each dataset is chosen to be trained on.
     :clip (float, default = None): Use gradient clipping.
     """
-    with tqdm(range(batch_count, desc = 'Batch', leave = False)) as loop:
+    with tqdm(range(batch_count), desc = 'Batch', leave = False) as loop:
         label_count = 0
         epoch_loss = 0
 
@@ -198,17 +199,17 @@ def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: ba
 
             scores = model(X, task_id, **kwargs)
             loss = loss_func(scores, y) * loss_weights[task_id]
-            loss.backwards()
+            loss.backward()
 
             if clip is not None:
                 torch.nn.utils.clip_grad_norm(model.parameters(), clip)  # Prevent exploding gradients
 
             opt.step()
 
-            metrics.compute(scores, y)
+            metrics.compute(torch.argmax(scores, dim = 1), y)
             label_count += len(y.cpu().tolist())
-            epoch_loss += loss.data.item().cpu()
-            batch_loss = loss.data.item().cpu() / len(y)
+            epoch_loss += loss.data.item()
+            batch_loss = loss.data.item() / len(y)
 
             loop.set_postfix(batch_loss = f"{batch_loss:.4f}",
                              epoch_loss = f"{epoch_loss / label_count:.4f}",
@@ -261,7 +262,7 @@ def train_mtl_model(model: base.ModelType, training_datasets: base.List[base.Dat
     batchers = []
 
     for train_data in training_datasets:
-        batches = process_and_batch(train_data, train_data.data, batch_size, 'label')
+        batches = process_and_batch(train_data, train_data.data, batch_size, **kwargs)
 
         if shuffle_data:
             batches.shuffle()
