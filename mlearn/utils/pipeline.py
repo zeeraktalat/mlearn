@@ -5,7 +5,8 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
 
-def process_and_batch(dataset: GeneralDataset, data: base.DataType, batch_size: int, onehot: bool = True, **kwargs):
+def process_and_batch(dataset: GeneralDataset, data: base.DataType, batch_size: int, onehot: bool = True,
+                      shuffle: bool = False, **kwargs):
     """
     Process a dataset and data.
 
@@ -21,6 +22,10 @@ def process_and_batch(dataset: GeneralDataset, data: base.DataType, batch_size: 
     batch = Batch(batch_size, data)
     batch.create_batches()
     batches = BatchExtractor('label', batch, dataset, onehot)
+
+    if shuffle:
+        batches.shuffle()
+
     return batches
 
 
