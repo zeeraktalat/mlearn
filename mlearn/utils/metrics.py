@@ -92,9 +92,13 @@ class Metrics:
         """
         self.scores['loss'].append(value)
 
-    def last_loss(self) -> float:
-        """Get last loss value."""
-        return self.scores['loss'][-1]
+    def get_last(self, key: str) -> float:
+        """
+        Get last value for given key.
+
+        :key (str): Metric to get last value of.
+        :returns (float): Return last computed value for the key."""
+        return self.scores[key][-1]
 
     def display(self) -> base.Dict[str, float]:
         """
@@ -113,7 +117,7 @@ class Metrics:
         difference = cur_score - prev_score
         return {self.display_metric: np.mean(self.scores[self.display_metric]), 'diff': difference}
 
-    def last_score(self) -> float:
+    def last_display(self) -> float:
         """Get last display score."""
         return self.scores[self.display_metric][-1]
 
