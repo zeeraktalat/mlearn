@@ -107,12 +107,18 @@ class GeneralDataset(IterableDataset):
                 data_line[field.name] = self.process_doc(line[idx].rstrip())
                 data_line['original'] = line[idx].rstrip()
 
+                if data_line[field.name] is None:
+                    __import__('pdb').set_trace()
+
             for field in self.label_fields:
                 idx = field.index if self.ftype in ['CSV', 'TSV'] else field.cname
                 if self.label_preprocessor:
                     data_line[field.name] = self.label_preprocessor(line[idx].rstrip())
                 else:
                     data_line[field.name] = line[idx].rstrip()
+
+                if data_line[field.name] is None:
+                    __import__('pdb').set_trace()
 
             for key, val in data_line.items():
                 setattr(datapoint, key, val)
@@ -358,7 +364,16 @@ class GeneralDataset(IterableDataset):
         :label (str): Label to process.
         :returns (int): Return index value of label.
         """
-        return self.ltoi[label]
+        try:
+            label = self.ltoi[label]
+        except KeyError as e:
+            if isinstance(label, int):
+                print(f"Exception occurred: Labels have already been processed. Dataset name: {self.name}")
+            else:
+                print(f"Exception occurred reading data: Dataset name: {self.name}")
+                __import__('pdb').set_trace()
+            pass
+        return label
 
     def label_ix_lookup(self, label: int) -> str:
         """
@@ -388,10 +403,6 @@ class GeneralDataset(IterableDataset):
                 else:
                     label = label[0]
             setattr(doc, 'label', label)
-            # if len(label) > 1:
-            #     setattr(doc, 'label', label)
-            # elif isinstance(label, list):
-            #     setattr(doc, 'label', label[0])
 
     def _process_label(self, label: base.List[str], processor: base.Callable = None) -> int:
         """
