@@ -5,7 +5,7 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
 
-def process_and_batch(dataset: GeneralDataset, data: base.DataType, batch_size: int, onehot: bool = True):
+def process_and_batch(dataset: GeneralDataset, data: base.DataType, batch_size: int, onehot: bool = True, **kwargs):
     """
     Process a dataset and data.
 
