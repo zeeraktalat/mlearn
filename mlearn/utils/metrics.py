@@ -97,7 +97,8 @@ class Metrics:
         Get last value for given key.
 
         :key (str): Metric to get last value of.
-        :returns (float): Return last computed value for the key."""
+        :returns (float): Return last computed value for the key.
+        """
         return self.scores[key][-1]
 
     def display(self) -> base.Dict[str, float]:

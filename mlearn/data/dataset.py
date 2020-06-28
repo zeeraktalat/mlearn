@@ -366,7 +366,7 @@ class GeneralDataset(IterableDataset):
         """
         try:
             label = self.ltoi[label]
-        except KeyError as e:
+        except KeyError:
             if isinstance(label, int):
                 print(f"Exception occurred: Labels have already been processed. Dataset name: {self.name}")
             else:
