@@ -109,34 +109,24 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
             if shuffle:
                 iterator.shuffle()
 
-            epoch_preds, epoch_labels, epoch_loss = _singletask_epoch(model, optimizer, loss_func, iterator, clip, gpu)
-
-            preds.extend(epoch_preds)
-            labels.extend(epoch_labels)
-            metrics.compute(epoch_labels, epoch_preds)
-            metrics.loss(epoch_loss)
+            _singletask_epoch(model, optimizer, loss, iterator, clip, gpu)
 
             try:
-                dev_loss, _, _, _ = eval_torch_model(model, dev_iterator, loss_func, dev_metrics, gpu, store = False,
-                                                     **kwargs)
-                dev_metrics.loss(dev_loss)
-                dev_score = dev_metrics[dev_metrics.display_metric][-1]
+                eval_torch_model(model, dev, loss, dev_metrics, gpu, store = False, **kwargs)
 
                 if early_stopping is not None and early_stopping(model, dev_metrics.early_stopping()):
                     model = early_stopping.best_state
                     break
 
-                loop.set_postfix(epoch_loss = f"{epoch_loss:.4f}",
-                                 dev_loss = f"{dev_loss:.4f}",
+                loop.set_postfix(epoch_loss = f"{metrics.get_last('loss'):.4f}",
+                                 dev_loss = f"{dev_metrics.get_last('loss'):.4f}",
                                  **metrics.display(),
-                                 dev_score = dev_score)
+                                 dev_score = f"{dev_metrics.last_display()}")
             except Exception as e:
                 print(f"Caught exception but continuing: {e}")
-                loop.set_postfix(epoch_loss = f"{epoch_loss:.4f}", **metrics.display())
+                loop.set_postfix(epoch_loss = f"{metrics.get_last('loss'):.4f}", **metrics.display())
             finally:
                 loop.refresh()
-
-    return metrics.scores['loss'], dev_metrics.scores['dev_loss'], metrics.scores, dev_metrics.scores
 
 
 def run_mtl_model(train: bool, writer: base.Callable, model_info: list, head_len: int, library: str = 'pytorch',
