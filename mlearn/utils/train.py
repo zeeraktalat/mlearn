@@ -32,20 +32,20 @@ def run_singletask_model(library: str, train: bool, writer: base.Callable, model
         write_predictions(kwargs['test_obj'], model_info = model_info, **kwargs)
 
 
-def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base.Callable,
-                      iterator: base.DataType, clip: float = None, gpu: bool = True, **kwargs):
+def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base.Callable, metrics: Metrics,
+                      batches: base.DataType, clip: float = None, gpu: bool = True, **kwargs):
     """
     Training procedure for single task pytorch models.
 
     :model (base.ModelType): Untrained model to be trained.
     :optimizer (bas.Callable): Optimizer function.
     :loss_func (base.Callable): Loss function to use.
-    :iterator (base.DataType): Batched training set.
+    :batches (base.DataType): Batched training set.
     :clip (float, default = None): Add gradient clipping to prevent exploding gradients.
     :gpu (bool, default = True): Run on GPU
     :returns: TODO
     """
-    with tqdm(iterator, desc = "Batch", leave = False) as loop:
+    with tqdm(batches, desc = "Batch", leave = False) as loop:
         predictions, labels = [], []
         epoch_loss = 0
 
@@ -75,10 +75,10 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
 
 
 def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, iterator: base.DataType,
-                           loss_func: base.Callable, optimizer: base.Callable, metrics: object,
-                           dev_iterator: base.DataType = None, dev_metrics: object = None, clip: float = None,
-                           patience: int = 10, low_is_good: bool = False, shuffle: bool = True, gpu: bool = True,
-                           **kwargs) -> base.Union[list, int, dict, dict]:
+                           loss: base.Callable, optimizer: base.Callable, metrics: Metrics, dev: base.DataType = None,
+                           dev_metrics: Metrics = None, clip: float = None, early_stopping: int = None,
+                           low: bool = False, shuffle: bool = True, gpu: bool = True, **kwargs
+                           ) -> base.Union[list, int, dict, dict]:
     """
     Train a single task pytorch model.
 
@@ -86,14 +86,14 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
     :save_path (str): Path to save models to.
     :epochs (int): The number of epochs to run.
     :iterator (base.DataType): Batched training set.
-    :loss_func (base.Callable): Loss function to use.
+    :loss (base.Callable): Loss function to use.
     :optimizer (bas.Callable): Optimizer function.
     :metrics (object): Initialized Metrics object.
-    :dev_iterator (base.DataType, optional): Batched dev set.
+    :dev (base.DataType, optional): Batched dev set.
     :dev_metrics (object): Initialized Metrics object.
     :clip (float, default = None): Clip gradients to prevent exploding gradient problem.
-    :patience (int, default = 10): Number of iterations to keep going before early stopping.
-    :low_is_good (bool, default = False): Lower scores indicate better performance.
+    :early_stopping (int, default = 10): Number of iterations to keep going before early stopping.
+    :low (bool, default = False): Lower scores indicate better performance.
     :shuffle (bool, default = True): Shuffle the dataset.
     :gpu (bool, default = True): Run on GPU
     """
