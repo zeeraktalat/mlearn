@@ -121,9 +121,9 @@ class CNNClassifier(nn.Module):
         super(CNNClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'cnn'
-        self.info = {'Model': self.name, 'Window Sizes': ", ".join(window_sizes), '# Filters': num_filters,
-                     'Input dim': input_dim, 'Hidden dim': hidden_dim, 'Output dim': output_dim,
-                     'Activation Func': activation}
+        self.info = {'Model': self.name, 'Window Sizes': ", ".join([str(it) for it in window_sizes]),
+                     '# Filters': num_filters, 'Input dim': input_dim, 'Hidden dim': hidden_dim,
+                     'Output dim': output_dim, 'Activation Func': activation}
 
         self.itoh = nn.Linear(input_dim, hidden_dim)  # Works
         self.conv = nn.ModuleList([nn.Conv2d(1, num_filters, (w, hidden_dim)) for w in window_sizes])

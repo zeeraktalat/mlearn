@@ -22,8 +22,9 @@ class EmbeddingLSTMClassifier(nn.Module):
         super(EmbeddingLSTMClassifier, self).__init__()
         self.name = "emb-mtl-lstm"
         self.batch_first = batch_first
-        self.info = {'Input dim': ", ".join(input_dims), 'Embedding dim': embedding_dim, 'Shared dim': shared_dim,
-                     'Hidden dim': ", ".join(hidden_dims), 'Output dim': ", ".join(output_dims),
+        self.info = {'Input dim': ", ".join([str(it) for it in input_dims]), 'Embedding dim': embedding_dim,
+                     'Shared dim': shared_dim, 'Hidden dim': ", ".join([str(it) for it in hidden_dims]),
+                     'Output dim': ", ".join([str(it) for it in output_dims]),
                      '# layers': no_layers, 'Dropout': dropout, 'Model': self.name}
 
         # Initialise the hidden dim
@@ -129,8 +130,9 @@ class OnehotLSTMClassifier(nn.Module):
         super(OnehotLSTMClassifier, self).__init__()
         self.name = "onehot-mtl-lstm"
         self.batch_first = batch_first
-        self.info = {'Input dim': ", ".join(input_dims), 'Shared dim': shared_dim,
-                     'Hidden dim': ", ".join(hidden_dims), 'Output dim': ", ".join(output_dims),
+        self.info = {'Input dim': ", ".join([str(it) for it in input_dims]), 'Shared dim': shared_dim,
+                     'Hidden dim': ", ".join([str(it) for it in hidden_dims]),
+                     'Output dim': ", ".join([str(it) for it in output_dims]),
                      '# layers': no_layers, 'Dropout': dropout, 'Model': self.name}
 
         # Initialise the hidden dim
@@ -233,8 +235,9 @@ class OnehotMLPClassifier(nn.Module):
         super(OnehotMLPClassifier, self).__init__()
         self.name = "onehot-mtl-mlp"
         self.batch_first = batch_first
-        self.info = {'Input dim': ", ".join(input_dims), 'Shared dim': shared_dim,
-                     'Hidden dim': ", ".join(hidden_dims), 'Output dim': ", ".join(output_dims),
+        self.info = {'Input dim': ", ".join([str(it) for it in input_dims]), 'Shared dim': shared_dim,
+                     'Hidden dim': ", ".join([str(it) for it in hidden_dims]),
+                     'Output dim': ", ".join([str(it) for it in output_dims]),
                      'Dropout': dropout, 'Model': self.name}
 
         # Initialise the hidden dim
