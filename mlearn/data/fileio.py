@@ -4,6 +4,7 @@ import json
 import torch
 import joblib
 from mlearn import base
+from mlearn.utils.pipeline import _get_datestr
 from mlearn.data.dataset import GeneralDataset
 
 
@@ -52,29 +53,31 @@ def read_json(fh: str, enc, doc_key: str, label_key: str, **kwargs) -> base.Tupl
     return tuple(out_vals)
 
 
-def write_predictions(data: base.DataType, dataset: GeneralDataset, train_field: str, label_field: str,
-                      model_info: list, data_name: str, main_name: str, pred_fn: base.Callable,
+def write_predictions(pred_fn: base.Callable, data: base.DataType, dataset: GeneralDataset, model: base.ModelType,
+                      model_header: list, train_field: str, label_field: str, data_name: str, main_name: str,
                       **kwargs) -> None:
     """
     Write documents and their predictions along with info about model making the prediction.
 
-    :data: The dataset objects that were predicted on.
+    :pred_fn (base.Callable): Opened result-file.
+    :data (base.DataType): The data that were predicted on.
+    :dataset (GeneralDataset): The dataset object.
+    :model (base.ModelType): The model used for inference.
+    :model_header (list): List of parameters in output file.
     :train_field (str): Attribute that is predicted on.
     :label_field (str): Attribute in data that contains the label.
     :model_info (list): Model information
     :data_name (str): Dataset evaluated on.
     :main_name (str): Dataset trained on.
-    :pred_fn (base.Callable): Opened resultfile.
     """
+    model_info = [model.params.get(field, '-') for field in model_header]
+    base = [_get_datestr, main_name, data_name]
     for doc in data:
-        try:
-            out = [" ".join(getattr(doc, train_field)).replace('\n', ' ').replace('\r', ' '),
-                   dataset.label_ix_lookup(getattr(doc, label_field)), dataset.label_ix_lookup(doc.pred),
-                   data_name, main_name] + model_info
-            pred_fn.writerow(out)
-        except Exception:
-            __import__('pdb').set_trace()
-
+        parsed = " ".join(getattr(doc, train_field)).replace('\n', ' ').replace('\r', ' ')
+        pred_info = [doc.original, parsed,
+                     dataset.label_ix_lookup(getattr(doc, label_field)), dataset.label_ix_lookup(doc.pred)]
+        out = base + pred_info + model_info
+        pred_fn.writerow(out)
     pred_fn.writerow(len(out) * ['---'])
 
 
