@@ -63,15 +63,15 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
 
             optimizer.step()
 
-            predictions.extend(torch.argmax(scores, 1).cpu().tolist())
+            predictions.extend(torch.argmax(scores, dim = 1).cpu().tolist())
             labels.extend(y.cpu().tolist())
-            epoch_loss += loss.data.item()
-            batch_loss = loss.data.item() / len(y)
 
-            loop.set_postfix(batch_loss = f"{batch_loss:.4f}",
-                             epoch_loss = f"{epoch_loss / len(labels):.4f}")
+            lo = loss.data.item()
+            epoch_loss += lo
 
-    return predictions, labels, epoch_loss / len(labels)
+            loop.set_postfix(batch_loss = f"{lo / len(y) :.4f}")
+        metrics.compute()
+        metrics.loss = epoch_loss / len(labels)
 
 
 def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, iterator: base.DataType,
@@ -98,12 +98,9 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
     :gpu (bool, default = True): Run on GPU
     """
     with trange(epochs, desc = "Training epochs", leave = False) as loop:
-        preds, labels = [], []
 
-        if patience > 0:
-            early_stopping = EarlyStopping(save_path, model, patience, low_is_good = low_is_good)
-        else:
-            early_stopping = None
+        if early_stopping is not None:
+            early_stopping = EarlyStopping(save_path, model, early_stopping, low_is_good = low)
 
         for ep in loop:
             model.train()
