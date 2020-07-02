@@ -81,45 +81,30 @@ def write_predictions(pred_fn: base.Callable, data: base.DataType, dataset: Gene
     pred_fn.writerow(len(out) * ['---'])
 
 
-def write_results(writer: base.Callable, train_scores: dict, train_loss: list, dev_scores: dict, dev_loss: list,
-                  epochs: int, model_info: list, metrics: list, exp_len: int, data_name: str, main_name: str,
-                  **kwargs) -> None:
+def write_results(writer: base.Callable, model: base.ModelType, model_header: list, metric_header: list,
+                  train_scores: object, dev_scores: object = None, data_name: str, main_name: str, **kwargs) -> None:
     """
     Write results to file.
 
     :writer (base.Callable): Path to file.
+    :model (base.ModelType): The model to be written for.
+    :model_header (list): Model parameters in the order they appear in the file.
+    :metric_header (list): Metrics in the order they appear in the output file.
     :train_scores (dict): Train scores.
-    :train_loss (list): Train losses.
     :dev_scores (dict): Dev scores.
-    :dev_loss (list): Dev losses.
-    :epochs (int): Epochs.
-    :model_info (list): Model info.
-    :metrics (list): Model info.
-    :exp_len (int): Expected length of each line.
     :data_name (str): Name of the dataset that's being run on.
     :main_name (str): Name of the dataset the model is trained/being trained on.
     """
-    if isinstance(train_loss, float):
-        train_loss = [train_loss]
+    base = [_get_datestr(), main_name, data_name]
+    for i in range(len(train_score)):
+        info = [model.params.get(field, '-') for field in model_header]
+        results = [train_scores.scores.get(score, (i + 1) * ['-'])[i] for score in metric_header]
 
-    iterations = epochs if epochs == len(train_loss) else len(train_loss)
-    for i in range(iterations):
-        try:
-            out = [data_name, main_name] + [i] + model_info  # Base info
-            out += [train_scores[m][i] for m in metrics.list()] + [train_loss[i]]  # Train info
+        if dev_scores:
+            dev_results = [dev_scores.scores.get(score, (i + 1) * ['-'])[i] for score in metric_header]
+            results.extend(dev_results)
 
-            if dev_scores:
-                out += [dev_scores[m][i] for m in metrics.list()] + [dev_loss[i]]  # Dev info
-
-        except IndexError:
-            __import__('pdb').set_trace()
-
-        row_len = len(out)
-        if row_len < exp_len:
-            out += [''] * (row_len - exp_len)
-        elif row_len > exp_len:
-            __import__('pdb').set_trace()
-
+        out = base + info + results
         writer.writerow(out)
 
 
