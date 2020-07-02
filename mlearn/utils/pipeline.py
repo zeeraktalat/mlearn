@@ -50,3 +50,6 @@ def select_vectorizer(vectorizer: str) -> base.VectType:
     setattr(v, 'fitted', False)
 
     return v
+
+def _get_datestr():
+    return datetime.now().strftime('%Y%m%d%H%M%S')
