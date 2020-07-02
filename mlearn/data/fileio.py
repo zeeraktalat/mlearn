@@ -70,7 +70,7 @@ def write_predictions(pred_fn: base.Callable, data: base.DataType, dataset: Gene
     :data_name (str): Dataset evaluated on.
     :main_name (str): Dataset trained on.
     """
-    model_info = [model.params.get(field, '-') for field in model_header]
+    model_info = [model.info.get(field, '-') for field in model_header]
     base = [_get_datestr, main_name, data_name]
     for doc in data:
         parsed = " ".join(getattr(doc, train_field)).replace('\n', ' ').replace('\r', ' ')
@@ -82,7 +82,7 @@ def write_predictions(pred_fn: base.Callable, data: base.DataType, dataset: Gene
 
 
 def write_results(writer: base.Callable, model: base.ModelType, model_header: list, metric_header: list,
-                  train_scores: object, dev_scores: object = None, data_name: str, main_name: str, **kwargs) -> None:
+                  data_name: str, main_name: str, train_scores: object, dev_scores: object = None, **kwargs) -> None:
     """
     Write results to file.
 
@@ -90,14 +90,14 @@ def write_results(writer: base.Callable, model: base.ModelType, model_header: li
     :model (base.ModelType): The model to be written for.
     :model_header (list): Model parameters in the order they appear in the file.
     :metric_header (list): Metrics in the order they appear in the output file.
-    :train_scores (dict): Train scores.
-    :dev_scores (dict): Dev scores.
     :data_name (str): Name of the dataset that's being run on.
     :main_name (str): Name of the dataset the model is trained/being trained on.
+    :train_scores (dict): Train scores.
+    :dev_scores (dict): Dev scores.
     """
     base = [_get_datestr(), main_name, data_name]
-    for i in range(len(train_score)):
-        info = [model.params.get(field, '-') for field in model_header]
+    for i in range(len(train_scores)):
+        info = [model.info.get(field, '-') for field in model_header]
         results = [train_scores.scores.get(score, (i + 1) * ['-'])[i] for score in metric_header]
 
         if dev_scores:
