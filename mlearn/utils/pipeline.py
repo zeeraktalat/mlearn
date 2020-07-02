@@ -1,3 +1,4 @@
+import datetime
 from mlearn import base
 from mlearn.data.dataset import GeneralDataset
 from mlearn.data.batching import Batch, BatchExtractor
@@ -43,13 +44,17 @@ def select_vectorizer(vectorizer: str) -> base.VectType:
     vect = vectorizer.lower()
     if 'dict' in vect:
         v = DictVectorizer()
+        setattr(v, 'name', 'DictVectorizer')
     elif 'tfidf' in vect:
         v = TfidfVectorizer()
+        setattr(v, 'name', 'TFIDF-Vectorizer')
     elif 'count' in vect:
         v = CountVectorizer()
+        setattr(v, 'name', 'CountVectorizer')
     setattr(v, 'fitted', False)
 
     return v
+
 
 def _get_datestr():
     return datetime.now().strftime('%Y%m%d%H%M%S')

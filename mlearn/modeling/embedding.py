@@ -7,24 +7,26 @@ import torch.nn.functional as F
 class LSTMClassifier(nn.Module):
     """Embedding based LSTM classifier."""
 
-    def __init__(self, input_dim: int, embedding_dim: int, hidden_dim: int, output_dim: int, num_layers: int,
-                 dropout: float = 0.2, batch_first: bool = True, **kwargs) -> None:
+    def __init__(self, input_dim: int, embedding_dim: int, hidden_dim: int, output_dim: int, no_layers: int,
+                 dropout: float = 0.0, batch_first: bool = True, **kwargs) -> None:
         """
         Initialise the LSTM.
 
         :input_dim (int): The dimensionality of the input to the embedding generation.
         :hidden_dim (int): The dimensionality of the hidden dimension.
         :output_dim (int): Number of classes for to predict on.
-        :num_layers (int): The number of recurrent layers in the LSTM (1-3).
+        :no_layers (int): The number of recurrent layers in the LSTM (1-3).
         :dropout (float, default = 0.2): The strength of the dropout as a float [0.0;1.0]
         :batch_first (bool, default = True): Batch the first dimension?
         """
         super(LSTMClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'lstm'
+        self.info = {'Input dim': input_dim, 'Embedding dim': embedding_dim, 'Hidden dim': hidden_dim,
+                     'Output dim': output_dim, '# layers': no_layers, 'Dropout': dropout, 'Model': self.name}
 
         self.itoe = nn.Embedding(input_dim, embedding_dim)
-        self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers, batch_first = batch_first)
+        self.lstm = nn.LSTM(embedding_dim, hidden_dim, no_layers, batch_first = batch_first)
         self.htoo = nn.Linear(hidden_dim, output_dim)
 
         # Set the method for producing "probability" distribution.
@@ -52,7 +54,7 @@ class LSTMClassifier(nn.Module):
 class MLPClassifier(nn.Module):
     """Embedding based MLP Classifier."""
 
-    def __init__(self, input_dim: int, embedding_dim: int, hidden_dim: int, output_dim: int, dropout: float = 0.2,
+    def __init__(self, input_dim: int, embedding_dim: int, hidden_dim: int, output_dim: int, dropout: float = 0.0,
                  batch_first: bool = True, activation: str = 'tanh', **kwargs) -> None:
         """
         Initialise the model.
@@ -66,6 +68,9 @@ class MLPClassifier(nn.Module):
         super(MLPClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'mlp'
+        self.info = {'Model': self.name, 'Input dim': input_dim, 'Embedding dim': embedding_dim,
+                     'Hidden dim': hidden_dim, 'Output dim': output_dim, 'Activation Func': activation,
+                     'Dropout': dropout}
 
         self.itoe = nn.Embedding(input_dim, embedding_dim)
         self.htoh = nn.Linear(embedding_dim, hidden_dim)
@@ -99,7 +104,7 @@ class CNNClassifier(nn.Module):
     """CNN Classifier."""
 
     def __init__(self, window_sizes: base.List[int], num_filters: int, input_dim: int, embedding_dim: int,
-                 output_dim: int, batch_first: bool = True, **kwargs) -> None:
+                 output_dim: int, activation: str = 'relu', batch_first: bool = True, **kwargs) -> None:
         """
         Initialise the model.
 
@@ -108,15 +113,20 @@ class CNNClassifier(nn.Module):
         :input_dim (int): The input dimension (can be limited to less than the vocab size)
         :embedding_dim (int): Embedding dimension size.
         :output_dim (int): Output dimension.
+        :activation (str): Name of activation function to use.
         :batch_first (bool, default: True): True if the batch is the first dimension.
         """
         super(CNNClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'cnn'
+        self.info = {'Model': self.name, 'Input dim': input_dim, 'Embedding dim': embedding_dim,
+                     'Output dim': output_dim, 'Window Sizes': ", ".join(window_sizes), '# Filters': num_filters,
+                     'Activation Func': activation}
 
         self.itoh = nn.Embedding(input_dim, embedding_dim)  # Works
         self.conv = nn.ModuleList([nn.Conv2d(1, num_filters, (w, embedding_dim)) for w in window_sizes])
         self.linear = nn.Linear(len(window_sizes) * num_filters, output_dim)
+        self.activation = F.relu if activation == 'relu' else F.tanh
         self.softmax = nn.LogSoftmax(dim = 1)
 
     def forward(self, sequence) -> base.DataType:
@@ -124,19 +134,19 @@ class CNNClassifier(nn.Module):
         Forward step of the model.
 
         :sequence: The sequence to be predicted on.
-        :return (base.DataType): The scores computed by the model.
+        :return (base.DataType): The probability distribution computed by the model.
         """
         # CNNs expect batch first so let's try that
         if not self.batch_first:
             sequence = sequence.transpose(0, 1)
 
         emb = self.itoh(sequence)  # Get embeddings for sequence
-        output = [F.relu(conv(emb.unsqueeze(1))).squeeze(3) for conv in self.conv]
+        output = [self.activation(conv(emb.unsqueeze(1))).squeeze(3) for conv in self.conv]
         output = [F.max_pool1d(i, i.size(2)).squeeze(2) for i in output]
         output = torch.cat(output, 1)
-        scores = self.softmax(self.linear(output))
+        prob_dist = self.softmax(self.linear(output))
 
-        return scores
+        return prob_dist
 
 
 class RNNClassifier(nn.Module):
@@ -157,6 +167,8 @@ class RNNClassifier(nn.Module):
         super(RNNClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'rnn'
+        self.info = {'Model': self.name, 'Input dim': input_dim, 'Embedding dim': embedding_dim,
+                     'Hidden dim': hidden_dim, 'Output dim': output_dim, 'Dropout': dropout}
 
         # Initialise the hidden dim
         self.hidden_dim = hidden_dim

@@ -9,17 +9,20 @@ from mlearn.data.fileio import load_model, store_model, store_features
 class LinearModel(object):
     """Base class for linear model."""
 
-    def __init__(self, model: base.ModelType, model_name: str, vectorizer: base.Callable, **kwargs) -> None:
+    def __init__(self, model: base.ModelType, model_name: str, vectorizer: base.Callable, vocab_size: int, **kwargs
+                 ) -> None:
         """
         Initialize Linear model.
 
         :model (base.ModelType): Untrained linear model.
         :model_name (str): Name of the model.
         :vectorizer (base.Callable): Vectorizer for the model.
+        :vocab_size (int): The size of the input vocabulary.
         """
         self.model = model(**kwargs)
         self.name = model_name
         self.vect = vectorizer
+        self.info = {'Model': self.name, 'Vectorizer': self.vect.name, 'Input dim': vocab_size}
 
     def top_features(self, dataset: GeneralDataset, base_path: str) -> dict:
         """
