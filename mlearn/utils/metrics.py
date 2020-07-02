@@ -130,6 +130,10 @@ class Metrics:
         """Return a list of all metrics."""
         return list(self.metrics.keys())
 
+    def __len__(self) -> int:
+        """Compute the number of entries input into each list."""
+        return len(self.scores['loss'])
+
     def __getitem__(self, metric: str) -> list:
         """
         Get individual metric.
