@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from mlearn import base
 from mlearn.data.dataset import GeneralDataset
 from mlearn.data.batching import Batch, BatchExtractor
