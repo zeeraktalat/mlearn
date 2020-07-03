@@ -9,14 +9,14 @@ from mlearn.utils.evaluate import eval_torch_model, eval_sklearn_model
 from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV
 
 
-def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base.Callable, metrics: Metrics,
+def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: base.Callable, metrics: Metrics,
                       batches: base.DataType, clip: float = None, gpu: bool = True, **kwargs):
     """
     Training procedure for single task pytorch models.
 
     :model (base.ModelType): Untrained model to be trained.
     :optimizer (bas.Callable): Optimizer function.
-    :loss_func (base.Callable): Loss function to use.
+    :loss_f (base.Callable): Loss function to use.
     :batches (base.DataType): Batched training set.
     :clip (float, default = None): Add gradient clipping to prevent exploding gradients.
     :gpu (bool, default = True): Run on GPU
@@ -32,7 +32,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func
                 y = y.cuda()
 
             scores = model(X, **kwargs)
-            loss = loss_func(scores, y)
+            loss = loss_f(scores, y)
             loss.backward()
 
             if clip is not None:
@@ -129,14 +129,14 @@ def run_singletask_model(library: str, train: bool, writer: base.Callable, model
         write_predictions(kwargs['test_obj'], model_info = model_info, **kwargs)
 
 
-def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: base.DataType, opt: base.Callable,
+def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.DataType, opt: base.Callable,
                metrics: object, batchers: base.List[base.Batch], batch_count: int, dataset_weights: base.List[float],
                clip: float = None, **kwargs) -> None:
     """
     Train one epoch of an MTL training loop.
 
     :model (base.ModelType): Model in the process of being trained.
-    :loss_func (base.Callable): The loss function being used.
+    :loss_f (base.Callable): The loss function being used.
     :loss_weights (base.DataType): Determines relative task importance When using multiple input/output functions.
     :opt (base.Callable): The optimizer function used.
     :metrics (object): Initialized Metrics object.
@@ -150,7 +150,6 @@ def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: ba
         epoch_loss = 0
 
         for b in loop:
-
             # Select task and get batch
             task_id = np.random.choice(range(len(batchers)), p = dataset_weights)
             X, y = next(iter(batchers[task_id]))
@@ -160,7 +159,7 @@ def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: ba
             opt.zero_grad()
 
             scores = model(X, task_id, **kwargs)
-            loss = loss_func(scores, y) * loss_weights[task_id]
+            loss = loss_f(scores, y) * loss_weights[task_id]
             loss.backward()
 
             if clip is not None:
@@ -181,7 +180,7 @@ def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: ba
 
 
 def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], save_path: str, opt: base.Callable,
-                    loss_func: base.Callable, metrics: object, batch_size: int = 64, epochs: int = 2,
+                    loss_f: base.Callable, metrics: object, batch_size: int = 64, epochs: int = 2,
                     clip: float = None, earlystop: int = None, dev: base.DataType = None, dev_metrics: object = None,
                     dev_task_id: int = 0, batches_per_epoch: int = None, low: bool = True,
                     shuffle: bool = True, dataset_weights: base.DataType = None, loss_weights: base.DataType = None,
@@ -193,7 +192,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], s
     :batchers (base.List[base.DataType]): Batched training data.
     :save_path (str): Path to save trained model to.
     :opt (base.Callable): Pytorch optimizer to train model.
-    :loss_func (base.Callable): Loss function.
+    :loss_f (base.Callable): Loss function.
     :metrics (object): Initialized metrics object.
     :batch_size (int): Training batch size.
     :epochs (int): Maximum number of epochs (if no early stopping).
@@ -227,10 +226,10 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], s
                 for batch in batchers:
                     batch.shuffle()
 
-            _mtl_epoch(model, loss_func, loss_weights, opt, metrics, batchers, batches_per_epoch, dataset_weights, clip)
+            _mtl_epoch(model, loss_f, loss_weights, opt, metrics, batchers, batches_per_epoch, dataset_weights, clip)
 
             try:
-                eval_torch_model(model, dev, loss_func, dev_metrics, mtl = dev_task_id)
+                eval_torch_model(model, dev, loss_f, dev_metrics, mtl = dev_task_id)
 
                 loop.set_postfix(loss = f"{metrics.get_last('loss'):.4f}",
                                  dev_loss = f"{dev_metrics.get_last('loss'):.4f}",

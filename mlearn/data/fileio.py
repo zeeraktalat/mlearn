@@ -71,7 +71,7 @@ def write_predictions(writer: base.Callable, model: base.ModelType, model_hdr: l
     :label_field (str): Attribute in data that contains the label.
     """
     base = [_get_datestr, main_name, data_name]
-    model_info = [model.info.get(field, '-') for field in model_hdr] + hyper_info
+    info = [model.info.get(field, '-') for field in model_hdr] + hyper_info
 
     for doc in data:
         parsed = " ".join(getattr(doc, train_field)).replace('\n', ' ').replace('\r', ' ')
@@ -80,7 +80,7 @@ def write_predictions(writer: base.Callable, model: base.ModelType, model_hdr: l
 
         pred_info = [doc.original, parsed, label, pred]
 
-        out = base + pred_info + model_info
+        out = base + pred_info + info
         writer.writerow(out)
 
 
@@ -101,6 +101,7 @@ def write_results(writer: base.Callable, model: base.ModelType, model_hdr: list,
     """
     base = [_get_datestr(), main_name, data_name] + hyper_info
     info = [model.info.get(field, '-') for field in model_hdr]
+
     for i in range(len(train_scores)):
         results = [train_scores.scores.get(score, (i + 1) * ['-'])[i] for score in metric_hdr]
 
