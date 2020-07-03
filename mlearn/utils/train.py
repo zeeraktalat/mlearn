@@ -9,29 +9,6 @@ from mlearn.utils.evaluate import eval_torch_model, eval_sklearn_model
 from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV
 
 
-def run_singletask_model(library: str, train: bool, writer: base.Callable, model_info: list, head_len: int, **kwargs):
-    """
-    Train or evaluate model.
-
-    :library (str): Library of the model.
-    :train (bool): Whether it's a train or test run.
-    :writer (csv.writer): File to output model performance to.
-    :model_info (list): Information about the model to be added to each line of the output.
-    :head_len (int): The length of the header.
-    """
-    if train:
-        func = train_singletask_model if library == 'pytorch' else select_sklearn_training_regiment
-    else:
-        func = eval_torch_model if library == 'pytorch' else eval_sklearn_model
-
-    train_loss, dev_loss, train_scores, dev_scores = func(**kwargs)
-    write_results(writer, train_scores, train_loss, dev_scores, dev_loss, model_info = model_info, exp_len = head_len,
-                  **kwargs)
-
-    if not train:
-        write_predictions(kwargs['test_obj'], model_info = model_info, **kwargs)
-
-
 def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_func: base.Callable, metrics: Metrics,
                       batches: base.DataType, clip: float = None, gpu: bool = True, **kwargs):
     """
@@ -129,8 +106,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
                 loop.refresh()
 
 
-def run_mtl_model(train: bool, writer: base.Callable, model_info: list, head_len: int, library: str = 'pytorch',
-                  **kwargs):
+def run_singletask_model(library: str, train: bool, writer: base.Callable, model_info: list, head_len: int, **kwargs):
     """
     Train or evaluate model.
 
@@ -141,7 +117,7 @@ def run_mtl_model(train: bool, writer: base.Callable, model_info: list, head_len
     :head_len (int): The length of the header.
     """
     if train:
-        func = train_mtl_model if library == 'pytorch' else select_sklearn_training_regiment
+        func = train_singletask_model if library == 'pytorch' else select_sklearn_training_regiment
     else:
         func = eval_torch_model if library == 'pytorch' else eval_sklearn_model
 
@@ -204,17 +180,16 @@ def _mtl_epoch(model: base.ModelType, loss_func: base.Callable, loss_weights: ba
         metrics.loss = batch_loss
 
 
-def train_mtl_model(model: base.ModelType, train_data: base.List[base.DataType], batchers: base.List[base.DataType],
-                    save_path: str, opt: base.Callable, loss_func: base.Callable, metrics: object, batch_size: int = 64,
-                    epochs: int = 2, clip: float = None, earlystop: int = None, dev: base.DataType = None,
-                    dev_metrics: object = None, dev_task_id: int = 0, batches_per_epoch: int = None, low: bool = True,
+def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], save_path: str, opt: base.Callable,
+                    loss_func: base.Callable, metrics: object, batch_size: int = 64, epochs: int = 2,
+                    clip: float = None, earlystop: int = None, dev: base.DataType = None, dev_metrics: object = None,
+                    dev_task_id: int = 0, batches_per_epoch: int = None, low: bool = True,
                     shuffle: bool = True, dataset_weights: base.DataType = None, loss_weights: base.DataType = None,
                     **kwargs) -> None:
     """
     Train a multi-task learning model.
 
     :model (base.ModelType): Untrained model.
-    :train_data (base.List[base.DataType]): List of tuples containing dense matrices.
     :batchers (base.List[base.DataType]): Batched training data.
     :save_path (str): Path to save trained model to.
     :opt (base.Callable): Pytorch optimizer to train model.
@@ -236,13 +211,13 @@ def train_mtl_model(model: base.ModelType, train_data: base.List[base.DataType],
     """
     with trange(epochs, desc = "Training model") as loop:
         if loss_weights is None:
-            loss_weights = np.ones(len(train_data))
+            loss_weights = np.ones(len(batchers))
 
         if dataset_weights is None:
-            dataset_weights = loss_weights / len(train_data)
+            dataset_weights = loss_weights / len(batchers)
 
         if batches_per_epoch is None:
-            batches_per_epoch = sum([len(dataset) * batch_size for dataset in train_data]) // batch_size
+            batches_per_epoch = sum([len(dataset) * batch_size for dataset in batchers]) // batch_size
 
         if earlystop is not None:
             earlystop = EarlyStopping(save_path, model, earlystop, low_is_good = low)
@@ -265,9 +240,32 @@ def train_mtl_model(model: base.ModelType, train_data: base.List[base.DataType],
                     model = earlystop.best_state
                     break
             except Exception:
-                loop.set_postfix(epoch_loss = metrics.last_loss)
+                loop.set_postfix(epoch_loss = metrics.get_last('loss'))
             finally:
                 loop.refresh()
+
+
+def run_mtl_model(train: bool, writer: base.Callable, pred_writer: base.Callable = None, library: str = 'pytorch',
+                  **kwargs) -> None:
+    """
+    Train or evaluate model.
+
+    :train (bool): Whether it's a train or test run.
+    :writer (csv.writer): File to output model performance to.
+    :pred_writer (base.Callable): File to output the model predictions to.
+    :library (str): Library of the model.
+    """
+    if train:
+        func = train_mtl_model if library == 'pytorch' else select_sklearn_training_regiment
+    else:
+        func = eval_torch_model if library == 'pytorch' else eval_sklearn_model
+
+    func(**kwargs)
+
+    write_results(writer, **kwargs)
+
+    if not train:
+        write_predictions(pred_writer, **kwargs)
 
 
 def train_sklearn_cv_model(model: base.ModelType, vectorizer: base.VectType, dataset: base.DataType,
