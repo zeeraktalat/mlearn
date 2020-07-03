@@ -53,55 +53,59 @@ def read_json(fh: str, enc, doc_key: str, label_key: str, **kwargs) -> base.Tupl
     return tuple(out_vals)
 
 
-def write_predictions(pred_fn: base.Callable, data: base.DataType, dataset: GeneralDataset, model: base.ModelType,
-                      model_header: list, train_field: str, label_field: str, data_name: str, main_name: str,
+def write_predictions(writer: base.Callable, model: base.ModelType, model_hdr: list, data_name: str, main_name: str,
+                      hyper_info: str, data: base.DataType, dataset: GeneralDataset, train_field: str, label_field: str,
                       **kwargs) -> None:
     """
     Write documents and their predictions along with info about model making the prediction.
 
-    :pred_fn (base.Callable): Opened result-file.
-    :data (base.DataType): The data that were predicted on.
-    :dataset (GeneralDataset): The dataset object.
+    :writer (base.Callable): Opened result-file.
     :model (base.ModelType): The model used for inference.
-    :model_header (list): List of parameters in output file.
-    :train_field (str): Attribute that is predicted on.
-    :label_field (str): Attribute in data that contains the label.
-    :model_info (list): Model information
+    :model_hdr (list): List of parameters in output file.
     :data_name (str): Dataset evaluated on.
     :main_name (str): Dataset trained on.
+    :hyper_info (list): List of hyper paraemeters.
+    :data (base.DataType): The data that were predicted on.
+    :dataset (GeneralDataset): The dataset object.
+    :train_field (str): Attribute that is predicted on.
+    :label_field (str): Attribute in data that contains the label.
     """
-    model_info = [model.info.get(field, '-') for field in model_header]
     base = [_get_datestr, main_name, data_name]
+    model_info = [model.info.get(field, '-') for field in model_hdr] + hyper_info
+
     for doc in data:
         parsed = " ".join(getattr(doc, train_field)).replace('\n', ' ').replace('\r', ' ')
-        pred_info = [doc.original, parsed,
-                     dataset.label_ix_lookup(getattr(doc, label_field)), dataset.label_ix_lookup(doc.pred)]
+        label = dataset.label_ix_lookup(getattr(doc, label_field))
+        pred = dataset.label_ix_lookup(doc.pred)
+
+        pred_info = [doc.original, parsed, label, pred]
+
         out = base + pred_info + model_info
-        pred_fn.writerow(out)
-    pred_fn.writerow(len(out) * ['---'])
+        writer.writerow(out)
 
 
-def write_results(writer: base.Callable, model: base.ModelType, model_header: list, metric_header: list,
-                  data_name: str, main_name: str, train_scores: object, dev_scores: object = None, **kwargs) -> None:
+def write_results(writer: base.Callable, model: base.ModelType, model_hdr: list, data_name: str, main_name: str,
+                  hyper_info: list, metric_hdr: list, train_scores: object, dev: object = None, **kwargs) -> None:
     """
     Write results to file.
 
     :writer (base.Callable): Path to file.
     :model (base.ModelType): The model to be written for.
-    :model_header (list): Model parameters in the order they appear in the file.
-    :metric_header (list): Metrics in the order they appear in the output file.
+    :model_hdr (list): Model parameters in the order they appear in the file.
     :data_name (str): Name of the dataset that's being run on.
     :main_name (str): Name of the dataset the model is trained/being trained on.
+    :hyper_info (list): List of hyper-parameters.
+    :metric_hdr (list): Metrics in the order they appear in the output file.
     :train_scores (dict): Train scores.
-    :dev_scores (dict): Dev scores.
+    :dev (dict): Dev scores.
     """
-    base = [_get_datestr(), main_name, data_name]
+    base = [_get_datestr(), main_name, data_name] + hyper_info
+    info = [model.info.get(field, '-') for field in model_hdr]
     for i in range(len(train_scores)):
-        info = [model.info.get(field, '-') for field in model_header]
-        results = [train_scores.scores.get(score, (i + 1) * ['-'])[i] for score in metric_header]
+        results = [train_scores.scores.get(score, (i + 1) * ['-'])[i] for score in metric_hdr]
 
-        if dev_scores:
-            dev_results = [dev_scores.scores.get(score, (i + 1) * ['-'])[i] for score in metric_header]
+        if dev:
+            dev_results = [dev.scores.get(score, (i + 1) * ['-'])[i] for score in metric_hdr]
             results.extend(dev_results)
 
         out = base + info + results
