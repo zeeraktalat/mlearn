@@ -148,11 +148,14 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
     with tqdm(range(batch_count), desc = 'Batch', leave = False) as loop:
         label_count = 0
         epoch_loss = 0
+        tasks = []
+        taskid2name = {i: batchers[i].data.name for i in range(len(batchers))}
 
         for b in loop:
             # Select task and get batch
             task_id = np.random.choice(range(len(batchers)), p = dataset_weights)
             X, y = next(iter(batchers[task_id]))
+            tasks.append(taskid2name[task_id])
 
             # Do model training
             model.train()
@@ -177,6 +180,7 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
                              **metrics.display(),
                              task = task_id)
         metrics.loss = batch_loss
+        setattr(metrics, 'tasks', tasks)
 
 
 def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], save_path: str, opt: base.Callable,
