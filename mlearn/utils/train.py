@@ -2,6 +2,7 @@ import torch
 import numpy as np
 from mlearn import base
 from tqdm import tqdm, trange
+from collections import defaultdict
 from mlearn.utils.metrics import Metrics
 from mlearn.utils.early_stopping import EarlyStopping
 from mlearn.data.fileio import write_predictions, write_results
@@ -10,19 +11,19 @@ from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV
 
 
 def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: base.Callable, metrics: Metrics,
-                      batches: base.DataType, clip: float = None, gpu: bool = True, **kwargs):
+                      batchers: base.DataType, clip: float = None, gpu: bool = True, **kwargs):
     """
     Training procedure for single task pytorch models.
 
     :model (base.ModelType): Untrained model to be trained.
     :optimizer (bas.Callable): Optimizer function.
     :loss_f (base.Callable): Loss function to use.
-    :batches (base.DataType): Batched training set.
+    :batchers (base.DataType): Batched training set.
     :clip (float, default = None): Add gradient clipping to prevent exploding gradients.
     :gpu (bool, default = True): Run on GPU
     :returns: TODO
     """
-    with tqdm(batches, desc = "Batch", leave = False) as loop:
+    with tqdm(batchers, desc = "Batch", leave = False) as loop:
         predictions, labels = [], []
         epoch_loss = 0
 
@@ -141,7 +142,7 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
     :opt (base.Callable): The optimizer function used.
     :metrics (object): Initialized Metrics object.
     :batchers (base.List[base.Batch]): A list of batched objects.
-    :batch_count (int): The number of batches to go through in each epoch.
+    :batch_count (int): The number of batchers to go through in each epoch.
     :dataset_weights (base.List[float]): The probability with which each dataset is chosen to be trained on.
     :clip (float, default = None): Use gradient clipping.
     """
@@ -180,12 +181,11 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
                              **metrics.display(),
                              task = task_id)
         metrics.loss = batch_loss
-        setattr(metrics, 'tasks', tasks)
 
 
-def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], save_path: str, opt: base.Callable,
-                    loss_f: base.Callable, metrics: object, batch_size: int = 64, epochs: int = 2,
-                    clip: float = None, earlystop: int = None, dev: base.DataType = None, dev_metrics: object = None,
+def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], opt: base.Callable,
+                    loss_f: base.Callable, metrics: object, batch_size: int = 64, epochs: int = 2, clip: float = None,
+                    earlystop: int = None, save_path: str = None, dev: base.DataType = None, dev_metrics: object = None,
                     dev_task_id: int = 0, batches_per_epoch: int = None, low: bool = True,
                     shuffle: bool = True, dataset_weights: base.DataType = None, loss_weights: base.DataType = None,
                     **kwargs) -> None:
@@ -205,7 +205,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], s
     :dev (base.DataType): Batched dev object.
     :dev_metrics (object): Initialized dev_metrics object.
     :dev_task_id (int, default = 0): Task ID for task to use for early stopping, in case of multitask learning.
-    :batches_per_epoch (int, default = None): Set number of batches per epoch. If None, an epoch consists of all
+    :batches_per_epoch (int, default = None): Set number of batchers per epoch. If None, an epoch consists of all
                                               training examples.
     :low (bool, default = True): If lower value is to be interpreted as better by EarlyStopping.
     :shuffle: Whether to shuffle data at training.
