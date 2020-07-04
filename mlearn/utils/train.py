@@ -213,6 +213,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
     :loss_weights (base.DataType): Determines relative task importance When using multiple input/output functions.
     """
     with trange(epochs, desc = "Training model") as loop:
+        scores = defaultdict(list)
         if loss_weights is None:
             loss_weights = np.ones(len(batchers))
 
@@ -232,8 +233,13 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
 
             _mtl_epoch(model, loss_f, loss_weights, opt, metrics, batchers, batches_per_epoch, dataset_weights, clip)
 
+            for score in metrics.scores:  # Compute average value of the scores computed in each epoch.
+                if score == 'loss':
+                    continue
+                else:
+                    scores[score].append(np.mean(metrics.scores[score]))
             try:
-                eval_torch_model(model, dev, loss_f, dev_metrics, mtl = dev_task_id)
+                eval_torch_model(model, dev, loss_f, dev_metrics, mtl = dev_task_id, **kwargs)
 
                 loop.set_postfix(loss = f"{metrics.get_last('loss'):.4f}",
                                  dev_loss = f"{dev_metrics.get_last('loss'):.4f}",
@@ -246,6 +252,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                 loop.set_postfix(epoch_loss = metrics.get_last('loss'))
             finally:
                 loop.refresh()
+        metrics.scores = scores
 
 
 def run_mtl_model(train: bool, writer: base.Callable, pred_writer: base.Callable = None, library: str = 'pytorch',
