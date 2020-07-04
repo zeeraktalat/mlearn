@@ -70,7 +70,7 @@ def write_predictions(writer: base.Callable, model: base.ModelType, model_hdr: l
     :train_field (str): Attribute that is predicted on.
     :label_field (str): Attribute in data that contains the label.
     """
-    base = [_get_datestr, main_name, data_name]
+    base = [_get_datestr(), main_name, data_name]
     info = [model.info.get(field, '-') for field in model_hdr] + hyper_info
 
     for doc in data:
@@ -85,7 +85,8 @@ def write_predictions(writer: base.Callable, model: base.ModelType, model_hdr: l
 
 
 def write_results(writer: base.Callable, model: base.ModelType, model_hdr: list, data_name: str, main_name: str,
-                  hyper_info: list, metric_hdr: list, train_scores: object, dev: object = None, **kwargs) -> None:
+                  hyper_info: list, metric_hdr: list, metrics: object, dev_metrics: object = None, **kwargs
+                  ) -> None:
     """
     Write results to file.
 
