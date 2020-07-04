@@ -15,20 +15,19 @@ def predict_torch_model(model: base.ModelType, X, **kwargs) -> list:
     return model(X, **kwargs).cpu()
 
 
-def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: base.Callable, m: metrics.Metrics,
-                     gpu: bool, mtl: int = None, task_id: int = None, store: bool = True, test: base.DataType = None,
-                     **kwargs) -> None:
+def eval_torch_model(model: base.ModelType, batchers: base.DataType, loss_f: base.Callable, metrics: metrics.Metrics,
+                     gpu: bool, mtl: int = None, store: bool = True, test: base.DataType = None, **kwargs) -> None:
     """
     Evalute pytorch model.
 
     :model (base.ModelType): Trained model to be trained.
-    :iterator (base.DataType): Batched dataset to predict on.
-    :loss_func (base.Callable): Loss function.
-    :m (object): Initialized m object.
+    :batchers (base.DataType): Batched dataset to predict on.
+    :loss_f (base.Callable): Loss function.
+    :metrics (object): Initialized metrics object.
     :gpu (bool): True if running on a GPU else false.
     :mtl (int, default = None): Task ID for MTL problem. Only unset if MTL model is in use.
     :store (bool, default = True): Store the prediction if true.
-    :test (base.DataType, default = None): Data object to test on.
+    :test (base.DataType, default = None): Data object to data on.
     :returns: None.
     """
     with torch.no_grad():
@@ -36,7 +35,7 @@ def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: 
         preds, labels = [], []
         loss = 0
 
-        with tqdm(iterator, desc = "Evaluating model", leave = False) as loop:
+        with tqdm(batchers, desc = "Evaluating model", leave = False) as loop:
             for X, y in loop:
                 if gpu:
                     X = X.cuda()
@@ -48,48 +47,48 @@ def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: 
                 else:
                     predicted = predict_torch_model(model, X)
 
-                loss += loss_func(predicted, y).data.item()
+                loss += loss_f(predicted, y).data.item()
                 preds.extend(torch.argmax(predicted, dim = 1).tolist())
                 labels.extend(y.tolist())
 
             if store:
-                for doc, pred in zip(test, predicted):
+                for doc, pred in zip(test, preds):
                     setattr(doc, 'pred', pred)
 
-            m.compute(labels, preds)
-            m.loss = loss / len(labels)
+            metrics.compute(labels, preds)
+            metrics.loss = loss / len(labels)
 
 
-def predict_sklearn_model(model: base.ModelType, iterator: base.DataType, metrics: metrics.Metrics = None,
+def predict_sklearn_model(model: base.ModelType, batchers: base.DataType, metrics: metrics.Metrics = None,
                           labels: base.DataType = None) -> base.Tuple[base.DataType, metrics.Metrics]:
     """
     Predict using trained Scikit-learn model.
 
     :model (base.ModelType): Trained model to be trained.
-    :iterator (base.DataType): Dataset to predict on.
+    :batchers (base.DataType): Dataset to predict on.
     :metrics (metrics.Metrics, default = None): Initialized Metrics object.
     :labels (base.DataType, default = None): For applying hte data
     :returns (Metrics.metrics): Metrics
     """
-    preds = model.predict(iterator)
+    preds = model.predict(batchers)
     if labels:
         metrics.compute(labels, preds)
     return preds, metrics
 
 
-def eval_sklearn_model(model: base.ModelType, iterator: base.DataType, metrics: metrics.Metrics, labels: base.DataType,
+def eval_sklearn_model(model: base.ModelType, batchers: base.DataType, metrics: metrics.Metrics, labels: base.DataType,
                        store: bool = True, evalset: base.DataType = None):
     """
     Evaluate Scikit-learn model.
 
     :model (base.ModelType): Trained model to be trained.
-    :iterator (base.DataType): Dataset to predict on.
+    :batchers (base.DataType): Dataset to predict on.
     :metrics (object): Initialized Metrics object.
     :evalset (base.DataType): Data object being predicted on.
     :store (bool, default = True): Store the prediction if true.
     :returns (metrics.Metrics): Return evaluation metrics.
     """
-    preds, metrics = predict_sklearn_model(model, iterator, metrics, labels)
+    preds, metrics = predict_sklearn_model(model, batchers, metrics, labels)
     if store:
         for doc, lab, pred in zip(evalset, labels, preds):
             setattr(doc, 'pred', pred)
