@@ -4,6 +4,7 @@ import json
 import torch
 import joblib
 from mlearn import base
+from mlearn.utils.pipeline import _get_datestr
 from mlearn.data.dataset import GeneralDataset
 
 
@@ -52,71 +53,68 @@ def read_json(fh: str, enc, doc_key: str, label_key: str, **kwargs) -> base.Tupl
     return tuple(out_vals)
 
 
-def write_predictions(data: base.DataType, dataset: GeneralDataset, train_field: str, label_field: str,
-                      model_info: list, data_name: str, main_name: str, pred_fn: base.Callable,
+def write_predictions(writer: base.Callable, model: base.ModelType, model_hdr: list, data_name: str, main_name: str,
+                      hyper_info: str, data: base.DataType, dataset: GeneralDataset, train_field: str, label_field: str,
                       **kwargs) -> None:
     """
     Write documents and their predictions along with info about model making the prediction.
 
-    :data: The dataset objects that were predicted on.
-    :train_field (str): Attribute that is predicted on.
-    :label_field (str): Attribute in data that contains the label.
-    :model_info (list): Model information
+    :writer (base.Callable): Opened result-file.
+    :model (base.ModelType): The model used for inference.
+    :model_hdr (list): List of parameters in output file.
     :data_name (str): Dataset evaluated on.
     :main_name (str): Dataset trained on.
-    :pred_fn (base.Callable): Opened resultfile.
+    :hyper_info (list): List of hyper paraemeters.
+    :data (base.DataType): The data that were predicted on.
+    :dataset (GeneralDataset): The dataset object.
+    :train_field (str): Attribute that is predicted on.
+    :label_field (str): Attribute in data that contains the label.
     """
+    base = [_get_datestr(), main_name, data_name]
+    info = [model.info.get(field, '-') for field in model_hdr] + hyper_info
+
     for doc in data:
-        try:
-            out = [" ".join(getattr(doc, train_field)).replace('\n', ' ').replace('\r', ' '),
-                   dataset.label_ix_lookup(getattr(doc, label_field)), dataset.label_ix_lookup(doc.pred),
-                   data_name, main_name] + model_info
-            pred_fn.writerow(out)
-        except Exception:
-            __import__('pdb').set_trace()
+        parsed = " ".join(getattr(doc, train_field)).replace('\n', ' ').replace('\r', ' ')
+        label = dataset.label_ix_lookup(getattr(doc, label_field))
+        pred = dataset.label_ix_lookup(doc.pred)
 
-    pred_fn.writerow(len(out) * ['---'])
+        pred_info = [doc.original, parsed, label, pred]
+
+        out = base + pred_info + info
+        writer.writerow(out)
 
 
-def write_results(writer: base.Callable, train_scores: dict, train_loss: list, dev_scores: dict, dev_loss: list,
-                  epochs: int, model_info: list, metrics: list, exp_len: int, data_name: str, main_name: str,
-                  **kwargs) -> None:
+def write_results(writer: base.Callable, model: base.ModelType, model_hdr: list, data_name: str, main_name: str,
+                  hyper_info: list, metric_hdr: list, metrics: object, dev_metrics: object = None, **kwargs
+                  ) -> None:
     """
     Write results to file.
 
     :writer (base.Callable): Path to file.
-    :train_scores (dict): Train scores.
-    :train_loss (list): Train losses.
-    :dev_scores (dict): Dev scores.
-    :dev_loss (list): Dev losses.
-    :epochs (int): Epochs.
-    :model_info (list): Model info.
-    :metrics (list): Model info.
-    :exp_len (int): Expected length of each line.
+    :model (base.ModelType): The model to be written for.
+    :model_hdr (list): Model parameters in the order they appear in the file.
     :data_name (str): Name of the dataset that's being run on.
     :main_name (str): Name of the dataset the model is trained/being trained on.
+    :hyper_info (list): List of hyper-parameters.
+    :metric_hdr (list): Metrics in the order they appear in the output file.
+    :metrics (dict): Train scores.
+    :dev_metrics (dict): dev_metrics scores.
     """
-    if isinstance(train_loss, float):
-        train_loss = [train_loss]
+    base = [_get_datestr(), main_name, data_name] + hyper_info
 
-    iterations = epochs if epochs == len(train_loss) else len(train_loss)
-    for i in range(iterations):
-        try:
-            out = [data_name, main_name] + [i] + model_info  # Base info
-            out += [train_scores[m][i] for m in metrics.list()] + [train_loss[i]]  # Train info
+    info = [model.info.get(field, '-') for field in model_hdr]
 
-            if dev_scores:
-                out += [dev_scores[m][i] for m in metrics.list()] + [dev_loss[i]]  # Dev info
+    for i in range(len(metrics.scores['loss'])):
+        results = [metrics.scores.get(score, (i + 1) * ['-'])[i] for score in metrics.scores]
 
-        except IndexError:
-            __import__('pdb').set_trace()
+        for score in metric_hdr:
+            results.append(metrics.scores.get(score, (i + 1) * ['-'])[i])
 
-        row_len = len(out)
-        if row_len < exp_len:
-            out += [''] * (row_len - exp_len)
-        elif row_len > exp_len:
-            __import__('pdb').set_trace()
+        if dev_metrics:
+            dev_metrics_results = [dev_metrics.scores.get(score, (i + 1) * ['-'])[i] for score in metric_hdr]
+            results.extend(dev_metrics_results)
 
+        out = base + info + results
         writer.writerow(out)
 
 

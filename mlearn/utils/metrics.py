@@ -92,6 +92,15 @@ class Metrics:
         """
         self.scores['loss'].append(value)
 
+    def get_last(self, key: str) -> float:
+        """
+        Get last value for given key.
+
+        :key (str): Metric to get last value of.
+        :returns (float): Return last computed value for the key.
+        """
+        return self.scores[key][-1]
+
     def display(self) -> base.Dict[str, float]:
         """
         Get display metric dict.
@@ -109,6 +118,10 @@ class Metrics:
         difference = cur_score - prev_score
         return {self.display_metric: np.mean(self.scores[self.display_metric]), 'diff': difference}
 
+    def last_display(self) -> float:
+        """Get last display score."""
+        return self.scores[self.display_metric][-1]
+
     def early_stopping(self) -> float:
         """Provide early stopping metrics."""
         return self.scores[self.early_stop][-1]
@@ -116,6 +129,10 @@ class Metrics:
     def list(self) -> base.List:
         """Return a list of all metrics."""
         return list(self.metrics.keys())
+
+    def __len__(self) -> int:
+        """Compute the number of entries input into each list."""
+        return len(self.scores[self.display_metric])
 
     def __getitem__(self, metric: str) -> list:
         """

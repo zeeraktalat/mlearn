@@ -13,7 +13,10 @@ class Preprocessors(object):
         self.liwc_dict = None
         self.slurs = None
         self.slur_window = None
-        self.liwc_path = liwc_dir + 'liwc-2015.csv'
+        if liwc_dir is None:
+            self.liwc_path = None
+        else:
+            self.liwc_path = liwc_dir + 'liwc-2015.csv'
 
     def word_length(self, doc: base.DocType) -> base.List[int]:
         """

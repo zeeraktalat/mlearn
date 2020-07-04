@@ -12,85 +12,83 @@ def predict_torch_model(model: base.ModelType, X, **kwargs) -> list:
     :X (base.DataType): Batch to predict on.
     :returns (list): Predictions.
     """
-    return torch.argmax(model(X, **kwargs).cpu(), dim = 1).tolist()
+    return model(X, **kwargs).cpu()
 
 
-def eval_torch_model(model: base.ModelType, iterator: base.DataType, loss_func: base.Callable,
-                     metrics: object, gpu: bool, mtl: bool = False, task_id: int = None,
-                     store: bool = True, test_obj: base.DataType = None, **kwargs):
+def eval_torch_model(model: base.ModelType, batchers: base.DataType, loss_f: base.Callable, metrics: metrics.Metrics,
+                     gpu: bool, mtl: int = None, store: bool = True, test: base.DataType = None, **kwargs) -> None:
     """
     Evalute pytorch model.
 
     :model (base.ModelType): Trained model to be trained.
-    :iterator (base.DataType): Batched dataset to predict on.
-    :loss_func (base.Callable): Loss function.
-    :metrics (object): Initialized Metrics object.
+    :batchers (base.DataType): Batched dataset to predict on.
+    :loss_f (base.Callable): Loss function.
+    :metrics (object): Initialized metrics object.
     :gpu (bool): True if running on a GPU else false.
-    :mtl (bool, default = False): Is it a Multi-task Learning problem?
-    :task_id (int, default = None): Task ID for MTL problem.
+    :mtl (int, default = None): Task ID for MTL problem. Only unset if MTL model is in use.
     :store (bool, default = True): Store the prediction if true.
-    :test_obj (base.DataType, default = None): Data object to test on.
-    :returns: TODO
+    :test (base.DataType, default = None): Data object to data on.
+    :returns: None.
     """
     with torch.no_grad():
         model.eval()
         preds, labels = [], []
-        loss = []
+        loss = 0
 
-        with tqdm(iterator, desc = "Evaluating model", leave = False) as loop:
-
+        with tqdm(batchers, desc = "Evaluating model", leave = False) as loop:
             for X, y in loop:
                 if gpu:
                     X = X.cuda()
 
-                if mtl and task_id is not None:
-                    predicted = predict_torch_model(model, X, task_id = task_id)
+                if mtl is not None:
+                    if not isinstance(mtl, int):
+                        raise AssertionError(f"AssertionError: MTL is not an INT. It has type: {type(mtl)}")
+                    predicted = predict_torch_model(model, X, task_id = mtl)
                 else:
                     predicted = predict_torch_model(model, X)
 
-                metrics.loss = loss_func(predicted, y).data.item()
-                preds.extend(predicted)
-                labels.extend(predicted)
+                loss += loss_f(predicted, y).data.item()
+                preds.extend(torch.argmax(predicted, dim = 1).tolist())
+                labels.extend(y.tolist())
 
             if store:
-                for doc, pred in zip(test_obj, predicted):
+                for doc, pred in zip(test, preds):
                     setattr(doc, 'pred', pred)
 
             metrics.compute(labels, preds)
+            metrics.loss = loss / len(labels)
 
-    return loss / len(labels), None, metrics.scores, None
 
-
-def predict_sklearn_model(model: base.ModelType, iterator: base.DataType, metrics: metrics.Metrics = None,
+def predict_sklearn_model(model: base.ModelType, batchers: base.DataType, metrics: metrics.Metrics = None,
                           labels: base.DataType = None) -> base.Tuple[base.DataType, metrics.Metrics]:
     """
     Predict using trained Scikit-learn model.
 
     :model (base.ModelType): Trained model to be trained.
-    :iterator (base.DataType): Dataset to predict on.
+    :batchers (base.DataType): Dataset to predict on.
     :metrics (metrics.Metrics, default = None): Initialized Metrics object.
     :labels (base.DataType, default = None): For applying hte data
     :returns (Metrics.metrics): Metrics
     """
-    preds = model.predict(iterator)
+    preds = model.predict(batchers)
     if labels:
         metrics.compute(labels, preds)
     return preds, metrics
 
 
-def eval_sklearn_model(model: base.ModelType, iterator: base.DataType, metrics: metrics.Metrics, labels: base.DataType,
+def eval_sklearn_model(model: base.ModelType, batchers: base.DataType, metrics: metrics.Metrics, labels: base.DataType,
                        store: bool = True, evalset: base.DataType = None):
     """
     Evaluate Scikit-learn model.
 
     :model (base.ModelType): Trained model to be trained.
-    :iterator (base.DataType): Dataset to predict on.
+    :batchers (base.DataType): Dataset to predict on.
     :metrics (object): Initialized Metrics object.
     :evalset (base.DataType): Data object being predicted on.
     :store (bool, default = True): Store the prediction if true.
     :returns (metrics.Metrics): Return evaluation metrics.
     """
-    preds, metrics = predict_sklearn_model(model, iterator, metrics, labels)
+    preds, metrics = predict_sklearn_model(model, batchers, metrics, labels)
     if store:
         for doc, lab, pred in zip(evalset, labels, preds):
             setattr(doc, 'pred', pred)
