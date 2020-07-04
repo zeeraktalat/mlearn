@@ -97,18 +97,22 @@ def write_results(writer: base.Callable, model: base.ModelType, model_hdr: list,
     :main_name (str): Name of the dataset the model is trained/being trained on.
     :hyper_info (list): List of hyper-parameters.
     :metric_hdr (list): Metrics in the order they appear in the output file.
-    :train_scores (dict): Train scores.
-    :dev (dict): Dev scores.
+    :metrics (dict): Train scores.
+    :dev_metrics (dict): dev_metrics scores.
     """
     base = [_get_datestr(), main_name, data_name] + hyper_info
+
     info = [model.info.get(field, '-') for field in model_hdr]
 
-    for i in range(len(train_scores)):
-        results = [train_scores.scores.get(score, (i + 1) * ['-'])[i] for score in metric_hdr]
+    for i in range(len(metrics.scores['loss'])):
+        results = [metrics.scores.get(score, (i + 1) * ['-'])[i] for score in metrics.scores]
 
-        if dev:
-            dev_results = [dev.scores.get(score, (i + 1) * ['-'])[i] for score in metric_hdr]
-            results.extend(dev_results)
+        for score in metric_hdr:
+            results.append(metrics.scores.get(score, (i + 1) * ['-'])[i])
+
+        if dev_metrics:
+            dev_metrics_results = [dev_metrics.scores.get(score, (i + 1) * ['-'])[i] for score in metric_hdr]
+            results.extend(dev_metrics_results)
 
         out = base + info + results
         writer.writerow(out)
