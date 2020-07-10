@@ -350,3 +350,38 @@ def vidgen(cleaners: base.Callable, data_path: str, length: int = None, preproce
     args['fields'] = [ignore, text] + 16 * [ignore] + [label, ignore]
 
     return _loader(args, **kwargs)
+
+
+def semeval_sentiment(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
+                      transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs
+                      ) -> GeneralDataset:
+    """
+    Load Semeval (TODO Add year) sentiment analysis dataset.
+
+    :cleaners (base.Callable): Initialized cleaner.
+    :data_path (str): Path to data directory.
+    :length (int), default = None): Maximum length of sequence.
+    :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
+    :transformer (base.Callable, default = None): Additional document processing, if required.
+    :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :returns: Loaded datasets.
+    """
+    args = {'data_dir': data_path,
+            'ftype': 'tsv',
+            'fields': None,
+            'train': 'semeval_sentiment_train.tsv', 'dev': None, 'test': None,
+            'sep': '\t',
+            'tokenizer': cleaners.tokenize,
+            'preprocessor': preprocessor,
+            'transformations': transformer,
+            'length': length,
+            'label_preprocessor': label_processor,
+            'name': 'Semeval (2016)'}
+
+    text = base.Field('text', train = True, label = False, cname = 'text', ix = 2)
+    label = base.Field('label', label = True, cname = 'label', ix = 1)
+    ignore = base.Field('ignore', ignore = True)
+
+    args['fields'] = [ignore, label, text]
+
+    return _loader(args, **kwargs)

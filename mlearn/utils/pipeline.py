@@ -1,10 +1,14 @@
+from datetime import datetime
 from mlearn import base
 from functools import reduce
 from mlearn.data.dataset import GeneralDataset
 from mlearn.data.batching import Batch, BatchExtractor
+from sklearn.feature_extraction import DictVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
 
-def process_and_batch(dataset: GeneralDataset, data: base.DataType, batch_size: int, onehot: bool = True):
+def process_and_batch(dataset: GeneralDataset, data: base.DataType, batch_size: int, onehot: bool = True,
+                      shuffle: bool = False, **kwargs):
     """
     Process a dataset and data.
 
@@ -20,6 +24,10 @@ def process_and_batch(dataset: GeneralDataset, data: base.DataType, batch_size: 
     batch = Batch(batch_size, data)
     batch.create_batches()
     batches = BatchExtractor('label', batch, dataset, onehot)
+
+    if shuffle:
+        batches.shuffle()
+
     return batches
 
 
@@ -33,3 +41,33 @@ def get_deep_dict_value(source: dict, keys: str, default = None):
     """
     value = reduce(lambda d, key: d.get(key, default) if isinstance(d, dict) else default, keys.split("|"), source)
     return value
+
+  
+def select_vectorizer(vectorizer: str) -> base.VectType:
+    """
+    Identify vectorizer used and return it to be used.
+
+    :param vectorizer: Vectorizer to be used.
+    :return v: Vectorizer function.
+    """
+    if not any(vec in vectorizer for vec in ['dict', 'count', 'tfidf']):
+        print("You need to select from the options: dict, count, tfidf. Defaulting to Dict.")
+        return DictVectorizer
+
+    vect = vectorizer.lower()
+    if 'dict' in vect:
+        v = DictVectorizer()
+        setattr(v, 'name', 'DictVectorizer')
+    elif 'tfidf' in vect:
+        v = TfidfVectorizer()
+        setattr(v, 'name', 'TFIDF-Vectorizer')
+    elif 'count' in vect:
+        v = CountVectorizer()
+        setattr(v, 'name', 'CountVectorizer')
+    setattr(v, 'fitted', False)
+
+    return v
+
+
+def _get_datestr():
+    return datetime.now().strftime('%Y%m%d%H%M%S')

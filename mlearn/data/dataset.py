@@ -100,12 +100,15 @@ class GeneralDataset(IterableDataset):
         for line in tqdm(self.reader(fp), desc = f'Loading {self.name} ({dataset})',
                          disable = os.environ.get('TQDM_DISABLE', False)):
 
-            data_line, datapoint = {}, base.Datapoint()  # TODO Look at moving all of this to the datapoint class.
+            data_line, datapoint = {}, base.Datapoint()  # TODO Look at moving all load processing into datapoint class.
 
             for field in self.train_fields:
                 idx = field.index if self.ftype in ['CSV', 'TSV'] else field.cname
                 data_line[field.name] = self.process_doc(line[idx].rstrip())
                 data_line['original'] = line[idx].rstrip()
+
+                if data_line[field.name] is None:
+                    __import__('pdb').set_trace()
 
             for field in self.label_fields:
                 idx = field.index if self.ftype in ['CSV', 'TSV'] else field.cname
@@ -114,18 +117,16 @@ class GeneralDataset(IterableDataset):
                 else:
                     data_line[field.name] = line[idx].rstrip()
 
+                if data_line[field.name] is None:
+                    __import__('pdb').set_trace()
+
             for key, val in data_line.items():
                 setattr(datapoint, key, val)
             data.append(datapoint)
         fp.close()
 
-        if self.length is None:
-            # Get the max length
-            lens = []
-            for doc in data:
-                for f in self.train_fields:
-                    lens.append(len([tok for tok in getattr(doc, getattr(f, 'name'))]))
-            self.length = max(lens)
+        if self.length is None:  # Get the max length of the input
+            self.length = max([len(getattr(doc, getattr(f, 'name'))) for f in self.train_fields for doc in data])
 
         if dataset == 'train':
             self.data = data
@@ -363,7 +364,16 @@ class GeneralDataset(IterableDataset):
         :label (str): Label to process.
         :returns (int): Return index value of label.
         """
-        return self.ltoi[label]
+        try:
+            label = self.ltoi[label]
+        except KeyError:
+            if isinstance(label, int):
+                print(f"Exception occurred: Labels have already been processed. Dataset name: {self.name}")
+            else:
+                print(f"Exception occurred reading data: Dataset name: {self.name}")
+                __import__('pdb').set_trace()
+            pass
+        return label
 
     def label_ix_lookup(self, label: int) -> str:
         """
@@ -393,10 +403,6 @@ class GeneralDataset(IterableDataset):
                 else:
                     label = label[0]
             setattr(doc, 'label', label)
-            # if len(label) > 1:
-            #     setattr(doc, 'label', label)
-            # elif isinstance(label, list):
-            #     setattr(doc, 'label', label[0])
 
     def _process_label(self, label: base.List[str], processor: base.Callable = None) -> int:
         """
@@ -461,6 +467,24 @@ class GeneralDataset(IterableDataset):
         delta = length - len(text)
         padded = text[:delta] if delta < 0 else text + ['<pad>'] * delta
         return padded
+
+    def vectorize(self, data: base.DataType, vectorizer: base.VectType) -> base.VectType:
+        """
+        Fit a vectorizer or vectorize documents.
+
+        :data (base.DataType): Dataset to vectorize.
+        :vect (base.VectType): Vectorizer to use.
+        :returns vectorized (base.DataType): Return vectorized dataset.
+        """
+        data = [getattr(doc, getattr(f, 'name')) for f in self.train_fields for doc in data]
+
+        if vectorizer.fitted:
+            vectorized = vectorizer.transform(data)
+        else:
+            vectorizer.fit(data)
+            vectorized = vectorizer.transform(data)
+            vectorizer.fitted = True
+        return vectorized
 
     def encode(self, data: base.DataType, onehot: bool = True) -> base.Iterator[base.DataType]:
         """

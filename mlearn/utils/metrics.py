@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_a
 class Metrics:
     """Metrics data object, to contain methods for computing, extracting, and evaluating different metrics."""
 
-    def __init__(self, metrics: base.List[str], display_metric: str, early_stop: str, avg: str = 'weighted'):
+    def __init__(self, metrics: base.List[str], display_metric: str, early_stop: str = None, avg: str = 'weighted'):
         """
         Intialize metrics computation class.
 
@@ -18,7 +18,7 @@ class Metrics:
         """
         self.scores, self.metrics = {}, OrderedDict()
         self.display_metric = display_metric
-        self.early_stop = early_stop
+        self.early_stop = early_stop if early_stop is not None else display_metric
         self.average = avg
 
         self.select_metrics(metrics)  # Initialize the metrics dict.
@@ -78,6 +78,12 @@ class Metrics:
                 scores[name] = float(metric(preds, labels, **kwargs))
         return scores
 
+    @property
+    def loss(self):
+        """Add or get mean loss."""
+        return np.mean(self.scores['loss'])
+
+    @loss.setter
     def loss(self, value: float) -> None:
         """
         Add latest loss value to scores.
@@ -85,6 +91,15 @@ class Metrics:
         :value (float): Loss value of latest run.
         """
         self.scores['loss'].append(value)
+
+    def get_last(self, key: str) -> float:
+        """
+        Get last value for given key.
+
+        :key (str): Metric to get last value of.
+        :returns (float): Return last computed value for the key.
+        """
+        return self.scores[key][-1]
 
     def display(self) -> base.Dict[str, float]:
         """
@@ -103,6 +118,10 @@ class Metrics:
         difference = cur_score - prev_score
         return {self.display_metric: np.mean(self.scores[self.display_metric]), 'diff': difference}
 
+    def last_display(self) -> float:
+        """Get last display score."""
+        return self.scores[self.display_metric][-1]
+
     def early_stopping(self) -> float:
         """Provide early stopping metrics."""
         return self.scores[self.early_stop][-1]
@@ -110,6 +129,10 @@ class Metrics:
     def list(self) -> base.List:
         """Return a list of all metrics."""
         return list(self.metrics.keys())
+
+    def __len__(self) -> int:
+        """Compute the number of entries input into each list."""
+        return len(self.scores[self.display_metric])
 
     def __getitem__(self, metric: str) -> list:
         """
