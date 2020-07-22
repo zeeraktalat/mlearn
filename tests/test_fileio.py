@@ -4,6 +4,7 @@ import unittest
 from mlearn.base import Field
 from mlearn.data import fileio as io
 from mlearn.utils.metrics import Metrics
+from mlearn.modeling.embedding import RNNClassifier
 from mlearn.data.dataset import GeneralDataset
 
 
@@ -52,39 +53,27 @@ class TestFileIO(unittest.TestCase):
             writer = csv.writer(inf, delimiter = '\t')
             train_scores = Metrics(['accuracy'], 'accuracy', 'accuracy')
             train_scores.scores = {'accuracy': [0.5]}
-            train_loss = 0.2
 
             dev_scores = Metrics(['accuracy'], 'accuracy', 'accuracy')
             dev_scores.scores = {'accuracy': [0.2]}
-            dev_loss = [0.2]
 
-            model_info = ['NotModel', 200, 300]
+            model = RNNClassifier(100, 50, 25, 2, 0.2)
+            model_hdr = ['Dropout', 'Model', 'Input dim', 'Embeding dim', 'Hidden dim', 'Output dim']
+            hyper_info = ['# Epochs', 'Learning rate', 'Batch size']
 
-            self.assertTrue(io.write_results(writer = writer, train_scores = train_scores, train_loss = train_loss,
-                                             dev_scores = dev_scores, dev_loss = dev_loss, epochs = 1,
-                                             model_info = model_info, metrics = train_scores, exp_len = 10,
-                                             data_name  = 'test', main_name = 'test222'),
+            self.assertTrue(io.write_results(writer = writer, model = model, model_hdr = model_hdr,
+                                             data_name = 'test', main_name = 'test222', hyper_info = hyper_info,
+                                             metric_hdr = train_scores.scores.keys(), metrics = train_scores,
+                                             dev_metrics = dev_scores),
                             msg = "Successful run of write_results failed.")
 
-            with self.assertRaises((IndexError, KeyError, AssertionError), msg = "Does not invoke Exceptions."):
-                # Index Error
-                io.write_results(writer = writer, train_scores = train_scores, train_loss = train_loss,
-                                 dev_scores = dev_scores, dev_loss = dev_loss, epochs = 20,
-                                 model_info = model_info, metrics = train_scores, exp_len = 10,
-                                 data_name  = 'test', main_name = 'test222')
-
-                # Assertion Error
-                io.write_results(writer = writer, train_scores = train_scores, train_loss = train_loss,
-                                 dev_scores = dev_scores, dev_loss = dev_loss, epochs = 20,
-                                 model_info = model_info, metrics = train_scores, exp_len = 7,
-                                 data_name  = 'test', main_name = 'test222')
-
+            with self.assertRaises(KeyError, msg = "Does not invoke Exceptions."):
                 # Key error
                 train_scores.scores = {'precision': 0.2}
-                io.write_results(writer = writer, train_scores = train_scores, train_loss = train_loss,
-                                 dev_scores = dev_scores, dev_loss = dev_loss, epochs = 1,
-                                 model_info = model_info, metrics = train_scores, exp_len = 10,
-                                 data_name  = 'test', main_name = 'test222')
+                io.write_results(writer = writer, model = model, model_hdr = model_hdr,
+                                 data_name = 'test', main_name = 'test222', hyper_info = hyper_info,
+                                 metric_hdr = train_scores.scores.keys(), metrics = train_scores,
+                                 dev_metrics = dev_scores),
 
     def test_write_predictions(self):
         """Test fileio.write_predictions()"""
@@ -104,19 +93,19 @@ class TestFileIO(unittest.TestCase):
 
         with open('test', 'w', encoding = 'utf-8') as inf:
             writer = csv.writer(inf, delimiter = '\t')
-            model_info = ['NotModel', 200, 300]
+            model = RNNClassifier(100, 50, 25, 2, 0.2)
+            model_hdr = ['Dropout', 'Model', 'Input dim', 'Embeding dim', 'Hidden dim', 'Output dim']
+            hyper_info = ['# Epochs', 'Learning rate', 'Batch size']
 
             with self.assertRaises((IndexError, KeyError), msg = "Exception not raised."):
-                io.write_predictions(data = dataset.data, dataset = dataset, train_field = 'text',
-                                     label_field = 'label', data_name = 'test1', main_name = 'test2', pred_fn = writer,
-                                     model_info = model_info)
+                io.write_predictions(writer, model, model_hdr, 'test1', 'test2', hyper_info,
+                                     dataset.data, dataset, 'text', 'label')
 
             dataset.build_token_vocab(dataset.data)
             dataset.build_label_vocab(dataset.data)
             for obj in dataset.data:
                 setattr(obj, 'label', dataset.label_name_lookup(obj.label))
 
-            self.assertTrue(io.write_predictions(data = dataset.data, dataset = dataset, model_info = model_info,
-                                                 train_field = 'text', label_field = 'label', data_name = 'test1',
-                                                 main_name = 'test2', pred_fn = writer),
+            self.assertTrue(io.write_predictions(writer, model, model_hdr, 'test1', 'test2', hyper_info,
+                                                 dataset.data, dataset, 'text', 'label'),
                             msg = "Writing of predictions file failed.")
