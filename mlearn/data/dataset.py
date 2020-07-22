@@ -8,7 +8,7 @@ from math import floor
 from mlearn import base
 from torch.nn.functional import one_hot
 from collections import Counter, defaultdict
-from torch.utils.data import Dataset as IterableDataset
+from torch.utils.data import IterableDataset
 
 
 class GeneralDataset(IterableDataset):
