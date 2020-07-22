@@ -42,7 +42,7 @@ def get_deep_dict_value(source: dict, keys: str, default = None):
     value = reduce(lambda d, key: d.get(key, default) if isinstance(d, dict) else default, keys.split("|"), source)
     return value
 
-  
+
 def select_vectorizer(vectorizer: str) -> base.VectType:
     """
     Identify vectorizer used and return it to be used.
