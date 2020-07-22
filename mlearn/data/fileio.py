@@ -89,7 +89,7 @@ def write_results(writer: base.Callable, model: base.ModelType, model_hdr: list,
 
     info = [model.info.get(field, '-') for field in model_hdr]
 
-    for i in range(len(metrics)):
+    for i in range(len(metrics['loss'])):
         results = [metrics.scores.get(score, (i + 1) * ['-'])[i] for score in metrics.scores]
 
         for score in metric_hdr:
