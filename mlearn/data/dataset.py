@@ -377,7 +377,7 @@ class GeneralDataset(IterableDataset):
 
     def label_ix_lookup(self, label: int) -> str:
         """
-        Look up label index from label.
+        Look up label from label index.
 
         :label (int): Label index to process.
         :returns (str): Return label.

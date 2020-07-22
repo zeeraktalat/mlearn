@@ -1,4 +1,4 @@
-{"text": "me gusta comer en la cafeteria","label": "spanish", "user": {"username": "zeerakw", "name": "zeerak", "location": {"city": "somewhere", "country": "some country"}}}
-{"text": "give it to me","label": "english", "user": {"username": "madeup", "name": "made", "location": {"city": "a galaxy", "country": "far far away"}}}
-{"text": "no creo que sea una buena idea","label": "spanish", "user": {"username": "upmade", "name": "up", "location": {"city": "a land", "country": "long lost"}}}
-{"text": "no it is not a good idea to get lost at sea","label": "english", "user": {"username": "notreal", "name": "unreal", "location": {"city": "between", "country": "rock and hard place"}}}
+{"text": "me gusta comer en la cafeteria","label": "spanish", "user": {"username": "zeerakw", "name": "zeerak", "location": {"city": "somewhere", "place": "some place"}}}
+{"text": "give it to me","label": "english", "user": {"username": "madeup", "name": "made", "location": {"city": "a galaxy", "place": "far far away"}}}
+{"text": "no creo que sea una buena idea","label": "spanish", "user": {"username": "upmade", "name": "up", "location": {"city": "a land", "place": "long lost"}}}
+{"text": "no it is not a good idea to get lost at sea","label": "english", "user": {"username": "notreal", "name": "unreal", "location": {"city": "between", "place": "rock and hard place"}}}

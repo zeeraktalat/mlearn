@@ -1,4 +1,3 @@
-import sys
 import ast
 import json
 import torch
@@ -6,56 +5,41 @@ import joblib
 from mlearn import base
 from mlearn.utils.pipeline import _get_datestr
 from mlearn.data.dataset import GeneralDataset
+from mlearn.utils.pipeline import get_deep_dict_value
 
 
-def read_json(fh: str, enc, doc_key: str, label_key: str, **kwargs) -> base.Tuple[str]:
+def read_json(fh: str, enc, doc_key: str, label_key: str, secondary_keys: dict = None, **kwargs) -> base.Tuple[str]:
     """
     Read JSON file containing entire document and label.
 
     To access keys in nested dictionaries, use the syntax <outer_key>.<inner_key>. Max depth 4.
 
-    :param fh: Filename
-    :param enc: Encoding of the file.
-    :param doc_key: Key to access document.
-    :param label_key: Key to access label.
-    :param kwargs: Other keys to access.
+    :fh: Filename
+    :enc: Encoding of the file.
+    :doc_key: Key to access document.
+    :label_key: Key to access label.
+    :secondary_keys (dict): Other keys to retrieve, including second level keys.
+    :kwargs: Other keys to access.
     :return (tuple): Document, label, and other indexed items.
     """
-    for line in open('../../data/' + fh, 'r', encoding = enc):
-        try:
-            dict_in = json.loads(line)
-        except Exception as e:
-            print("Error occurred: {0}".format(e))
-            dict_in = ast.literal_eval(line)
-        finally:
-            out_vals = []
-            out_vals.append(dict_in[doc_key])
-            out_vals.append(dict_in[label_key])
+    with open(fh, 'r', encoding = enc) as inf:
+        for line in inf:
+            try:
+                dict_in = json.loads(line)
+            except Exception as e:
+                print("Error occurred: {0}".format(e))
+                dict_in = ast.literal_eval(line)
+            out_dict = {doc_key: dict_in.get(doc_key), label_key: dict_in.get(label_key)}
 
-            if kwargs:  # Get all values in kwargs
-                for key, val in kwargs.items():
-                    keys = val.split('.')
-                    key_count = len(keys)
-
-                    try:
-                        if key_count == 1:
-                            out_vals.append(dict_in[val])
-                        elif key_count == 2:
-                            out_vals.append(dict_in[keys[0][keys[1]]])
-                        elif key_count == 3:
-                            out_vals.append(dict_in[keys[0]][keys[1]][keys[2]])
-                        elif key_count == 4:
-                            out_vals.append(dict_in[keys[0]][keys[1]][keys[2]][keys[3]])
-                    except IndexError as e:
-                        print("One of the keys does not exist.\nError {0}.\nkeys: {1}\nDoc: {2}".
-                              format(e, keys, dict_in), file = sys.stderr)
-
-    return tuple(out_vals)
+            if secondary_keys is not None:
+                for key, vals in secondary_keys.items():
+                    out_dict.update({key: get_deep_dict_value(dict_in, vals, None)})
+            yield out_dict
 
 
 def write_predictions(writer: base.Callable, model: base.ModelType, model_hdr: list, data_name: str, main_name: str,
-                      hyper_info: str, data: base.DataType, dataset: GeneralDataset, train_field: str, label_field: str,
-                      **kwargs) -> None:
+                      hyper_info: list, data: base.DataType, dataset: GeneralDataset, train_field: str,
+                      label_field: str, **kwargs) -> None:
     """
     Write documents and their predictions along with info about model making the prediction.
 
@@ -64,7 +48,7 @@ def write_predictions(writer: base.Callable, model: base.ModelType, model_hdr: l
     :model_hdr (list): List of parameters in output file.
     :data_name (str): Dataset evaluated on.
     :main_name (str): Dataset trained on.
-    :hyper_info (list): List of hyper paraemeters.
+    :hyper_info (list): List of hyper parameters.
     :data (base.DataType): The data that were predicted on.
     :dataset (GeneralDataset): The dataset object.
     :train_field (str): Attribute that is predicted on.
@@ -82,6 +66,7 @@ def write_predictions(writer: base.Callable, model: base.ModelType, model_hdr: l
 
         out = base + pred_info + info
         writer.writerow(out)
+    return True
 
 
 def write_results(writer: base.Callable, model: base.ModelType, model_hdr: list, data_name: str, main_name: str,
@@ -104,7 +89,7 @@ def write_results(writer: base.Callable, model: base.ModelType, model_hdr: list,
 
     info = [model.info.get(field, '-') for field in model_hdr]
 
-    for i in range(len(metrics.scores['loss'])):
+    for i in range(len(metrics)):
         results = [metrics.scores.get(score, (i + 1) * ['-'])[i] for score in metrics.scores]
 
         for score in metric_hdr:
@@ -116,6 +101,7 @@ def write_results(writer: base.Callable, model: base.ModelType, model_hdr: list,
 
         out = base + info + results
         writer.writerow(out)
+    return True
 
 
 def store_model(model: base.ModelType, base_path: str, library: str = None) -> None:
