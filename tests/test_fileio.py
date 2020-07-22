@@ -52,10 +52,10 @@ class TestFileIO(unittest.TestCase):
         with open('test', 'w', encoding = 'utf-8') as inf:
             writer = csv.writer(inf, delimiter = '\t')
             train_scores = Metrics(['accuracy'], 'accuracy', 'accuracy')
-            train_scores.scores = {'accuracy': [0.5]}
+            train_scores.scores = {'accuracy': [0.5], 'loss': [0.2]}
 
             dev_scores = Metrics(['accuracy'], 'accuracy', 'accuracy')
-            dev_scores.scores = {'accuracy': [0.2], }
+            dev_scores.scores = {'accuracy': [0.2], 'loss': [0.2]}
 
             model = RNNClassifier(100, 50, 25, 2, 0.2)
             model_hdr = ['Dropout', 'Model', 'Input dim', 'Embeding dim', 'Hidden dim', 'Output dim']

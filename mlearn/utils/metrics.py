@@ -132,7 +132,8 @@ class Metrics:
 
     def __len__(self) -> int:
         """Compute the number of entries input into each list."""
-        return len(self.scores[self.display_metric])
+        losses = len(self.scores['loss'])
+        return len(self.scores[self.display_metric]) if losses == 0 else losses
 
     def __getitem__(self, metric: str) -> list:
         """
