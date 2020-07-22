@@ -55,7 +55,7 @@ class TestFileIO(unittest.TestCase):
             train_scores.scores = {'accuracy': [0.5]}
 
             dev_scores = Metrics(['accuracy'], 'accuracy', 'accuracy')
-            dev_scores.scores = {'accuracy': [0.2]}
+            dev_scores.scores = {'accuracy': [0.2], }
 
             model = RNNClassifier(100, 50, 25, 2, 0.2)
             model_hdr = ['Dropout', 'Model', 'Input dim', 'Embeding dim', 'Hidden dim', 'Output dim']

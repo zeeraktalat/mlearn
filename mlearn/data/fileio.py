@@ -38,8 +38,8 @@ def read_json(fh: str, enc, doc_key: str, label_key: str, secondary_keys: dict =
 
 
 def write_predictions(writer: base.Callable, model: base.ModelType, model_hdr: list, data_name: str, main_name: str,
-                      hyper_info: str, data: base.DataType, dataset: GeneralDataset, train_field: str, label_field: str,
-                      **kwargs) -> None:
+                      hyper_info: list, data: base.DataType, dataset: GeneralDataset, train_field: str,
+                      label_field: str, **kwargs) -> None:
     """
     Write documents and their predictions along with info about model making the prediction.
 
@@ -48,7 +48,7 @@ def write_predictions(writer: base.Callable, model: base.ModelType, model_hdr: l
     :model_hdr (list): List of parameters in output file.
     :data_name (str): Dataset evaluated on.
     :main_name (str): Dataset trained on.
-    :hyper_info (list): List of hyper paraemeters.
+    :hyper_info (list): List of hyper parameters.
     :data (base.DataType): The data that were predicted on.
     :dataset (GeneralDataset): The dataset object.
     :train_field (str): Attribute that is predicted on.
@@ -89,7 +89,7 @@ def write_results(writer: base.Callable, model: base.ModelType, model_hdr: list,
 
     info = [model.info.get(field, '-') for field in model_hdr]
 
-    for i in range(len(metrics.scores['loss'])):
+    for i in range(len(metrics)):
         results = [metrics.scores.get(score, (i + 1) * ['-'])[i] for score in metrics.scores]
 
         for score in metric_hdr:
@@ -102,7 +102,6 @@ def write_results(writer: base.Callable, model: base.ModelType, model_hdr: list,
         out = base + info + results
         writer.writerow(out)
     return True
-
 
 
 def store_model(model: base.ModelType, base_path: str, library: str = None) -> None:
@@ -151,4 +150,3 @@ def load_features(base_path) -> dict:
     :base_path (str): Path to store the model in.
     """
     return joblib.load(f'{base_path}.fts')
-
