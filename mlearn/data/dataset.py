@@ -415,7 +415,12 @@ class GeneralDataset(IterableDataset):
         if not isinstance(label, list):
             label = [label]
         processor = processor if processor is not None else self.label_processor
-        return [processor(lab) for lab in label]
+        try:
+            return [processor(lab) for lab in label]
+        except KeyError as e:
+            if all(isinstance(lab, int) for lab in label):
+                pass  # All labels previously processed
+            raise KeyError(f"ERROR: Some string labels have not previously been seen: {label}\n{e}")
 
     def process_doc(self, doc: base.DocType) -> list:
         """
