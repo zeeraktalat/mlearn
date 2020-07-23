@@ -121,7 +121,7 @@ class CNNClassifier(nn.Module):
         super(CNNClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'cnn'
-        self.info = {'Model': self.name, 'Window Sizes': ", ".join([str(it) for it in window_sizes]),
+        self.info = {'Model': self.name, 'Window Sizes': " ".join([str(it) for it in window_sizes]),
                      '# Filters': num_filters, 'Input dim': input_dim, 'Hidden dim': hidden_dim,
                      'Output dim': output_dim, 'Activation Func': activation}
 

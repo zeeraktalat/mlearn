@@ -69,7 +69,7 @@ class MLPClassifier(nn.Module):
         self.batch_first = batch_first
         self.name = 'mlp'
         self.info = {'Model': self.name, 'Input dim': input_dim, 'Embedding dim': embedding_dim,
-                     'Hidden dim': hidden_dim, 'Output dim': output_dim, 'Activation Func': activation,
+                     'Hidden dim': hidden_dim, 'Output dim': output_dim, 'Activation': activation,
                      'Dropout': dropout}
 
         self.itoe = nn.Embedding(input_dim, embedding_dim)
@@ -120,8 +120,8 @@ class CNNClassifier(nn.Module):
         self.batch_first = batch_first
         self.name = 'cnn'
         self.info = {'Model': self.name, 'Input dim': input_dim, 'Embedding dim': embedding_dim,
-                     'Output dim': output_dim, 'Window Sizes': ", ".join(window_sizes), '# Filters': num_filters,
-                     'Activation Func': activation}
+                     'Output dim': output_dim, 'Window Sizes': " ".join(window_sizes), '# Filters': num_filters,
+                     'Activation': activation}
 
         self.itoh = nn.Embedding(input_dim, embedding_dim)  # Works
         self.conv = nn.ModuleList([nn.Conv2d(1, num_filters, (w, embedding_dim)) for w in window_sizes])

@@ -100,8 +100,8 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                                  dev_loss = f"{dev_metrics.get_last('loss'):.4f}",
                                  **metrics.display(),
                                  dev_score = f"{dev_metrics.last_display()}")
-            except Exception as e:
-                print(f"Caught exception but continuing: {e}")
+            except Exception:
+                # Dev is not set.
                 loop.set_postfix(epoch_loss = f"{metrics.get_last('loss'):.4f}", **metrics.display())
             finally:
                 loop.refresh()
