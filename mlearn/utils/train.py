@@ -107,27 +107,26 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                 loop.refresh()
 
 
-def run_singletask_model(library: str, train: bool, writer: base.Callable, model_info: list, head_len: int, **kwargs):
+def run_singletask_model(train: bool, writer: base.Callable, pred_writer: base.Callable = None,
+                         library: str = 'pytorch', **kwargs) -> None:
     """
     Train or evaluate model.
 
-    :library (str): Library of the model.
     :train (bool): Whether it's a train or test run.
     :writer (csv.writer): File to output model performance to.
-    :model_info (list): Information about the model to be added to each line of the output.
-    :head_len (int): The length of the header.
+    :pred_writer (base.Callable): File to output the model predictions to.
+    :library (str): Library of the model.
     """
     if train:
         func = train_singletask_model if library == 'pytorch' else select_sklearn_training_regiment
     else:
         func = eval_torch_model if library == 'pytorch' else eval_sklearn_model
 
-    train_loss, dev_loss, train_scores, dev_scores = func(**kwargs)
-    write_results(writer, train_scores, train_loss, dev_scores, dev_loss, model_info = model_info, exp_len = head_len,
-                  **kwargs)
+    func(**kwargs)
+    write_results(writer, **kwargs)
 
     if not train:
-        write_predictions(kwargs['test_obj'], model_info = model_info, **kwargs)
+        write_predictions(pred_writer, **kwargs)
 
 
 def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.DataType, opt: base.Callable,
