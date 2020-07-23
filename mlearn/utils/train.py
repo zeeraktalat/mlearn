@@ -52,7 +52,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: b
         metrics.loss = epoch_loss / len(labels)
 
 
-def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, iterator: base.DataType,
+def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, batchers: base.DataType,
                            loss: base.Callable, optimizer: base.Callable, metrics: Metrics, dev: base.DataType = None,
                            dev_metrics: Metrics = None, clip: float = None, early_stopping: int = None,
                            low: bool = False, shuffle: bool = True, gpu: bool = True, **kwargs
@@ -63,7 +63,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
     :model (base.ModelType): Untrained model to be trained.
     :save_path (str): Path to save models to.
     :epochs (int): The number of epochs to run.
-    :iterator (base.DataType): Batched training set.
+    :batchers (base.DataType): Batched training set.
     :loss (base.Callable): Loss function to use.
     :optimizer (bas.Callable): Optimizer function.
     :metrics (object): Initialized Metrics object.
@@ -85,9 +85,9 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, i
             optimizer.zero_grad()  # Zero out gradients
 
             if shuffle:
-                iterator.shuffle()
+                batchers.shuffle()
 
-            _singletask_epoch(model, optimizer, loss, iterator, clip, gpu)
+            _singletask_epoch(model, optimizer, loss, batchers, clip, gpu)
 
             try:
                 eval_torch_model(model, dev, loss, dev_metrics, gpu, store = False, **kwargs)
