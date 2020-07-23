@@ -15,14 +15,14 @@ def predict_torch_model(model: base.ModelType, X, **kwargs) -> list:
     return model(X, **kwargs).cpu()
 
 
-def eval_torch_model(model: base.ModelType, batchers: base.DataType, loss_f: base.Callable, metrics: metrics.Metrics,
+def eval_torch_model(model: base.ModelType, batchers: base.DataType, loss: base.Callable, metrics: metrics.Metrics,
                      gpu: bool, mtl: int = None, store: bool = True, test: base.DataType = None, **kwargs) -> None:
     """
     Evalute pytorch model.
 
     :model (base.ModelType): Trained model to be trained.
     :batchers (base.DataType): Batched dataset to predict on.
-    :loss_f (base.Callable): Loss function.
+    :loss (base.Callable): Loss function.
     :metrics (object): Initialized metrics object.
     :gpu (bool): True if running on a GPU else false.
     :mtl (int, default = None): Task ID for MTL problem. Only unset if MTL model is in use.
@@ -33,7 +33,7 @@ def eval_torch_model(model: base.ModelType, batchers: base.DataType, loss_f: bas
     with torch.no_grad():
         model.eval()
         preds, labels = [], []
-        loss = 0
+        lc = 0
 
         with tqdm(batchers, desc = "Evaluating model", leave = False) as loop:
             for X, y in loop:
@@ -47,7 +47,7 @@ def eval_torch_model(model: base.ModelType, batchers: base.DataType, loss_f: bas
                 else:
                     predicted = predict_torch_model(model, X)
 
-                loss += loss_f(predicted, y).data.item()
+                lc += loss(predicted, y).data.item()
                 preds.extend(torch.argmax(predicted, dim = 1).tolist())
                 labels.extend(y.tolist())
 
@@ -56,7 +56,7 @@ def eval_torch_model(model: base.ModelType, batchers: base.DataType, loss_f: bas
                     setattr(doc, 'pred', pred)
 
             metrics.compute(labels, preds)
-            metrics.loss = loss / len(labels)
+            metrics.loss = lc / len(labels)
 
 
 def predict_sklearn_model(model: base.ModelType, batchers: base.DataType, metrics: metrics.Metrics = None,

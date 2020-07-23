@@ -21,9 +21,15 @@ class LSTMClassifier(nn.Module):
         """
         super(LSTMClassifier, self).__init__()
         self.batch_first = batch_first
-        self.name = 'lstm'
-        self.info = {'Input dim': input_dim, 'Embedding dim': embedding_dim, 'Hidden dim': hidden_dim,
-                     'Output dim': output_dim, '# layers': no_layers, 'Dropout': dropout, 'Model': self.name}
+        self.name = 'onehot lstm'
+        self.info = {'Input dim': input_dim,
+                     'Embedding dim': embedding_dim,
+                     'Hidden dim': hidden_dim,
+                     'Output dim': output_dim,
+                     '# Layers': no_layers,
+                     'Dropout': dropout,
+                     'Model': self.name
+                     }
 
         self.itoh = nn.Linear(input_dim, embedding_dim)
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, no_layers, batch_first = batch_first)
@@ -69,9 +75,14 @@ class MLPClassifier(nn.Module):
         """
         super(MLPClassifier, self).__init__()
         self.batch_first = batch_first
-        self.name = 'mlp'
-        self.info = {'Model': self.name, 'Input dim': input_dim, 'Hidden dim': hidden_dim, 'Output dim': output_dim,
-                     'Activation Func': activation, 'Dropout': dropout}
+        self.name = 'onehot mlp'
+        self.info = {'Model': self.name,
+                     'Input dim': input_dim,
+                     'Hidden dim': hidden_dim,
+                     'Output dim': output_dim,
+                     'Activation': activation,
+                     'Dropout': dropout
+                     }
 
         self.itoh = nn.Linear(input_dim, hidden_dim)
         self.htoh = nn.Linear(hidden_dim, hidden_dim)
@@ -120,10 +131,15 @@ class CNNClassifier(nn.Module):
         """
         super(CNNClassifier, self).__init__()
         self.batch_first = batch_first
-        self.name = 'cnn'
-        self.info = {'Model': self.name, 'Window Sizes': " ".join([str(it) for it in window_sizes]),
-                     '# Filters': num_filters, 'Input dim': input_dim, 'Hidden dim': hidden_dim,
-                     'Output dim': output_dim, 'Activation Func': activation}
+        self.name = 'onehot cnn'
+        self.info = {'Model': self.name,
+                     'Window Sizes': " ".join([str(it) for it in window_sizes]),
+                     '# Filters': num_filters,
+                     'Input dim': input_dim,
+                     'Hidden dim': hidden_dim,
+                     'Output dim': output_dim,
+                     'Activation': activation
+                     }
 
         self.itoh = nn.Linear(input_dim, hidden_dim)  # Works
         self.conv = nn.ModuleList([nn.Conv2d(1, num_filters, (w, hidden_dim)) for w in window_sizes])
@@ -168,9 +184,13 @@ class RNNClassifier(nn.Module):
         """
         super(RNNClassifier, self).__init__()
         self.batch_first = batch_first
-        self.name = 'rnn'
-        self.info = {'Model': self.name, 'Input dim': input_dim, 'Hidden dim': hidden_dim,
-                     'Output dim': output_dim, 'Dropout': dropout}
+        self.name = 'onehot rnn'
+        self.info = {'Model': self.name,
+                     'Input dim': input_dim,
+                     'Hidden dim': hidden_dim,
+                     'Output dim': output_dim,
+                     'Dropout': dropout
+                     }
 
         # Initialise the hidden dim
         self.hidden_dim = hidden_dim
