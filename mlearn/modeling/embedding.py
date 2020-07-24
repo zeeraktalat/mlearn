@@ -72,7 +72,7 @@ class MLPClassifier(nn.Module):
         """
         super(MLPClassifier, self).__init__()
         self.batch_first = batch_first
-        self.name = 'emb mlp'
+        self.name = 'emb_mlp'
         self.info = {'Model': self.name,
                      'Input dim': input_dim,
                      'Hidden dim': hidden_dim,
@@ -128,7 +128,7 @@ class CNNClassifier(nn.Module):
         """
         super(CNNClassifier, self).__init__()
         self.batch_first = batch_first
-        self.name = 'emb cnn'
+        self.name = 'emb_cnn'
         self.info = {'Model': self.name,
                      'Window Sizes': " ".join([str(it) for it in window_sizes]),
                      '# Filters': num_filters,
@@ -181,7 +181,7 @@ class RNNClassifier(nn.Module):
         """
         super(RNNClassifier, self).__init__()
         self.batch_first = batch_first
-        self.name = 'emb rnn'
+        self.name = 'emb_rnn'
         self.info = {'Model': self.name,
                      'Input dim': input_dim,
                      'Embedding dim': embedding_dim,
