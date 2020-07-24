@@ -48,7 +48,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: b
             epoch_loss += lo
 
             loop.set_postfix(batch_loss = f"{lo / len(y) :.4f}")
-        metrics.compute()
+        metrics.compute(labels, predictions)
         metrics.loss = epoch_loss / len(labels)
 
 
@@ -76,7 +76,6 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
     :gpu (bool, default = True): Run on GPU
     """
     with trange(epochs, desc = "Training epochs", leave = False) as loop:
-
         if early_stopping is not None:
             early_stopping = EarlyStopping(save_path, model, early_stopping, low_is_good = low)
 
