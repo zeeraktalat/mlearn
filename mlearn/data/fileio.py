@@ -50,7 +50,7 @@ def write_predictions(writer: base.Callable, model: base.ModelType, model_hdr: l
     :main_name (str): Dataset trained on.
     :hyper_info (list): List of hyper parameters.
     :data (base.DataType): The data that were predicted on.
-    :dataset (GeneralDataset): The dataset object.
+    :dataset (GeneralDataset): The dataset object to transform integer labels into strings.
     :train_field (str): Attribute that is predicted on.
     :label_field (str): Attribute in data that contains the label.
     """
