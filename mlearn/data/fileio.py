@@ -62,7 +62,7 @@ def write_predictions(writer: base.Callable, model: base.ModelType, model_hdr: l
         label = dataset.label_ix_lookup(getattr(doc, label_field))
         pred = dataset.label_ix_lookup(doc.pred)
 
-        pred_info = [doc.original, parsed, label, pred]
+        pred_info = [label, pred, doc.original, parsed]
 
         out = base + info + pred_info
         writer.writerow(out)
