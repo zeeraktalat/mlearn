@@ -99,7 +99,7 @@ class GeneralDataset(IterableDataset):
         data = []
         for i, line in enumerate(tqdm(self.reader(fp), desc = f'Loading {self.name} ({dataset})',
                                       disable = os.environ.get('TQDM_DISABLE', False))):
-            if i == 1000:
+            if i == 500:
                 break
 
             data_line, datapoint = {}, base.Datapoint()  # TODO Look at moving all load processing into datapoint class.

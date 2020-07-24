@@ -76,6 +76,9 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
     :gpu (bool, default = True): Run on GPU
     """
     with trange(epochs, desc = "Training epochs", leave = False) as loop:
+        if gpu:
+            model = model.cuda()
+
         if early_stopping is not None:
             early_stopping = EarlyStopping(save_path, model, early_stopping, low_is_good = low)
 
