@@ -100,7 +100,6 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                                  dev_score = f"{dev_metrics.last_display()}")
 
                 if early_stopping is not None and early_stopping(model, dev_metrics.early_stopping()):
-                    breakpoint()
                     model = early_stopping.best_state
                     return
             except Exception:
