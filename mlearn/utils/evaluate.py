@@ -16,7 +16,7 @@ def predict_torch_model(model: base.ModelType, X, **kwargs) -> list:
 
 
 def eval_torch_model(model: base.ModelType, batchers: base.DataType, loss: base.Callable, metrics: metrics.Metrics,
-                     gpu: bool, mtl: int = None, store: bool = True, test: base.DataType = None, **kwargs) -> None:
+                     gpu: bool, mtl: int = None, store: bool = True, data: base.DataType = None, **kwargs) -> None:
     """
     Evalute pytorch model.
 
@@ -27,7 +27,7 @@ def eval_torch_model(model: base.ModelType, batchers: base.DataType, loss: base.
     :gpu (bool): True if running on a GPU else false.
     :mtl (int, default = None): Task ID for MTL problem. Only unset if MTL model is in use.
     :store (bool, default = True): Store the prediction if true.
-    :test (base.DataType, default = None): Data object to data on.
+    :data (base.DataType, default = None): Data object to data on.
     :returns: None.
     """
     with torch.no_grad():
@@ -52,7 +52,7 @@ def eval_torch_model(model: base.ModelType, batchers: base.DataType, loss: base.
                 labels.extend(y.tolist())
 
             if store:
-                for doc, pred in zip(test, preds):
+                for doc, pred in zip(data, preds):
                     setattr(doc, 'pred', pred)
 
             metrics.compute(labels, preds)
