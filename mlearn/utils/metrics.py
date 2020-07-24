@@ -44,6 +44,7 @@ class Metrics:
                 self.metrics['confusion'] = confusion_matrix
             elif 'f1' in m:
                 self.metrics['f1-score'] = f1_score
+                m = 'f1-score'
 
             self.scores[m] = []
         self.scores['loss'] = []
