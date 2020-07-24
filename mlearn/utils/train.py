@@ -87,7 +87,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
             if shuffle:
                 batchers.shuffle()
 
-            _singletask_epoch(model, optimizer, loss, batchers, clip, gpu)
+            _singletask_epoch(model, optimizer, loss, metrics, batchers, clip, gpu)
 
             try:
                 eval_torch_model(model, dev, loss, dev_metrics, gpu, store = False, **kwargs)
