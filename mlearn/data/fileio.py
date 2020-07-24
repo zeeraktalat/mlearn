@@ -54,8 +54,8 @@ def write_predictions(writer: base.Callable, model: base.ModelType, model_hdr: l
     :train_field (str): Attribute that is predicted on.
     :label_field (str): Attribute in data that contains the label.
     """
-    base = [_get_datestr(), main_name, data_name]
-    info = [model.info.get(field, '-') for field in model_hdr] + hyper_info
+    base = [_get_datestr(), main_name, data_name] + hyper_info
+    info = [model.info.get(field, '-') for field in model_hdr]
 
     for doc in data:
         parsed = " ".join(getattr(doc, train_field)).replace('\n', ' ').replace('\r', ' ')
@@ -86,14 +86,10 @@ def write_results(writer: base.Callable, model: base.ModelType, model_hdr: list,
     :dev_metrics (dict): dev_metrics scores.
     """
     base = [_get_datestr(), main_name, data_name] + hyper_info
-
     info = [model.info.get(field, '-') for field in model_hdr]
 
     for i in range(len(metrics['loss'])):
-        results = [metrics.scores.get(score, (i + 1) * ['-'])[i] for score in metrics.scores]
-
-        for score in metric_hdr:
-            results.append(metrics.scores.get(score, (i + 1) * ['-'])[i])
+        results = [metrics.scores.get(score, (i + 1) * ['-'])[i] for score in metric_hdr]
 
         if dev_metrics:
             dev_metrics_results = [dev_metrics.scores.get(score, (i + 1) * ['-'])[i] for score in metric_hdr]
