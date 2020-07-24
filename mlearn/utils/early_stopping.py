@@ -23,7 +23,7 @@ class EarlyStopping:
         self.best_epoch = 0
         self.epoch = 0
         self.low_is_good = low_is_good
-        self.path_prefix = path_prefix + f'_{model.name}.pkl'
+        self.path_prefix = f'{path_prefix}_{model.name}.pkl'
         self.verbose = verbose
         self.model = model
 
