@@ -40,7 +40,6 @@ class EarlyStopping:
             self.best_score = score
 
         if self.new_best(score):
-            breakpoint()
             self.best_state = model
             self.best_score = score
             self.best_epoch = self.epoch
