@@ -106,7 +106,7 @@ class GeneralDataset(IterableDataset):
 
             for field in self.train_fields:
                 idx = field.index if self.ftype in ['CSV', 'TSV'] else field.cname
-                data_line[field.name] = self.process_doc(line[idx].rstrip())
+                data_line[field.name] = self.process_doc(line[idx].rstrip().replace('\n', '').replace('\r', '').strip())
                 data_line['original'] = line[idx].rstrip()
 
                 if data_line[field.name] is None:
