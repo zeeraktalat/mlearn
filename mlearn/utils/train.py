@@ -125,7 +125,7 @@ def run_singletask_model(train: bool, writer: base.Callable, pred_writer: base.C
     func(**kwargs)
     write_results(writer, **kwargs)
 
-    if not train:
+    if not train and pred_writer is not None:
         write_predictions(pred_writer, **kwargs)
 
 
