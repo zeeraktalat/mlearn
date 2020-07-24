@@ -101,7 +101,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
 
                 if early_stopping is not None and early_stopping(model, dev_metrics.early_stopping()):
                     model = early_stopping.best_state
-                    return
+                    break
             except Exception:
                 # Dev is not set.
                 loop.set_postfix(epoch_loss = f"{metrics.get_last('loss'):.4f}", **metrics.display())
