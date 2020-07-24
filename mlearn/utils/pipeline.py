@@ -70,4 +70,4 @@ def select_vectorizer(vectorizer: str) -> base.VectType:
 
 
 def _get_datestr():
-    return datetime.now().strftime('%Y%m%d%H%M%S')
+    return datetime.now().strftime('%Y/%m/%d:%H:%M:%S')
