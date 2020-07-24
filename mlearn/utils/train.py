@@ -94,14 +94,14 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
             try:
                 eval_torch_model(model, dev, loss, dev_metrics, gpu, store = False, **kwargs)
 
-                if early_stopping is not None and early_stopping(model, dev_metrics.early_stopping()):
-                    model = early_stopping.best_state
-                    break
-
                 loop.set_postfix(epoch_loss = f"{metrics.get_last('loss'):.4f}",
                                  dev_loss = f"{dev_metrics.get_last('loss'):.4f}",
                                  **metrics.display(),
                                  dev_score = f"{dev_metrics.last_display()}")
+
+                if early_stopping is not None and early_stopping(model, dev_metrics.early_stopping()):
+                    model = early_stopping.best_state
+                    return
             except Exception:
                 # Dev is not set.
                 loop.set_postfix(epoch_loss = f"{metrics.get_last('loss'):.4f}", **metrics.display())

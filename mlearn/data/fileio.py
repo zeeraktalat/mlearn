@@ -64,7 +64,7 @@ def write_predictions(writer: base.Callable, model: base.ModelType, model_hdr: l
 
         pred_info = [doc.original, parsed, label, pred]
 
-        out = base + pred_info + info
+        out = base + info + pred_info
         writer.writerow(out)
     return True
 
