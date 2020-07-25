@@ -531,8 +531,6 @@ class GeneralDataset(IterableDataset):
         :returns (base.DataType): Return onehot encoded tensor.
         """
         encoded = self.encode_doc(text, doc).unsqueeze(0)
-        # encoded = encoded.unsqueeze(encoded.dim())
-
         return encoded
 
     def encode_doc(self, text: base.DataType, doc: base.Datapoint) -> base.DataType:

@@ -28,7 +28,9 @@ class LSTMClassifier(nn.Module):
                      'Output dim': output_dim,
                      '# Layers': no_layers,
                      'Dropout': dropout,
-                     'Model': self.name}
+                     'Model': self.name,
+                     'activation': 'tanh'
+                     }
 
         self.itoe = nn.Embedding(input_dim, embedding_dim)
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, no_layers, batch_first = batch_first)
@@ -88,7 +90,7 @@ class MLPClassifier(nn.Module):
 
         # Set dropout and non-linearity
         self.dropout = nn.Dropout(dropout)
-        self.activation = nn.ReLU() if activation == 'relu' else nn.Tanh()
+        self.activation = torch.relu if activation == 'relu' else torch.relu
         self.softmax = nn.LogSoftmax(dim = 1)
 
     def forward(self, sequence: base.DataType):
@@ -141,7 +143,7 @@ class CNNClassifier(nn.Module):
         self.itoh = nn.Embedding(input_dim, embedding_dim)  # Works
         self.conv = nn.ModuleList([nn.Conv2d(1, num_filters, (w, embedding_dim)) for w in window_sizes])
         self.linear = nn.Linear(len(window_sizes) * num_filters, output_dim)
-        self.activation = F.relu if activation == 'relu' else F.tanh
+        self.activation = torch.relu if activation == 'relu' else torch.relu
         self.softmax = nn.LogSoftmax(dim = 1)
 
     def forward(self, sequence) -> base.DataType:
@@ -168,7 +170,7 @@ class RNNClassifier(nn.Module):
     """Embedding RNN Classifier."""
 
     def __init__(self, input_dim: int, embedding_dim: int, hidden_dim: int, output_dim: int, dropout: float = 0.2,
-                 batch_first: bool = True, **kwargs) -> None:
+                 activation: str = 'tanh', batch_first: bool = True, **kwargs) -> None:
         """
         Initialise the RNN classifier.
 
@@ -176,9 +178,11 @@ class RNNClassifier(nn.Module):
         :embdding_dim (int): The dimension of the embeddings.
         :hidden_dim (int): The dimension of the hidden representation.
         :output_dim (int): The dimension of the output representation.
-        :dropout (float, default = 0.2): The strength of the dropout [0.0; 1.0]
+        :dropout (float, default = 0.2): The strength of the dropout [0.0; 1.0].
+        :activation (str, default = 'tanh'): Set activation function.
         :batch_first (bool): Is batch the first dimension?
         """
+        nonlinearity = activation
         super(RNNClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'emb_rnn'
@@ -187,7 +191,8 @@ class RNNClassifier(nn.Module):
                      'Embedding dim': embedding_dim,
                      'Hidden dim': hidden_dim,
                      'Output dim': output_dim,
-                     'Dropout': dropout
+                     'Dropout': dropout,
+                     'activation': 'tanh'
                      }
 
         # Initialise the hidden dim

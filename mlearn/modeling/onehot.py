@@ -28,7 +28,8 @@ class LSTMClassifier(nn.Module):
                      'Output dim': output_dim,
                      '# Layers': no_layers,
                      'Dropout': dropout,
-                     'Model': self.name
+                     'Model': self.name,
+                     'activation': 'tanh'
                      }
 
         self.itoh = nn.Linear(input_dim, embedding_dim)
@@ -90,7 +91,7 @@ class MLPClassifier(nn.Module):
 
         # Set dropout and non-linearity
         self.dropout = nn.Dropout(dropout)
-        self.activation = nn.ReLU() if activation == 'relu' else nn.Tanh()
+        self.activation = torch.relu if activation == 'relu' else torch.relu
         self.softmax = nn.LogSoftmax(dim = 1)
 
     def forward(self, sequence: base.DataType):
@@ -144,7 +145,7 @@ class CNNClassifier(nn.Module):
         self.itoh = nn.Linear(input_dim, hidden_dim)  # Works
         self.conv = nn.ModuleList([nn.Conv2d(1, num_filters, (w, hidden_dim)) for w in window_sizes])
         self.linear = nn.Linear(len(window_sizes) * num_filters, output_dim)
-        self.activation = F.relu if activation == 'relu' else F.tanh
+        self.activation = nn.ReLU() if activation == 'relu' else nn.Tanh()
         self.softmax = nn.LogSoftmax(dim = 1)
 
     def forward(self, sequence) -> base.DataType:
@@ -172,7 +173,7 @@ class RNNClassifier(nn.Module):
     """RNN Classifier."""
 
     def __init__(self, input_dim: int, hidden_dim: int, output_dim: int, dropout: float = 0.0, batch_first: bool = True,
-                 **kwargs) -> None:
+                 activation: str = 'tanh', **kwargs) -> None:
         """
         Initialise the RNN classifier.
 
@@ -181,7 +182,9 @@ class RNNClassifier(nn.Module):
         :output_dim (int): The dimension of the output representation.
         :dropout (float, default = 0.0): The value of the dropout layer.
         :batch_first (bool): Is batch the first dimension?
+        :activation (str, default = 'tanh'): Set activation function.
         """
+        nonlinearity = activation
         super(RNNClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'onehot_rnn'
@@ -189,7 +192,8 @@ class RNNClassifier(nn.Module):
                      'Input dim': input_dim,
                      'Hidden dim': hidden_dim,
                      'Output dim': output_dim,
-                     'Dropout': dropout
+                     'Dropout': dropout,
+                     'activation': activation
                      }
 
         # Initialise the hidden dim
