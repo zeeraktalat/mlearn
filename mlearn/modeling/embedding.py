@@ -7,7 +7,7 @@ import torch.nn.functional as F
 class LSTMClassifier(nn.Module):
     """Embedding based LSTM classifier."""
 
-    def __init__(self, input_dim: int, embedding_dim: int, hidden_dim: int, output_dim: int, no_layers: int,
+    def __init__(self, input_dim: int, embedding_dim: int, hidden_dim: int, output_dim: int, num_layers: int,
                  dropout: float = 0.0, batch_first: bool = True, **kwargs) -> None:
         """
         Initialise the LSTM.
@@ -15,7 +15,7 @@ class LSTMClassifier(nn.Module):
         :input_dim (int): The dimensionality of the input to the embedding generation.
         :hidden_dim (int): The dimensionality of the hidden dimension.
         :output_dim (int): Number of classes for to predict on.
-        :no_layers (int): The number of recurrent layers in the LSTM (1-3).
+        :num_layers (int): The number of recurrent layers in the LSTM (1-3).
         :dropout (float, default = 0.2): The strength of the dropout as a float [0.0;1.0]
         :batch_first (bool, default = True): Batch the first dimension?
         """
@@ -26,14 +26,14 @@ class LSTMClassifier(nn.Module):
                      'Embedding dim': embedding_dim,
                      'Hidden dim': hidden_dim,
                      'Output dim': output_dim,
-                     '# Layers': no_layers,
+                     '# Layers': num_layers,
                      'Dropout': dropout,
                      'Model': self.name,
-                     'activation': 'tanh'
+                     'nonlinearity': 'tanh'
                      }
 
         self.itoe = nn.Embedding(input_dim, embedding_dim)
-        self.lstm = nn.LSTM(embedding_dim, hidden_dim, no_layers, batch_first = batch_first)
+        self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers, batch_first = batch_first)
         self.htoo = nn.Linear(hidden_dim, output_dim)
 
         # Set the method for producing "probability" distribution.
@@ -62,7 +62,7 @@ class MLPClassifier(nn.Module):
     """Embedding based MLP Classifier."""
 
     def __init__(self, input_dim: int, embedding_dim: int, hidden_dim: int, output_dim: int, dropout: float = 0.0,
-                 batch_first: bool = True, activation: str = 'tanh', **kwargs) -> None:
+                 batch_first: bool = True, nonlinearity: str = 'tanh', **kwargs) -> None:
         """
         Initialise the model.
 
@@ -70,7 +70,7 @@ class MLPClassifier(nn.Module):
         :hidden_dim: The dimension of the hidden layer.
         :output_dim: The dimension of the output layer (i.e. the number of classes).
         :batch_first (bool): Batch the first dimension?
-        :activation (str, default = 'tanh'): String name of activation function to be used.
+        :nonlinearity (str, default = 'tanh'): String name of nonlinearity function to be used.
         """
         super(MLPClassifier, self).__init__()
         self.batch_first = batch_first
@@ -80,7 +80,7 @@ class MLPClassifier(nn.Module):
                      'Hidden dim': hidden_dim,
                      'Embedding dim': embedding_dim,
                      'Output dim': output_dim,
-                     'Activation': activation,
+                     'nonlinearity': nonlinearity,
                      'Dropout': dropout
                      }
 
@@ -90,7 +90,7 @@ class MLPClassifier(nn.Module):
 
         # Set dropout and non-linearity
         self.dropout = nn.Dropout(dropout)
-        self.activation = torch.relu if activation == 'relu' else torch.relu
+        self.nonlinearity = torch.relu if nonlinearity == 'relu' else torch.relu
         self.softmax = nn.LogSoftmax(dim = 1)
 
     def forward(self, sequence: base.DataType):
@@ -103,8 +103,8 @@ class MLPClassifier(nn.Module):
         if self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        out = self.dropout(self.activation(self.itoe(sequence)))
-        out = self.dropout(self.activation(self.htoh(out)))
+        out = self.dropout(self.nonlinearity(self.itoe(sequence)))
+        out = self.dropout(self.nonlinearity(self.htoh(out)))
         out = out.mean(0)
         out = self.htoo(out)
         prob_dist = self.softmax(out)  # Re-shape to fit batch size.
@@ -116,7 +116,7 @@ class CNNClassifier(nn.Module):
     """CNN Classifier."""
 
     def __init__(self, window_sizes: base.List[int], num_filters: int, input_dim: int, embedding_dim: int,
-                 output_dim: int, activation: str = 'relu', batch_first: bool = True, **kwargs) -> None:
+                 output_dim: int, nonlinearity: str = 'relu', batch_first: bool = True, **kwargs) -> None:
         """
         Initialise the model.
 
@@ -125,7 +125,7 @@ class CNNClassifier(nn.Module):
         :input_dim (int): The input dimension (can be limited to less than the vocab size)
         :embedding_dim (int): Embedding dimension size.
         :output_dim (int): Output dimension.
-        :activation (str): Name of activation function to use.
+        :nonlinearity (str): Name of nonlinearity function to use.
         :batch_first (bool, default: True): True if the batch is the first dimension.
         """
         super(CNNClassifier, self).__init__()
@@ -137,13 +137,13 @@ class CNNClassifier(nn.Module):
                      'Input dim': input_dim,
                      'Embedding dim': embedding_dim,
                      'Output dim': output_dim,
-                     'Activation': activation
+                     'nonlinearity': nonlinearity
                      }
 
         self.itoh = nn.Embedding(input_dim, embedding_dim)  # Works
         self.conv = nn.ModuleList([nn.Conv2d(1, num_filters, (w, embedding_dim)) for w in window_sizes])
         self.linear = nn.Linear(len(window_sizes) * num_filters, output_dim)
-        self.activation = torch.relu if activation == 'relu' else torch.relu
+        self.nonlinearity = torch.relu if nonlinearity == 'relu' else torch.relu
         self.softmax = nn.LogSoftmax(dim = 1)
 
     def forward(self, sequence) -> base.DataType:
@@ -158,7 +158,7 @@ class CNNClassifier(nn.Module):
             sequence = sequence.transpose(0, 1)
 
         emb = self.itoh(sequence)  # Get embeddings for sequence
-        output = [self.activation(conv(emb.unsqueeze(1))).squeeze(3) for conv in self.conv]
+        output = [self.nonlinearity(conv(emb.unsqueeze(1))).squeeze(3) for conv in self.conv]
         output = [F.max_pool1d(i, i.size(2)).squeeze(2) for i in output]
         output = torch.cat(output, 1)
         prob_dist = self.softmax(self.linear(output))
@@ -170,7 +170,7 @@ class RNNClassifier(nn.Module):
     """Embedding RNN Classifier."""
 
     def __init__(self, input_dim: int, embedding_dim: int, hidden_dim: int, output_dim: int, dropout: float = 0.2,
-                 activation: str = 'tanh', batch_first: bool = True, **kwargs) -> None:
+                 nonlinearity: str = 'tanh', batch_first: bool = True, **kwargs) -> None:
         """
         Initialise the RNN classifier.
 
@@ -179,10 +179,10 @@ class RNNClassifier(nn.Module):
         :hidden_dim (int): The dimension of the hidden representation.
         :output_dim (int): The dimension of the output representation.
         :dropout (float, default = 0.2): The strength of the dropout [0.0; 1.0].
-        :activation (str, default = 'tanh'): Set activation function.
+        :nonlinearity (str, default = 'tanh'): Set nonlinearity function.
         :batch_first (bool): Is batch the first dimension?
         """
-        nonlinearity = activation
+        nonlinearity = nonlinearity
         super(RNNClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'emb_rnn'
@@ -192,7 +192,7 @@ class RNNClassifier(nn.Module):
                      'Hidden dim': hidden_dim,
                      'Output dim': output_dim,
                      'Dropout': dropout,
-                     'activation': 'tanh'
+                     'nonlinearity': 'tanh'
                      }
 
         # Initialise the hidden dim
