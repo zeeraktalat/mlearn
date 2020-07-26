@@ -71,3 +71,21 @@ def select_vectorizer(vectorizer: str) -> base.VectType:
 
 def _get_datestr():
     return datetime.now().strftime('%Y/%m/%d:%H:%M:%S')
+
+
+def get_hyperparam_combinations(search_space: base.List[dict], hyper_parameters: base.List[base.Tuple]
+                                ) -> base.List[dict]:
+    """
+    Create all hyper-parameter combinations to run.
+
+    :search_space (base.List[dict]): List of dictionaries with one value
+    :hyper_parameters (base.List[dict]): List of tuples containing a dict with all values for each iteration.
+    :returns search_space (base.Generator[dict]): A list of dictionaries containing the search space.
+    """
+    for param_name, param_space in hyper_parameters:
+        additions = []
+        for comb_dict in search_space:
+            for param in param_space:
+                additions.append({**comb_dict, **{param_name: param}})
+        search_space = additions
+    return search_space
