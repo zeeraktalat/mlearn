@@ -97,7 +97,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                 loop.set_postfix(epoch_loss = f"{metrics.get_last('loss'):.4f}",
                                  dev_loss = f"{dev_metrics.get_last('loss'):.4f}",
                                  **metrics.display(),
-                                 dev_score = f"{dev_metrics.last_display()}")
+                                 dev_score = f"{dev_metrics.last_display():.4f}")
 
                 if early_stopping is not None and early_stopping(model, dev_metrics.early_stopping()):
                     model = early_stopping.best_state
