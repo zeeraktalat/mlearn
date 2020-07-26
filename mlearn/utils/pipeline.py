@@ -73,8 +73,8 @@ def _get_datestr():
     return datetime.now().strftime('%Y/%m/%d:%H:%M:%S')
 
 
-def get_hyperparam_combinations(search_space: base.List[dict], hyper_parameters: base.List[base.Tuple]
-                                ) -> base.List[dict]:
+def hyperparam_space(search_space: base.List[dict], hyper_parameters: base.List[base.Tuple]
+                     ) -> base.List[dict]:
     """
     Create all hyper-parameter combinations to run.
 
