@@ -1,5 +1,6 @@
-from mlearn import base
 import torch
+from tqdm import tqdm
+from mlearn import base
 
 
 class EarlyStopping:
@@ -46,10 +47,10 @@ class EarlyStopping:
             return False
 
         elif self.epoch > self.best_epoch + self.patience:
-            print("Early stopping: Terminate")
+            tqdm.write("Early stopping: Terminate")
             return True
         if self.verbose:
-            print("Early stopping: Worse epoch")
+            tqdm.write("Early stopping: Worse epoch")
         return False
 
     def new_best(self, score: float) -> bool:
