@@ -234,12 +234,13 @@ class OnehotMLPClassifier(nn.Module):
         :batch_first (boo, default = True): If input tensors have the batch dimension in the first dimensino.
         """
         super(OnehotMLPClassifier, self).__init__()
-        self.name = "onehot-mtl-mlp"
         self.batch_first = batch_first
-        self.info = {'Input dim': ", ".join([str(it) for it in input_dims]), 'Shared dim': shared_dim,
-                     'Hidden dim': ", ".join([str(it) for it in hidden_dims]),
-                     'Output dim': ", ".join([str(it) for it in output_dims]),
-                     'Dropout': dropout, 'Model': self.name}
+        self.name = "mtl_onehot_mlp"
+        self.info = {'Model': self.name,
+                     'Input dim': ", ".join([str(it) for it in input_dims]), 'Hidden dim': hidden_dims,
+                     'Output dim': ", ".join([str(it) for it in output_dims]), 'Shared dim': shared_dim,
+                     'nonlinearity': nonlinearity, 'Dropout': dropout
+                     }
 
         # Initialise the hidden dim
         self.all_parameters = nn.ParameterList()

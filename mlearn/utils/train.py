@@ -187,8 +187,8 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
         metrics.loss = batch_loss
 
 
-def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], opt: base.Callable,
-                    loss_f: base.Callable, metrics: object, batch_size: int = 64, epochs: int = 2, clip: float = None,
+def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], optimizer: base.Callable,
+                    loss: base.Callable, metrics: object, batch_size: int = 64, epochs: int = 2, clip: float = None,
                     earlystop: int = None, save_path: str = None, dev: base.DataType = None, dev_metrics: object = None,
                     dev_task_id: int = 0, batches_per_epoch: int = None, low: bool = True,
                     shuffle: bool = True, dataset_weights: base.DataType = None, loss_weights: base.DataType = None,
@@ -199,8 +199,8 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
     :model (base.ModelType): Untrained model.
     :batchers (base.List[base.DataType]): Batched training data.
     :save_path (str): Path to save trained model to.
-    :opt (base.Callable): Pytorch optimizer to train model.
-    :loss_f (base.Callable): Loss function.
+    :optimizer (base.Callable): Pytorch optimizer to train model.
+    :loss (base.Callable): Loss function.
     :metrics (object): Initialized metrics object.
     :batch_size (int): Training batch size.
     :epochs (int): Maximum number of epochs (if no early stopping).
@@ -236,7 +236,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                 for batch in batchers:
                     batch.shuffle()
 
-            _mtl_epoch(model, loss_f, loss_weights, opt, metrics, batchers, batches_per_epoch, dataset_weights,
+            _mtl_epoch(model, loss, loss_weights, optimizer, metrics, batchers, batches_per_epoch, dataset_weights,
                        taskid2name, clip, epoch = i, **kwargs)
 
             for score in metrics.scores:  # Compute average value of the scores computed in each epoch.
@@ -245,7 +245,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                 else:
                     scores[score].append(np.mean(metrics.scores[score]))
             try:
-                eval_torch_model(model, dev, loss_f, dev_metrics, mtl = dev_task_id, **kwargs)
+                eval_torch_model(model, dev, loss, dev_metrics, mtl = dev_task_id, **kwargs)
 
                 loop.set_postfix(loss = f"{metrics.get_last('loss'):.4f}",
                                  dev_loss = f"{dev_metrics.get_last('loss'):.4f}",
