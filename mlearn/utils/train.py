@@ -216,7 +216,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
     :dataset_weights (base.DataType, default = None): Probability for each dataset to be chosen (must sum to 1.0).
     :loss_weights (base.DataType): Determines relative task importance When using multiple input/output functions.
     """
-    with trange(epochs, desc = "Training model") as loop:
+    with trange(epochs, desc = "Training model", leave = False) as loop:
         taskid2name = {i: batchers[i].data.name for i in range(len(batchers))}
         scores = defaultdict(list)
         if loss_weights is None:
