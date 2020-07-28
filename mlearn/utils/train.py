@@ -5,9 +5,9 @@ from tqdm import tqdm, trange
 from collections import defaultdict
 from mlearn.utils.metrics import Metrics
 from mlearn.utils.early_stopping import EarlyStopping
-from mlearn.data.fileio import write_predictions, write_results
 from mlearn.utils.evaluate import eval_torch_model, eval_sklearn_model
 from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV
+from mlearn.data.fileio import write_predictions, write_results, mtl_batch_writer
 
 
 def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: base.Callable, metrics: Metrics,
@@ -133,7 +133,7 @@ def run_singletask_model(train: bool, writer: base.Callable, pred_writer: base.C
 
 def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.DataType, opt: base.Callable,
                metrics: object, batchers: base.List[base.Batch], batch_count: int, dataset_weights: base.List[float],
-               clip: float = None, **kwargs) -> None:
+               batch_writer: base.Callable, taskid2name: dict, clip: float = None, **kwargs) -> None:
     """
     Train one epoch of an MTL training loop.
 
@@ -145,19 +145,18 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
     :batchers (base.List[base.Batch]): A list of batched objects.
     :batch_count (int): The number of batchers to go through in each epoch.
     :dataset_weights (base.List[float]): The probability with which each dataset is chosen to be trained on.
+    :batch_writer (base.Callable): Initialized batch writer.
+    :taskid2name (dict): Dictionary mapping task ID to dataset name.
     :clip (float, default = None): Use gradient clipping.
     """
     with tqdm(range(batch_count), desc = 'Batch', leave = False) as loop:
         label_count = 0
         epoch_loss = 0
-        tasks = []
-        taskid2name = {i: batchers[i].data.name for i in range(len(batchers))}
 
-        for b in loop:
+        for i, b in enumerate(loop):
             # Select task and get batch
             task_id = np.random.choice(range(len(batchers)), p = dataset_weights)
             X, y = next(iter(batchers[task_id]))
-            tasks.append(taskid2name[task_id])
 
             # Do model training
             model.train()
@@ -176,6 +175,10 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
             label_count += len(y.cpu().tolist())
             epoch_loss += loss.data.item()
             batch_loss = loss.data.item() / len(y)
+
+            # Write batch info
+            task_name = taskid2name[task_id]
+            mtl_batch_writer(batch_writer, model, batch = i, metrics = metrics, task_name = task_name, **kwargs)
 
             loop.set_postfix(batch_loss = f"{batch_loss:.4f}",
                              epoch_loss = f"{epoch_loss / label_count:.4f}",
@@ -214,6 +217,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
     :loss_weights (base.DataType): Determines relative task importance When using multiple input/output functions.
     """
     with trange(epochs, desc = "Training model") as loop:
+        taskid2name = {i: batchers[i].data.name for i in range(len(batchers))}
         scores = defaultdict(list)
         if loss_weights is None:
             loss_weights = np.ones(len(batchers))
@@ -227,12 +231,13 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
         if earlystop is not None:
             earlystop = EarlyStopping(save_path, model, earlystop, low_is_good = low)
 
-        for epoch in loop:
+        for i, epoch in enumerate(loop):
             if shuffle:
                 for batch in batchers:
                     batch.shuffle()
 
-            _mtl_epoch(model, loss_f, loss_weights, opt, metrics, batchers, batches_per_epoch, dataset_weights, clip)
+            _mtl_epoch(model, loss_f, loss_weights, opt, metrics, batchers, batches_per_epoch, dataset_weights,
+                       taskid2name, clip, epoch = i, **kwargs)
 
             for score in metrics.scores:  # Compute average value of the scores computed in each epoch.
                 if score == 'loss':
