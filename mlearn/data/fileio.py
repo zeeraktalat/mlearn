@@ -127,7 +127,7 @@ def mtl_batch_writer(batch_writer: base.Callable, model: base.ModelType, model_h
 
     # hyper-info: batch size, # Epochs, Learning rate
     out = base + hyper_info + model_info + scores
-    batch_writer.batch_writerow(out)
+    batch_writer.writerow(out)
 
 
 def store_model(model: base.ModelType, base_path: str, library: str = None) -> None:
