@@ -299,10 +299,10 @@ class OnehotMLPClassifier(nn.Module):
         if self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        res = self.dropout(self.inputs[task_id](sequence.float()))
+        res = self.dropout(self.nonlinearity(self.inputs[task_id](sequence.float())))
 
         for layer in self.shared:
-            res = self.dropout(layer(res))
+            res = self.dropout(self.nonlinearity(layer(res)))
 
         res = res.mean(0)
         res = self.outputs[task_id](res)
