@@ -131,22 +131,22 @@ def run_singletask_model(train: bool, writer: base.Callable, pred_writer: base.C
         write_predictions(pred_writer, **kwargs)
 
 
-def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.DataType, opt: base.Callable,
+def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.DataType, optimizer: base.Callable,
                metrics: object, batchers: base.List[base.Batch], batch_count: int, dataset_weights: base.List[float],
-               batch_writer: base.Callable, taskid2name: dict, clip: float = None, **kwargs) -> None:
+               taskid2name: dict, epoch_no: int, clip: float = None, **kwargs) -> None:
     """
     Train one epoch of an MTL training loop.
 
     :model (base.ModelType): Model in the process of being trained.
     :loss_f (base.Callable): The loss function being used.
     :loss_weights (base.DataType): Determines relative task importance When using multiple input/output functions.
-    :opt (base.Callable): The optimizer function used.
+    :optimizer (base.Callable): The optimizer function used.
     :metrics (object): Initialized Metrics object.
     :batchers (base.List[base.Batch]): A list of batched objects.
     :batch_count (int): The number of batchers to go through in each epoch.
     :dataset_weights (base.List[float]): The probability with which each dataset is chosen to be trained on.
-    :batch_writer (base.Callable): Initialized batch writer.
     :taskid2name (dict): Dictionary mapping task ID to dataset name.
+    :epoch_no (int): The iteration of the epoch.
     :clip (float, default = None): Use gradient clipping.
     """
     with tqdm(range(batch_count), desc = 'Batch', leave = False) as loop:
@@ -160,7 +160,7 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
 
             # Do model training
             model.train()
-            opt.zero_grad()
+            optimizer.zero_grad()
 
             scores = model(X, task_id, **kwargs)
             loss = loss_f(scores, y) * loss_weights[task_id]
@@ -169,7 +169,7 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
             if clip is not None:
                 torch.nn.utils.clip_grad_norm(model.parameters(), clip)  # Prevent exploding gradients
 
-            opt.step()
+            optimizer.step()
 
             metrics.compute(torch.argmax(scores, dim = 1), y)
             label_count += len(y.cpu().tolist())
@@ -178,7 +178,8 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
 
             # Write batch info
             task_name = taskid2name[task_id]
-            mtl_batch_writer(batch_writer, model, batch = i, metrics = metrics, task_name = task_name, **kwargs)
+            mtl_batch_writer(model = model, batch = i, metrics = metrics, task_name = task_name, epoch = epoch_no,
+                             **kwargs)
 
             loop.set_postfix(batch_loss = f"{batch_loss:.4f}",
                              epoch_loss = f"{epoch_loss / label_count:.4f}",
@@ -237,7 +238,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                     batch.shuffle()
 
             _mtl_epoch(model, loss, loss_weights, optimizer, metrics, batchers, batches_per_epoch, dataset_weights,
-                       taskid2name, clip, epoch = i, **kwargs)
+                       taskid2name, i, clip, **kwargs)
 
             for score in metrics.scores:  # Compute average value of the scores computed in each epoch.
                 if score == 'loss':
