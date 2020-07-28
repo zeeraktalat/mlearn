@@ -174,18 +174,17 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
             metrics.compute(torch.argmax(scores, dim = 1), y)
             label_count += len(y.cpu().tolist())
             epoch_loss += loss.data.item()
-            batch_loss = loss.data.item() / len(y)
+            metrics.loss = loss.data.item() / len(y)
 
             # Write batch info
             task_name = taskid2name[task_id]
             mtl_batch_writer(model = model, batch = i, metrics = metrics, task_name = task_name, epoch = epoch_no,
                              **kwargs)
 
-            loop.set_postfix(batch_loss = f"{batch_loss:.4f}",
+            loop.set_postfix(batch_loss = f"{metrics.get_last('loss'):.4f}",
                              epoch_loss = f"{epoch_loss / label_count:.4f}",
                              **metrics.display(),
                              task = task_id)
-        metrics.loss = batch_loss
 
 
 def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], optimizer: base.Callable,
@@ -242,11 +241,11 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
 
             for score in metrics.scores:  # Compute average value of the scores computed in each epoch.
                 if score == 'loss':
-                    scores[score].append(metrics.scores[score])
+                    scores[score].append(sum(metrics.scores[score]))
                 else:
                     scores[score].append(np.mean(metrics.scores[score]))
             try:
-                eval_torch_model(model, dev, loss, dev_metrics, mtl = dev_task_id, **kwargs)
+                eval_torch_model(model, dev, loss, dev_metrics, mtl = dev_task_id, store = False, **kwargs)
 
                 loop.set_postfix(loss = f"{metrics.get_last('loss'):.4f}",
                                  dev_loss = f"{dev_metrics.get_last('loss'):.4f}",
