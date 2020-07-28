@@ -241,7 +241,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
 
             for score in metrics.scores:  # Compute average value of the scores computed in each epoch.
                 if score == 'loss':
-                    continue
+                    scores[score].append(metrics.scores[score])
                 else:
                     scores[score].append(np.mean(metrics.scores[score]))
             try:
