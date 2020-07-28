@@ -99,12 +99,13 @@ def write_results(writer: base.Callable, model: base.ModelType, model_hdr: list,
     return True
 
 
-def mtl_batch_writer(writer: base.Callable, model: base.ModelType, model_hdr: list, task_name: str, main_name: str,
-                     hyper_info: list, metric_hdr: list, metrics: object, epoch: int, batch: int, **kwargs) -> None:
+def mtl_batch_writer(batch_writer: base.Callable, model: base.ModelType, model_hdr: list, task_name: str,
+                     main_name: str, hyper_info: list, metric_hdr: list, metrics: object, epoch: int, batch: int,
+                     **kwargs) -> None:
     """
     Write results to file.
 
-    :writer (base.Callable): Path to file.
+    :batch_writer (base.Callable): Path to file.
     :model (base.ModelType): The model to be written for.
     :model_hdr (list): Model parameters in the order they appear in the file.
     :task_name (str): Name of the task/dataset that's being run on.
@@ -115,7 +116,6 @@ def mtl_batch_writer(writer: base.Callable, model: base.ModelType, model_hdr: li
     :epoch (int): The iteration of the epoch.
     :batch (int): The iteration of the batches.
     """
-
     # Timestamp, Epoch, batch, Task, Main task
     base = [_get_datestr(), epoch, batch, task_name, main_name]
 
@@ -127,7 +127,7 @@ def mtl_batch_writer(writer: base.Callable, model: base.ModelType, model_hdr: li
 
     # hyper-info: batch size, # Epochs, Learning rate
     out = base + hyper_info + model_info + scores
-    writer.writerow(out)
+    batch_writer.batch_writerow(out)
 
 
 def store_model(model: base.ModelType, base_path: str, library: str = None) -> None:
