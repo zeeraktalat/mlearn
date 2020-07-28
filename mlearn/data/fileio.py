@@ -3,9 +3,8 @@ import json
 import torch
 import joblib
 from mlearn import base
-from mlearn.utils.pipeline import _get_datestr
 from mlearn.data.dataset import GeneralDataset
-from mlearn.utils.pipeline import get_deep_dict_value
+from mlearn.utils.pipeline import get_deep_dict_value, _get_datestr
 
 
 def read_json(fh: str, enc, doc_key: str, label_key: str, secondary_keys: dict = None, **kwargs) -> base.Tuple[str]:
@@ -98,6 +97,37 @@ def write_results(writer: base.Callable, model: base.ModelType, model_hdr: list,
         out = base + info + results
         writer.writerow(out)
     return True
+
+
+def mtl_batch_writer(writer: base.Callable, model: base.ModelType, model_hdr: list, task_name: str, main_name: str,
+                     hyper_info: list, metric_hdr: list, metrics: object, epoch: int, batch: int, **kwargs) -> None:
+    """
+    Write results to file.
+
+    :writer (base.Callable): Path to file.
+    :model (base.ModelType): The model to be written for.
+    :model_hdr (list): Model parameters in the order they appear in the file.
+    :task_name (str): Name of the task/dataset that's being run on.
+    :main_name (str): Name of the main task/dataset.
+    :hyper_info (list): List of hyper-parameter values.
+    :metric_hdr (list): Metrics in the order they appear in the output file.
+    :metrics (dict): Train scores.
+    :epoch (int): The iteration of the epoch.
+    :batch (int): The iteration of the batches.
+    """
+
+    # Timestamp, Epoch, batch, Task, Main task
+    base = [_get_datestr(), epoch, batch, task_name, main_name]
+
+    # Modelinfo: model, input, embedding, hidden, output, dropout, nonlinear
+    model_info = [model.info.get(field, '-') for field in model_hdr]
+
+    # metrics + loss
+    scores = [metrics.get_last(m) for m in metric_hdr]
+
+    # hyper-info: batch size, # Epochs, Learning rate
+    out = base + hyper_info + model_info + scores
+    writer.writerow(out)
 
 
 def store_model(model: base.ModelType, base_path: str, library: str = None) -> None:
