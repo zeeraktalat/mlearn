@@ -353,7 +353,6 @@ class EmbeddingMLPClassifier(nn.Module):
 
             # Add parameters
             self.all_parameters.append(layer.weight)
-            self.all_parameters.append(layer.bias)
 
         self.shared = []
         for i in range(len(embedding_dims) - 1):
@@ -381,7 +380,7 @@ class EmbeddingMLPClassifier(nn.Module):
         print(self)
         print(list(self.all_parameters))
 
-    def forward(self, sequence, task_id) -> base.DataType:
+    def forward(self, sequence, task_id, **kwargs) -> base.DataType:
         """
         Forward step in the classifier.
 
@@ -392,7 +391,7 @@ class EmbeddingMLPClassifier(nn.Module):
         if self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        res = self.dropout(self.inputs[task_id](sequence.float()))
+        res = self.dropout(self.inputs[task_id](sequence))
 
         for layer in self.shared:
             res = self.dropout(layer(res))
