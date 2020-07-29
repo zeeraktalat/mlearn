@@ -368,7 +368,9 @@ class GeneralDataset(IterableDataset):
             label = self.ltoi[label]
         except KeyError:
             if isinstance(label, int):
-                print(f"Exception occurred: Labels have already been processed. Dataset name: {self.name}")
+                with open('warning.log', 'a') as warning:
+                    print(f"Exception occurred: Labels have already been processed. Dataset name: {self.name}",
+                           file = warning)
             else:
                 print(f"Exception occurred reading data: Dataset name: {self.name}")
                 __import__('pdb').set_trace()
