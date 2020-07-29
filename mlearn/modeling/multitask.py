@@ -315,15 +315,15 @@ class OnehotMLPClassifier(nn.Module):
 class EmbeddingMLPClassifier(nn.Module):
     """Embedding MLP MTL classifier."""
 
-    def __init__(self, input_dims: base.List[int], shared_dim: int, hidden_dims: base.List[int],
-                 embedding_dim: int, output_dims: base.List[int], dropout: float = 0.0, batch_first = True,
+    def __init__(self, input_dims: base.List[int], shared_dim: int, embedding_dims: base.List[int],
+                 output_dims: base.List[int], dropout: float = 0.0, batch_first = True,
                  **kwargs) -> None:
         """
         Initialise the Multitask LSTM.
 
         :param input_dims (base.List[int]): The dimensionality of the input.
         :param shared_dim (int): The dimensionality of the shared layer.
-        :param hidden_dims (base.List[int]): The dimensionality of the hidden dimensions for each task.
+        :param embedding_dims (base.List[int]): The dimensionality of the hidden dimensions for each task.
         :param output_dims (base.List[int]): Number of classes for to predict on.
         :param dropout (float, default = 0.0): Value of dropout layer.
         :batch_first (boo, default = True): If input tensors have the batch dimension in the first dimensino.
@@ -332,14 +332,14 @@ class EmbeddingMLPClassifier(nn.Module):
         self.name = "onehot-mtl-mlp"
         self.batch_first = batch_first
         self.info = {'Input dim': ", ".join([str(it) for it in input_dims]), 'Shared dim': shared_dim,
-                     'Hidden dim': ", ".join([str(it) for it in hidden_dims]),
-                     'Output dim': ", ".join([str(it) for it in output_dims]), 'Embedding dim': embedding_dim,
+                     'Embedding dim': ", ".join([str(it) for it in embedding_dims]),
+                     'Output dim': ", ".join([str(it) for it in output_dims]),
                      'Dropout': dropout, 'Model': self.name}
 
         # Initialise the hidden dim
         self.all_parameters = nn.ParameterList()
 
-        assert len(input_dims) == len(hidden_dims) == len(output_dims)
+        assert len(input_dims) == len(embedding_dims) == len(output_dims)
 
         # Input layer (not shared) [Embedding]
         # hidden to hidden layer (shared) [Linear]
@@ -348,7 +348,7 @@ class EmbeddingMLPClassifier(nn.Module):
 
         self.inputs = {}  # Define task inputs
         for task_id, input_dim in enumerate(input_dims):
-            layer = nn.Embedding(input_dim, embedding_dim)
+            layer = nn.Embedding(input_dim, embedding_dims[0])
             self.inputs[task_id] = layer
 
             # Add parameters
@@ -356,8 +356,8 @@ class EmbeddingMLPClassifier(nn.Module):
             self.all_parameters.append(layer.bias)
 
         self.shared = []
-        for i in range(len(hidden_dims) - 1):
-            layer = nn.Linear(hidden_dims[i], hidden_dims[i + 1])
+        for i in range(len(embedding_dims) - 1):
+            layer = nn.Linear(embedding_dims[i], embedding_dims[i + 1])
             self.shared.append(layer)
 
             # Add parameters
@@ -365,8 +365,8 @@ class EmbeddingMLPClassifier(nn.Module):
             self.all_parameters.append(layer.bias)
 
         self.outputs = {}
-        for task_id, _ in enumerate(hidden_dims):
-            layer = nn.Linear(hidden_dims[-1], output_dims[task_id])
+        for task_id, _ in enumerate(embedding_dims):
+            layer = nn.Linear(embedding_dims[-1], output_dims[task_id])
             self.outputs[task_id] = layer
 
             # Add parameters
