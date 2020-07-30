@@ -413,10 +413,10 @@ def preotiuc_user(cleaners: base.Callable, data_path: str, length: int = None, p
             'label_preprocessor': label_processor,
             'name': 'Preotiuc (Users)'}
 
-    text = base.Field('text', train = True, label = False, cname = 'text', ix = 2)
+    text = base.Field('text', train = True, label = False, cname = 'text', ix = 0)
     label = base.Field('label', label = True, cname = 'label', ix = 1)
     ignore = base.Field('ignore', ignore = True)
 
-    args['fields'] = [ignore, label, text]
+    args['fields'] = [text, label, ignore, ignore, ignore]
 
     return _loader(args, **kwargs)
