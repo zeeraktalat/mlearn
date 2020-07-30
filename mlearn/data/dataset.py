@@ -260,7 +260,8 @@ class GeneralDataset(IterableDataset):
         train_fields = self.train_fields
         self.token_counts = Counter()
 
-        for doc in tqdm(data, desc = "Building vocabulary", disable = os.environ.get('TQDM_DISABLE', False)):
+        for doc in tqdm(data, desc = f"Building vocabulary ({self.name})",
+                        disable = os.environ.get('TQDM_DISABLE', False)):
             if original:
                 self.token_counts.update(self.tokenizer(doc.original.replace('\n', ' ')))
             else:
@@ -352,7 +353,7 @@ class GeneralDataset(IterableDataset):
         labels = set(getattr(lab, getattr(f, 'name')) for lab in labels for f in self.label_fields)
         self.itol, self.ltoi = {}, {}
 
-        for ix, l in enumerate(tqdm(sorted(labels), desc = "Encode label vocab",
+        for ix, l in enumerate(tqdm(sorted(labels), desc = f"Encode label vocab ({self.name})",
                                     disable = os.environ.get("TQDM_DISABLE", False))):
             self.itol[ix] = l
             self.ltoi[l] = ix
