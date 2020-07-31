@@ -133,7 +133,7 @@ def run_singletask_model(train: bool, writer: base.Callable, pred_writer: base.C
 
 def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.DataType, optimizer: base.Callable,
                metrics: object, batchers: base.List[base.Batch], batch_count: int, dataset_weights: base.List[float],
-               taskid2name: dict, epoch_no: int, clip: float = None, **kwargs) -> None:
+               taskid2name: dict, epoch_no: int, clip: float = None, gpu: bool = True, **kwargs) -> None:
     """
     Train one epoch of an MTL training loop.
 
@@ -157,6 +157,10 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
             # Select task and get batch
             task_id = np.random.choice(range(len(batchers)), p = dataset_weights)
             X, y = next(iter(batchers[task_id]))
+
+            if gpu:
+                X = X.cuda()
+                y = y.cuda()
 
             # Do model training
             model.train()
