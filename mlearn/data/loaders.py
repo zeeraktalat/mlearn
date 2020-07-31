@@ -420,3 +420,73 @@ def preotiuc_user(cleaners: base.Callable, data_path: str, length: int = None, p
     args['fields'] = [text, label, ignore, ignore, ignore]
 
     return _loader(args, **kwargs)
+
+
+def oraby_sarcasm(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
+                  transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs
+                  ) -> GeneralDataset:
+    """
+    Load Oraby et al. Sarcasm dataset.
+
+    :cleaners (base.Callable): Initialized cleaner.
+    :data_path (str): Path to data directory.
+    :length (int), default = None): Maximum length of sequence.
+    :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
+    :transformer (base.Callable, default = None): Additional document processing, if required.
+    :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :returns: Loaded datasets.
+    """
+    args = {'data_dir': data_path,
+            'ftype': 'csv',
+            'fields': None,
+            'train': 'oraby_sarcasm.csv', 'dev': None, 'test': None,
+            'sep': ',',
+            'tokenizer': cleaners.tokenize,
+            'preprocessor': preprocessor,
+            'transformations': transformer,
+            'length': length,
+            'label_preprocessor': label_processor,
+            'name': 'Preotiuc (Users)'}
+
+    text = base.Field('text', train = True, label = False, cname = 'text', ix = 2)
+    label = base.Field('label', label = True, cname = 'label', ix = 0)
+    ignore = base.Field('ignore', ignore = True)
+
+    args['fields'] = [label, ignore, text]
+
+    return _loader(args, **kwargs)
+
+
+def oraby_fact_feel(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
+                    transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs
+                    ) -> GeneralDataset:
+    """
+    Load Oraby et al. Fact-Feel dataset.
+
+    :cleaners (base.Callable): Initialized cleaner.
+    :data_path (str): Path to data directory.
+    :length (int), default = None): Maximum length of sequence.
+    :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
+    :transformer (base.Callable, default = None): Additional document processing, if required.
+    :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :returns: Loaded datasets.
+    """
+    args = {'data_dir': data_path,
+            'ftype': 'csv',
+            'fields': None,
+            'train': 'oraby_fact_feel_train.csv', 'dev': 'oraby_fact_feel_dev.csv', 'test': 'oraby_fact_feel_test.csv',
+            'sep': ',',
+            'tokenizer': cleaners.tokenize,
+            'preprocessor': preprocessor,
+            'transformations': transformer,
+            'length': length,
+            'label_preprocessor': label_processor,
+            'name': 'Preotiuc (Users)'}
+
+    text = base.Field('text', train = True, label = False, cname = 'text', ix = 2)
+    label = base.Field('label', label = True, cname = 'label', ix = 1)
+    ignore = base.Field('ignore', ignore = True)
+
+    args['fields'] = [ignore, label, text]
+
+    return _loader(args, **kwargs)
