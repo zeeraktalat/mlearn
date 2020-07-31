@@ -245,7 +245,7 @@ class OnehotMLPClassifier(nn.Module):
         # Initialise the hidden dim
         self.all_parameters = nn.ParameterList()
 
-        assert len(input_dims) == len(hidden_dims) == len(output_dims)
+        assert len(input_dims) == len(output_dims)
 
         # Input layer (not shared) [Linear]
         # hidden to hidden layer (shared) [Linear]
@@ -271,7 +271,7 @@ class OnehotMLPClassifier(nn.Module):
             self.all_parameters.append(layer.bias)
 
         self.outputs = {}
-        for task_id, _ in enumerate(hidden_dims):
+        for task_id, _ in enumerate(input_dims):
             layer = nn.Linear(hidden_dims[-1], output_dims[task_id])
             self.outputs[task_id] = layer
 
@@ -339,7 +339,7 @@ class EmbeddingMLPClassifier(nn.Module):
         # Initialise the hidden dim
         self.all_parameters = nn.ParameterList()
 
-        assert len(input_dims) == len(embedding_dims) == len(output_dims)
+        assert len(input_dims) == len(output_dims)
 
         # Input layer (not shared) [Embedding]
         # hidden to hidden layer (shared) [Linear]
@@ -364,7 +364,7 @@ class EmbeddingMLPClassifier(nn.Module):
             self.all_parameters.append(layer.bias)
 
         self.outputs = {}
-        for task_id, _ in enumerate(embedding_dims):
+        for task_id, _ in enumerate(input_dims):
             layer = nn.Linear(embedding_dims[-1], output_dims[task_id])
             self.outputs[task_id] = layer
 
