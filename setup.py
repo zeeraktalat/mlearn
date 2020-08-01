@@ -24,7 +24,7 @@ setuptools.setup(
         "numpy==1.18.2",
         "tqdm==4.36.1",
         "spacy==2.2.2",
-        "scikit-learn==0.21.3",
+        "scikit-learn==0.23.1",
         "torchtestcase",
         "torch==1.4.0",
         "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.5/en_core_web_sm-2.2.5.tar.gz#egg=en_core_web_sm"
