@@ -446,7 +446,7 @@ def oraby_sarcasm(cleaners: base.Callable, data_path: str, length: int = None, p
             'transformations': transformer,
             'length': length,
             'label_preprocessor': label_processor,
-            'name': 'Preotiuc (Users)'}
+            'name': 'Oraby et al. (Sarcasm)'}
 
     text = base.Field('text', train = True, label = False, cname = 'text', ix = 2)
     label = base.Field('label', label = True, cname = 'label', ix = 0)
@@ -481,7 +481,7 @@ def oraby_fact_feel(cleaners: base.Callable, data_path: str, length: int = None,
             'transformations': transformer,
             'length': length,
             'label_preprocessor': label_processor,
-            'name': 'Preotiuc (Users)'}
+            'name': 'Oraby et al. (Fact-feel)'}
 
     text = base.Field('text', train = True, label = False, cname = 'text', ix = 2)
     label = base.Field('label', label = True, cname = 'label', ix = 1)
