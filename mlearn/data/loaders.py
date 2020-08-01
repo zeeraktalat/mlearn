@@ -472,10 +472,10 @@ def oraby_fact_feel(cleaners: base.Callable, data_path: str, length: int = None,
     :returns: Loaded datasets.
     """
     args = {'data_dir': data_path,
-            'ftype': 'csv',
+            'ftype': 'tsv',
             'fields': None,
-            'train': 'oraby_fact_feel_train.csv', 'dev': 'oraby_fact_feel_dev.csv', 'test': 'oraby_fact_feel_test.csv',
-            'sep': ',',
+            'train': 'oraby_fact_feel_train.tsv', 'dev': 'oraby_fact_feel_dev.tsv', 'test': 'oraby_fact_feel_test.tsv',
+            'sep': '\t',
             'tokenizer': cleaners.tokenize,
             'preprocessor': preprocessor,
             'transformations': transformer,
