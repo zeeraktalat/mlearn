@@ -196,7 +196,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                     earlystop: int = None, save_path: str = None, dev: base.DataType = None, dev_metrics: object = None,
                     dev_task_id: int = 0, batches_per_epoch: int = None, low: bool = True,
                     shuffle: bool = True, dataset_weights: base.DataType = None, loss_weights: base.DataType = None,
-                    **kwargs) -> None:
+                    gpu: bool = True, **kwargs) -> None:
     """
     Train a multi-task learning model.
 
@@ -218,11 +218,16 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
     :low (bool, default = True): If lower value is to be interpreted as better by EarlyStopping.
     :shuffle: Whether to shuffle data at training.
     :dataset_weights (base.DataType, default = None): Probability for each dataset to be chosen (must sum to 1.0).
-    :loss_weights (base.DataType): Determines relative task importance When using multiple input/output functions.
+    :loss_weights (base.DataType, default = None): Weight the loss by multiplication.
+    :gpu (bool, default = True): Set tot rue if model runs on GPU.
     """
     with trange(epochs, desc = "Training model", leave = False) as loop:
         taskid2name = {i: batchers[i].data.name for i in range(len(batchers))}
         scores = defaultdict(list)
+
+        if gpu:
+            model = model.cuda()
+
         if loss_weights is None:
             loss_weights = np.ones(len(batchers))
 
