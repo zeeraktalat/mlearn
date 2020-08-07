@@ -16,7 +16,7 @@ def _loader(args: dict, **kwargs) -> GeneralDataset:
         dataset.split(dataset.data, [0.8, 0.1, 0.1], **kwargs)
 
     elif args['dev'] is not None and args['test'] is None:
-        dataset.load('dev')
+        dataset.load('dev', **kwargs)
         dataset.split(dataset.data, [0.8], **kwargs)
 
     elif args['dev'] is None and args['test'] is not None:

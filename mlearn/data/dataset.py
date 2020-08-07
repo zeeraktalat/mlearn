@@ -19,7 +19,7 @@ class GeneralDataset(IterableDataset):
                  test_labels: str = None, sep: str = None, tokenizer: base.Union[base.Callable, str] = 'spacy',
                  preprocessor: base.Callable = None, transformations: base.Callable = None,
                  label_processor: base.Callable = None, label_preprocessor: base.Callable = None,
-                 length: int = None, gpu: bool = True) -> None:
+                 length: int = None, gpu: bool = True, **kwargs) -> None:
         """
         Initialize the variables required for the dataset loading.
 
