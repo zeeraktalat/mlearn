@@ -117,7 +117,9 @@ def waseem(cleaners: base.Callable, data_path: str, length: int = None, preproce
             'transformations': transformer,
             'length': length,
             'label_preprocessor': label_processor,
-            'name': 'Waseem'
+            'name': 'Waseem',
+            'skip_header': False,
+            'line_count': 6909
             }
 
     text_field = base.Field('text', train = True, label = False, ignore = False, cname = 'text')
@@ -151,7 +153,9 @@ def waseem_hovy(cleaners: base.Callable, data_path: str, length: int = None,
             'transformations': transformer,
             'length': length,
             'label_preprocessor': label_processor,
-            'name': 'Waseem-Hovy'
+            'name': 'Waseem-Hovy',
+            'skip_header': False,
+            'line_count': 16907
             }
 
     text_field = base.Field('text', train = True, label = False, ignore = False, cname = 'text')
@@ -198,7 +202,9 @@ def garcia(cleaners: base.Callable, data_path: str, length: int = None,
             'transformations': transformer,
             'length': length,
             'label_preprocessor': label_processor,
-            'name': 'Garcia et al.'
+            'name': 'Garcia et al.',
+            'skip_header': True,
+            'line_count': 1915
             }
 
     text_field = base.Field('text', train = True, label = False, ignore = False, cname = 'text', ix = 5)
@@ -237,7 +243,9 @@ def wulczyn(cleaners: base.Callable, data_path: str, length: int = None, preproc
             'transformations': transformer,
             'length': length,
             'label_preprocessor': label_processor,
-            'name': 'Wulczyn et al.'
+            'name': 'Wulczyn et al.',
+            'skip_header': True,
+            'line_count': 159689
             }
 
     text = base.Field('text', train = True, label = False, cname = 'comment', ix = 1)
@@ -273,7 +281,10 @@ def hoover(cleaners: base.Callable, data_path: str, length: int = None, preproce
             'transformations': transformer,
             'length': length,
             'label_preprocessor': label_processor,
-            'name': 'Hoover et al.'}
+            'name': 'Hoover et al.',
+            'skip_header': True,
+            'line_count': 95693
+            }
 
     text = base.Field('text', train = True, label = False, cname = 'text', ix = 1)
     label = base.Field('label', train = False, label = True, cname = 'label', ix = 18)
@@ -341,48 +352,16 @@ def vidgen(cleaners: base.Callable, data_path: str, length: int = None, preproce
             'transformations': transformer,
             'length': length,
             'label_preprocessor': label_processor,
-            'name': 'Vidgen et al.'}
+            'name': 'Vidgen et al.',
+            'skip_header': True,
+            'line_count': 20000
+            }
 
     text = base.Field('text', train = True, label = False, cname = 'text', ix = 3)
     label = base.Field('label', train = False, label = True, cname = 'label', ix = 3)
     ignore = base.Field('ignore', train = False, label = False, cname = 'ignore', ignore = True)
 
     args['fields'] = [ignore, text] + 16 * [ignore] + [label, ignore]
-
-    return _loader(args, **kwargs)
-
-
-def semeval_sentiment(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-                      transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs
-                      ) -> GeneralDataset:
-    """
-    Load Semeval (TODO Add year) sentiment analysis dataset.
-
-    :cleaners (base.Callable): Initialized cleaner.
-    :data_path (str): Path to data directory.
-    :length (int), default = None): Maximum length of sequence.
-    :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
-    :transformer (base.Callable, default = None): Additional document processing, if required.
-    :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
-    :returns: Loaded datasets.
-    """
-    args = {'data_dir': data_path,
-            'ftype': 'tsv',
-            'fields': None,
-            'train': 'semeval_sentiment_train.tsv', 'dev': None, 'test': None,
-            'sep': '\t',
-            'tokenizer': cleaners.tokenize,
-            'preprocessor': preprocessor,
-            'transformations': transformer,
-            'length': length,
-            'label_preprocessor': label_processor,
-            'name': 'Semeval (2016)'}
-
-    text = base.Field('text', train = True, label = False, cname = 'text', ix = 2)
-    label = base.Field('label', label = True, cname = 'label', ix = 1)
-    ignore = base.Field('ignore', ignore = True)
-
-    args['fields'] = [ignore, label, text]
 
     return _loader(args, **kwargs)
 
@@ -411,7 +390,10 @@ def preotiuc_user(cleaners: base.Callable, data_path: str, length: int = None, p
             'transformations': transformer,
             'length': length,
             'label_preprocessor': label_processor,
-            'name': 'Preotiuc (Users)'}
+            'name': 'Preotiuc (Users)',
+            'skip_header': True,
+            'line_count': 3531
+            }
 
     text = base.Field('text', train = True, label = False, cname = 'text', ix = 0)
     label = base.Field('label', label = True, cname = 'label', ix = 1)
@@ -446,7 +428,10 @@ def oraby_sarcasm(cleaners: base.Callable, data_path: str, length: int = None, p
             'transformations': transformer,
             'length': length,
             'label_preprocessor': label_processor,
-            'name': 'Oraby et al. (Sarcasm)'}
+            'name': 'Oraby et al. (Sarcasm)',
+            'skip_header': True,
+            'line_count': 11650
+            }
 
     text = base.Field('text', train = True, label = False, cname = 'text', ix = 2)
     label = base.Field('label', label = True, cname = 'label', ix = 0)
@@ -481,7 +466,10 @@ def oraby_fact_feel(cleaners: base.Callable, data_path: str, length: int = None,
             'transformations': transformer,
             'length': length,
             'label_preprocessor': label_processor,
-            'name': 'Oraby et al. (Fact-feel)'}
+            'name': 'Oraby et al. (Fact-feel)',
+            'skip_header': True,
+            'line_count': 10191
+            }
 
     text = base.Field('text', train = True, label = False, cname = 'text', ix = 2)
     label = base.Field('label', label = True, cname = 'label', ix = 1)

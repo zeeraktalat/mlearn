@@ -84,7 +84,7 @@ class GeneralDataset(IterableDataset):
         self.length = length
         self.gpu = gpu
 
-    def load(self, dataset: str = 'train', skip_header = True, **kwargs) -> None:
+    def load(self, dataset: str = 'train', skip_header = True, line_count: int = None, **kwargs) -> None:
         """
         Load the datasebase.
 
@@ -98,7 +98,7 @@ class GeneralDataset(IterableDataset):
 
         data = []
         for line in tqdm(self.reader(fp), desc = f'Loading {self.name} ({dataset})',
-                         disable = os.environ.get('TQDM_DISABLE', False)):
+                         disable = os.environ.get('TQDM_DISABLE', False), total = line_count):
 
             data_line, datapoint = {}, base.Datapoint()  # TODO Look at moving all load processing into datapoint class.
 
