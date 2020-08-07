@@ -91,7 +91,7 @@ class GeneralDataset(IterableDataset):
         :skip_header (bool, default = True): Skip the header.
         :dataset (str, default = 'train'): Dataset to load. Must exist as key in self.data_files.
         """
-        fp = open(self.data_files[dataset])
+        fp = open(self.data_files[dataset], 'r', encoding = 'utf-8')
 
         if skip_header:
             next(fp)
