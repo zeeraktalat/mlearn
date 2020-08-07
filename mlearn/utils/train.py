@@ -175,7 +175,7 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
 
             optimizer.step()
 
-            metrics.compute(torch.argmax(scores, dim = 1), y)
+            metrics.compute(torch.argmax(scores, dim = 1).tolist(), y.tolist())
             label_count += len(y.cpu().tolist())
             epoch_loss += loss.data.item()
             metrics.loss = loss.data.item() / len(y)
