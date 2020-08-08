@@ -567,6 +567,7 @@ class GeneralDataset(IterableDataset):
             splits = [0.8, 0.1, 0.1]
         data = self.data if data is None else data
         split_sizes = list(map(lambda x: floor(len(data) * x), splits))  # Get the actual sizes of the splits.
+        print(f"split sizes are: {split_sizes}; stratify is {stratify}")
 
         if stratify is not None:  # TODO
             out = self._stratify_split(data, stratify, split_sizes, **kwargs)
@@ -581,6 +582,9 @@ class GeneralDataset(IterableDataset):
                 self.dev = out[1]
         return out
 
+    
+
+
     def _stratify_split(self, data: base.DataType, strata_field: str, split_sizes: base.List[int], **kwargs
                         ) -> base.Tuple[list, base.Union[list, None], list]:
         """
@@ -593,15 +597,6 @@ class GeneralDataset(IterableDataset):
         """
         train_size, dev_size, test_size = split_sizes[0], None, None
         idx_maps = defaultdict(list)
-
-        # Create lists of each label.
-        for i, doc in enumerate(data):
-            idx_maps[getattr(doc, strata_field)].append(i)
-
-        # Get labels and probabilities ordered
-        labels, label_probs = zip(*{label: len(idx_maps[label]) / len(data) for label in idx_maps}.items())
-        train = self._stratify_helper(data, labels, train_size, label_probs, idx_maps)
-
         num_splits = len(split_sizes)
         if num_splits == 1:
             test_size = len(data) - split_sizes[0]
@@ -610,11 +605,41 @@ class GeneralDataset(IterableDataset):
         elif num_splits == 3:
             dev_size = split_sizes[1]
             test_size = split_sizes[2]
+           
+        # Create lists of each label.
+        for i, doc in enumerate(data):
+            idx_maps[getattr(doc, strata_field)].append(i)
+        print(f"labels in data: {[(key, len(idx_maps[key])) for key in idx_maps]}")
+
+        # Get labels and probabilities ordered
+        labels, label_probs = zip(*{label: len(idx_maps[label]) / len(data) for label in idx_maps}.items())
+
+        pretend_land = defaultdict(Counter)
+        set_infos = [("dev", dev_size), ("train", train_size), ("test", test_size)]
+        for label_idx, label in enumerate(labels):
+            assigned = 0
+            for set_name, set_size in set_infos:
+                label_count_for_set = floor(set_size * label_probs[label_idx])
+                pretend_land[set_name][label] = label_count_for_set
+                assigned += label_count_for_set
+            remaining = len(idx_maps[label]) - assigned
+            below_split_size = [s[0] for s in set_infos if sum(pretend_land[s[0]].values()) < s[1]]
+            for _ in range(remaining):
+                chosen_set = np.random.choice(below_split_size)
+                pretend_land[chosen_set][label] += 1
+                below_split_size = [s[0] for s in set_infos if sum(pretend_land[s[0]].values()) < s[1]]
+
+        print(f"pretend splits: {pretend_land}")
+
+        print(f"labels: {labels}, label_probs: {label_probs}")
+        print(f"got to train, train size {train_size}")
+        train = self._stratify_helper(data, labels, train_size, label_probs, idx_maps, pretend_land["train"])
 
         dev, test = None, None
 
         if dev_size is not None:
-            dev = self._stratify_helper(data, labels, dev_size, label_probs, idx_maps)
+            print("got to dev")
+            dev = self._stratify_helper(data, labels, dev_size, label_probs, idx_maps, pretend_land["dev"])
             test_size += len(data) - (train_size + dev_size + test_size)
         else:
             test_size += len(data) - (train_size + test_size)
@@ -622,12 +647,13 @@ class GeneralDataset(IterableDataset):
         indices = []
         for label in idx_maps:
             indices.extend(idx_maps[label])
+        print(f"got to test; test size {test_size}, indices count {len(indices)}")
         test = [data[ix] for ix in np.random.choice(indices, test_size, replace = False)]
 
         return train, dev, test
 
     def _stratify_helper(self, data: base.DataType, labels: tuple, sample_size: int, probs: tuple,
-                         idx_map: dict) -> base.DataType:
+                         idx_map: dict, label_count) -> base.DataType:
         """
         Perform stratified allocation of documents.
 
@@ -639,10 +665,14 @@ class GeneralDataset(IterableDataset):
         :returns (base.DataType): Returns the stratified sample.
         """
         # Get counts for the label distribution
-        label_count = Counter(np.random.choice(labels, sample_size, replace = True, p = probs))
+        print(f"labels: {labels}, sample_size {sample_size}, probs {probs}")
+        print(f"should try to sample something like {[(label, prob*sample_size) for label, prob in zip(labels, probs)]}")
+#        label_count = Counter(np.random.choice(labels, size=sample_size, replace = True, p = probs))
+        print(f"label count: {label_count}")
 
         sampled = []
         for label, count in label_count.items():
+            print(f"wanting to sample {count} from {len(idx_map[label])}")
             indices = np.random.choice(idx_map[label], count, replace = False)  # Get indices for label
             sampled.extend([data[ix] for ix in indices])
             idx_map[label] = [ix for ix in idx_map[label] if ix not in indices]  # Delete all used indices
