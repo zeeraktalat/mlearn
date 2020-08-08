@@ -83,8 +83,8 @@ class EmbeddingLSTMClassifier(nn.Module):
         self.softmax = nn.LogSoftmax(dim = 1)
 
         # TODO Ensure that the model is deterministic (the bias term is added)
-        print(self)
-        print(list(self.all_parameters))
+        # print(self)
+        # print(list(self.all_parameters))
 
     def forward(self, sequence, task_id) -> base.DataType:
         """

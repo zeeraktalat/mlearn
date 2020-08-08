@@ -254,7 +254,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                 else:
                     scores[score].append(np.mean(metrics.scores[score]))
             try:
-                eval_torch_model(model, dev, loss, dev_metrics, mtl = dev_task_id, store = False, **kwargs)
+                eval_torch_model(model, dev, loss, dev_metrics, mtl = dev_task_id, store = False gpu = gpu, **kwargs)
 
                 loop.set_postfix(loss = f"{metrics.get_last('loss'):.4f}",
                                  dev_loss = f"{dev_metrics.get_last('loss'):.4f}",
