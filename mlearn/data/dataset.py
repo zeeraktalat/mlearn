@@ -566,12 +566,19 @@ class GeneralDataset(IterableDataset):
         if splits is None:
             splits = [0.8, 0.1, 0.1]
         elif len(splits) == 1:
-            splits = splits + [None, None]
+            splits = splits + [0.0, 0.0]
         elif len(splits) == 2:
-            splits = splits + [None]
+            splits = [splits[0]] + [0.0] + [splits[1]]
 
         data = self.data if data is None else data
         split_sizes = list(map(lambda x: floor(len(data) * x), splits))  # Get the actual sizes of the splits.
+
+        if len(data) != sum(split_sizes):
+            if split_sizes[-1] != 0.0:
+                split_sizes[-1] = split_sizes[-1] + (len(data) - sum(split_sizes))
+            elif split_sizes[1] != 0.0:
+                split_sizes[1] = split_sizes[1] + (len(data) - sum(split_sizes))
+
         print(f"split sizes are: {split_sizes}; stratify is {stratify}")
 
         if stratify is not None:  # TODO
@@ -583,7 +590,7 @@ class GeneralDataset(IterableDataset):
             self.data = out[0]
             self.test = out[-1]
 
-            if len(splits) == 3:
+            if splits[1] != 0.0:
                 self.dev = out[1]
         return out
 
@@ -597,15 +604,14 @@ class GeneralDataset(IterableDataset):
         :strata_field (str): Name of label field.
         :returns (base.Tuple[list, base.Union[list, None], list]): Return stratified splits.
         """
-        train_size, dev_size, test_size = splits
+        train_size, dev_size, test_size = split_sizes
         idx_maps = defaultdict(list)
-        num_splits = len(split_sizes)
 
-        if (dev_size, test_size) == (None, None):
+        if (dev_size, test_size) == (0.0, 0.0):
             test_size = len(data) - split_sizes[0]
-        elif (dev_size, test_size) == (not None, None):
+        elif (dev_size, test_size) == (not 0.0, 0.0):
             test_size = split_sizes[-1]
-        elif (dev_size, test_size) != (None, None):
+        elif (dev_size, test_size) != (0.0, 0.0):
             dev_size = split_sizes[1]
             test_size = split_sizes[2]
 
