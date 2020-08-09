@@ -631,19 +631,19 @@ class GeneralDataset(IterableDataset):
             print("got to dev")
             dev = self._stratify_helper(data, labels, dev_size, label_probs, idx_maps)
 
-        print(f"got to test; test size {test_size}, indices count {len(indices)}")
+        print(f"got to test; test size {test_size}")
         test = self._stratify_helper(data, labels, test_size, label_probs, idx_maps)
 
         # Deal with the remaining documents
         print(f"Expected sizes are {train_size}, {dev_size}, {test_size}")
         print(f"Actual sizes are: {len(train), len(dev), len(test)}")
 
-        missing = {name: (exp_size - len(split), split) for split, (name, _), exp_size in
+        missing = {name: (len(split) - exp_size, split, exp_size) for split, (name, _), exp_size in
                    zip([train, dev, test], set_infos, [train_size, dev_size, test_size])}
         remaining = [doc for label in idx_maps for doc in idx_maps[label]]
 
-        for name, (diff, split) in missing.items():
-            exp_label_count = [(label, prob * sample_size) for label, prob in zip(labels, label_probs)]
+        for name, (diff, split, exp_size) in missing.items():
+            exp_label_count = [(label, prob * exp_size) for label, prob in zip(labels, label_probs)]
             actual_label_count = Counter([doc.label for doc in split])
 
             if diff != 0:
@@ -653,7 +653,7 @@ class GeneralDataset(IterableDataset):
                     assert(abs(diff) <= len(remaining))
 
                     indices = np.random.choice(remaining, abs(diff), replace = False)
-                    split.extend([remaining.pop(idx) for idx in indices])  # Randomly split across labels
+                    split.extend([data[remaining.pop(i)] for i, idx in enumerate(indices)])  # Randomly split across labels
                 except AssertionError:
                     tqdm.write("WARNING: The missing # docs in {name} is greater than # unassigned docs.")
                     tqdm.write("Adding all remaining documents to split {name} in {self.name}.")
@@ -714,18 +714,17 @@ class GeneralDataset(IterableDataset):
         :returns (base.Tuple[list, base.Union[list, None], list]): Tuple containing data splits.
         """
         indices = list(range(len(data)))
-        num_splits = len(splits)
-        if num_splits == 1:
+        train_size, dev_size, test_size = splits
+
+        if (dev_size, test_size) == (0.0, 0.0):
             train, indices = self._split_helper(data, splits[0], indices)
             test, indices = self._split_helper(data, len(data) - splits[0], indices)
             out = (train, None, test)
-
-        elif num_splits == 2:
+        elif (dev_size, test_size) == (not 0.0, 0.0):
             train, indices = self._split_helper(data, splits[0], indices)
             test, indices = self._split_helper(data, splits[1], indices)
             out = (train, None, test)
-
-        elif num_splits == 3:
+        elif (dev_size, test_size) != (0.0, 0.0):
             train, indices = self._split_helper(data, splits[0], indices)
             dev, indices = self._split_helper(data, splits[1], indices)
             test, indices = self._split_helper(data, splits[2], indices)
