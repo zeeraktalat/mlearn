@@ -641,7 +641,7 @@ class GeneralDataset(IterableDataset):
 
                     # Randomly split across labels
                     indices = np.random.choice(remaining, abs(diff), replace = False)
-                    split.extend([data[remaining.pop(i)] for i, idx in enumerate(indices)])
+                    split.extend([data[idx] for idx in indices])
                 except AssertionError:
                     tqdm.write("WARNING: The missing # docs in {name} is greater than # unassigned docs.")
                     tqdm.write("Adding all remaining documents to split {name} in {self.name}.")
