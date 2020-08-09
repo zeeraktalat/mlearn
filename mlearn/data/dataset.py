@@ -618,26 +618,19 @@ class GeneralDataset(IterableDataset):
         # Create lists of each label.
         for i, doc in enumerate(data):
             idx_maps[getattr(doc, strata_field)].append(i)
-        print(f"labels in data: {[(key, len(idx_maps[key])) for key in idx_maps]}")
 
         # Get labels and probabilities ordered
         labels, label_probs = zip(*{label: len(idx_maps[label]) / len(data) for label in idx_maps}.items())
         set_infos = [("train", train_size), ("dev", dev_size), ("test", test_size)]
 
-        print("got to train")
         train = self._stratify_helper(data, labels, train_size, label_probs, idx_maps)
 
-        if dev_size is not None:
-            print("got to dev")
+        if dev_size != 0.0:
             dev = self._stratify_helper(data, labels, dev_size, label_probs, idx_maps)
 
-        print(f"got to test; test size {test_size}")
         test = self._stratify_helper(data, labels, test_size, label_probs, idx_maps)
 
         # Deal with the remaining documents
-        print(f"Expected sizes are {train_size}, {dev_size}, {test_size}")
-        print(f"Actual sizes are: {len(train), len(dev), len(test)}")
-
         missing = {name: (len(split) - exp_size, split, exp_size) for split, (name, _), exp_size in
                    zip([train, dev, test], set_infos, [train_size, dev_size, test_size])}
         remaining = [doc for label in idx_maps for doc in idx_maps[label]]
@@ -658,27 +651,6 @@ class GeneralDataset(IterableDataset):
                     tqdm.write("WARNING: The missing # docs in {name} is greater than # unassigned docs.")
                     tqdm.write("Adding all remaining documents to split {name} in {self.name}.")
                     split.extend(remaining)
-
-        print("Remaining documents dealt with.")
-        print(f"Expected sizes are {train_size}, {dev_size}, {test_size}")
-        print(f"Actual sizes are: {len(train), len(dev), len(test)}")
-
-        # for label_idx, label in enumerate(labels):
-        #     assigned = 0
-        #
-        #     for set_name, set_size in set_infos:
-        #         label_count_for_set = floor(set_size * label_probs[label_idx])
-        #         expected[set_name][label] = label_count_for_set
-        #         assigned += label_count_for_set
-        #
-        #     remaining = len(idx_maps[label]) - assigned
-        #     below_split_size = [split for split, size in set_infos if sum(expected[split].values()) < size]
-        #
-        #     for _ in range(remaining):
-        #         chosen_set = np.random.choice(below_split_size)
-        #         expected[chosen_set][label] += 1
-        #         below_split_size = [s[0] for s in set_infos if sum(expected[s[0]].values()) < s[1]]
-
 
         return train, dev, test
 
