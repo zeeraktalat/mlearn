@@ -625,8 +625,7 @@ class GeneralDataset(IterableDataset):
 
         train = self._stratify_helper(data, labels, train_size, label_probs, idx_maps)
 
-        if dev_size != 0.0:
-            dev = self._stratify_helper(data, labels, dev_size, label_probs, idx_maps)
+        dev = self._stratify_helper(data, labels, dev_size, label_probs, idx_maps)
 
         test = self._stratify_helper(data, labels, test_size, label_probs, idx_maps)
 
@@ -636,17 +635,15 @@ class GeneralDataset(IterableDataset):
         remaining = [doc for label in idx_maps for doc in idx_maps[label]]
 
         for name, (diff, split, exp_size) in missing.items():
-            exp_label_count = [(label, prob * exp_size) for label, prob in zip(labels, label_probs)]
-            actual_label_count = Counter([doc.label for doc in split])
-
             if diff != 0:
-                if diff > 0: # In spite of using floor, we have a split with too many documents
+                if diff > 0:  # In spite of using floor, we have a split with too many documents
                     raise IndexError("The {name} split in {self.name} has been assigned too many documents.")
                 try:
                     assert(abs(diff) <= len(remaining))
 
+                    # Randomly split across labels
                     indices = np.random.choice(remaining, abs(diff), replace = False)
-                    split.extend([data[remaining.pop(i)] for i, idx in enumerate(indices)])  # Randomly split across labels
+                    split.extend([data[remaining.pop(i)] for i, idx in enumerate(indices)])
                 except AssertionError:
                     tqdm.write("WARNING: The missing # docs in {name} is greater than # unassigned docs.")
                     tqdm.write("Adding all remaining documents to split {name} in {self.name}.")
