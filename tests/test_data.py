@@ -357,6 +357,11 @@ class TestDataSet(torchtestcase.TorchTestCase):
 
         expected = [1531, 383]
         train, _, test = data.split(loaded_train, [0.8, 0.2], stratify = 'label', store = False)
+        result = [len(train), len(test)]
+
+        self.assertEqual(sum(result), len(loaded_train), msg = "The splits ([0.8, 0.2]) != len(loaded_train)")
+        self.assertListEqual(expected, result, msg = 'Two split values in list failed.')
+
         train, _, test = self.csv_dataset.split(loaded_train, [0.8, 0.2], stratify = 'label', store = False)
         result = [len(train), len(test)]
 
