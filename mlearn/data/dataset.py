@@ -565,8 +565,21 @@ class GeneralDataset(IterableDataset):
         """
         if splits is None:
             splits = [0.8, 0.1, 0.1]
+        elif len(splits) == 1:
+            splits = splits + [0.0, 0.0]
+        elif len(splits) == 2:
+            splits = [splits[0]] + [0.0] + [splits[1]]
+
         data = self.data if data is None else data
         split_sizes = list(map(lambda x: floor(len(data) * x), splits))  # Get the actual sizes of the splits.
+
+        if len(data) != sum(split_sizes):
+            if split_sizes[-1] != 0.0:
+                split_sizes[-1] = split_sizes[-1] + (len(data) - sum(split_sizes))
+            elif split_sizes[1] != 0.0:
+                split_sizes[1] = split_sizes[1] + (len(data) - sum(split_sizes))
+
+        print(f"split sizes are: {split_sizes}; stratify is {stratify}")
 
         if stratify is not None:  # TODO
             out = self._stratify_split(data, stratify, split_sizes, **kwargs)
@@ -577,7 +590,7 @@ class GeneralDataset(IterableDataset):
             self.data = out[0]
             self.test = out[-1]
 
-            if len(splits) == 3:
+            if splits[1] != 0.0:
                 self.dev = out[1]
         return out
 
@@ -591,8 +604,16 @@ class GeneralDataset(IterableDataset):
         :strata_field (str): Name of label field.
         :returns (base.Tuple[list, base.Union[list, None], list]): Return stratified splits.
         """
-        train_size, dev_size, test_size = split_sizes[0], None, None
+        train_size, dev_size, test_size = split_sizes
         idx_maps = defaultdict(list)
+
+        if (dev_size, test_size) == (0.0, 0.0):
+            test_size = len(data) - split_sizes[0]
+        elif (dev_size, test_size) == (not 0.0, 0.0):
+            test_size = split_sizes[-1]
+        elif (dev_size, test_size) != (0.0, 0.0):
+            dev_size = split_sizes[1]
+            test_size = split_sizes[2]
 
         # Create lists of each label.
         for i, doc in enumerate(data):
@@ -600,29 +621,33 @@ class GeneralDataset(IterableDataset):
 
         # Get labels and probabilities ordered
         labels, label_probs = zip(*{label: len(idx_maps[label]) / len(data) for label in idx_maps}.items())
+        set_infos = [("train", train_size), ("dev", dev_size), ("test", test_size)]
+
         train = self._stratify_helper(data, labels, train_size, label_probs, idx_maps)
 
-        num_splits = len(split_sizes)
-        if num_splits == 1:
-            test_size = len(data) - split_sizes[0]
-        elif num_splits == 2:
-            test_size = split_sizes[-1]
-        elif num_splits == 3:
-            dev_size = split_sizes[1]
-            test_size = split_sizes[2]
+        dev = self._stratify_helper(data, labels, dev_size, label_probs, idx_maps)
 
-        dev, test = None, None
+        test = self._stratify_helper(data, labels, test_size, label_probs, idx_maps)
 
-        if dev_size is not None:
-            dev = self._stratify_helper(data, labels, dev_size, label_probs, idx_maps)
-            test_size += len(data) - (train_size + dev_size + test_size)
-        else:
-            test_size += len(data) - (train_size + test_size)
+        # Deal with the remaining documents
+        missing = {name: (len(split) - exp_size, split, exp_size) for split, (name, _), exp_size in
+                   zip([train, dev, test], set_infos, [train_size, dev_size, test_size])}
+        remaining = [doc for label in idx_maps for doc in idx_maps[label]]
 
-        indices = []
-        for label in idx_maps:
-            indices.extend(idx_maps[label])
-        test = [data[ix] for ix in np.random.choice(indices, test_size, replace = False)]
+        for name, (diff, split, exp_size) in missing.items():
+            if diff != 0:
+                if diff > 0:  # In spite of using floor, we have a split with too many documents
+                    raise IndexError("The {name} split in {self.name} has been assigned too many documents.")
+                try:
+                    assert(abs(diff) <= len(remaining))
+
+                    # Randomly split across labels
+                    indices = np.random.choice(remaining, abs(diff), replace = False)
+                    split.extend([data[remaining.pop(i)] for i, idx in enumerate(indices)])
+                except AssertionError:
+                    tqdm.write("WARNING: The missing # docs in {name} is greater than # unassigned docs.")
+                    tqdm.write("Adding all remaining documents to split {name} in {self.name}.")
+                    split.extend(remaining)
 
         return train, dev, test
 
@@ -639,10 +664,10 @@ class GeneralDataset(IterableDataset):
         :returns (base.DataType): Returns the stratified sample.
         """
         # Get counts for the label distribution
-        label_count = Counter(np.random.choice(labels, sample_size, replace = True, p = probs))
+        label_count = [(label, floor(prob * sample_size)) for label, prob in zip(labels, probs)]
 
         sampled = []
-        for label, count in label_count.items():
+        for label, count in label_count:
             indices = np.random.choice(idx_map[label], count, replace = False)  # Get indices for label
             sampled.extend([data[ix] for ix in indices])
             idx_map[label] = [ix for ix in idx_map[label] if ix not in indices]  # Delete all used indices
@@ -658,18 +683,17 @@ class GeneralDataset(IterableDataset):
         :returns (base.Tuple[list, base.Union[list, None], list]): Tuple containing data splits.
         """
         indices = list(range(len(data)))
-        num_splits = len(splits)
-        if num_splits == 1:
+        train_size, dev_size, test_size = splits
+
+        if (dev_size, test_size) == (0.0, 0.0):
             train, indices = self._split_helper(data, splits[0], indices)
             test, indices = self._split_helper(data, len(data) - splits[0], indices)
             out = (train, None, test)
-
-        elif num_splits == 2:
+        elif (dev_size, test_size) == (not 0.0, 0.0):
             train, indices = self._split_helper(data, splits[0], indices)
             test, indices = self._split_helper(data, splits[1], indices)
             out = (train, None, test)
-
-        elif num_splits == 3:
+        elif (dev_size, test_size) != (0.0, 0.0):
             train, indices = self._split_helper(data, splits[0], indices)
             dev, indices = self._split_helper(data, splits[1], indices)
             test, indices = self._split_helper(data, splits[2], indices)
