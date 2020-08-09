@@ -579,8 +579,6 @@ class GeneralDataset(IterableDataset):
             elif split_sizes[1] != 0.0:
                 split_sizes[1] = split_sizes[1] + (len(data) - sum(split_sizes))
 
-        print(f"split sizes are: {split_sizes}; stratify is {stratify}")
-
         if stratify is not None:  # TODO
             out = self._stratify_split(data, stratify, split_sizes, **kwargs)
         else:
