@@ -1,6 +1,6 @@
-from datetime import datetime
 from mlearn import base
 from functools import reduce
+from datetime import datetime
 from mlearn.data.dataset import GeneralDataset
 from mlearn.data.batching import Batch, BatchExtractor
 from sklearn.feature_extraction import DictVectorizer
@@ -47,8 +47,8 @@ def select_vectorizer(vectorizer: str) -> base.VectType:
     """
     Identify vectorizer used and return it to be used.
 
-    :param vectorizer: Vectorizer to be used.
-    :return v: Vectorizer function.
+    :vectorizer: Vectorizer to be used.
+    :v: Vectorizer function.
     """
     if not any(vec in vectorizer for vec in ['dict', 'count', 'tfidf']):
         print("You need to select from the options: dict, count, tfidf. Defaulting to Dict.")
