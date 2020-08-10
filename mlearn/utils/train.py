@@ -5,7 +5,6 @@ from mlearn import base
 from tqdm import tqdm, trange
 from collections import defaultdict
 from mlearn.utils.metrics import Metrics
-from mlearn.utils.pipeline import bayesian_search
 from mlearn.utils.early_stopping import EarlyStopping
 from mlearn.utils.evaluate import eval_torch_model, eval_sklearn_model
 from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV
