@@ -127,6 +127,19 @@ class Metrics:
         """Provide early stopping metrics."""
         return self.scores[self.early_stop][-1]
 
+    def bayesian_search(self, prepend: str = None) -> base.List[float]:
+        """
+        Take a metrics object and return the metric(s) that are being measured.
+
+        :prepend (str, default = None): Prepend string to metric names.
+        :returns performance (base.List[float]): Return the metrics for the metrics desired.
+        """
+        if prepend is None:
+            prepend = ''
+
+        performance = {f"{prepend}{m}": self.get_last(m) for m in self.scores}
+        return performance
+
     def list(self) -> base.List:
         """Return a list of all metrics."""
         return list(self.metrics.keys())
