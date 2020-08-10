@@ -1,3 +1,5 @@
+import os
+import wandb
 import torch
 from tqdm import tqdm
 from mlearn import base
@@ -68,8 +70,11 @@ class EarlyStopping:
     @property
     def best_state(self):
         """Load/save the best model state prior to early stopping being activated."""
-        print("Loading weights from epoch {0}".format(self.best_epoch))
+        tqdm.write("Loading weights from epoch {0}".format(self.best_epoch))
         self.model.load_state_dict(torch.load(self.path_prefix)['model_state_dict'])
+        # Upload best model to WandB
+        torch.save(torch.save({'model_state_dict': self.model.state_dict()}, os.path.join(wandb.run.dir,
+                                                                                          f"{self.model.name}.pt))
         return self.model
 
     @best_state.setter
