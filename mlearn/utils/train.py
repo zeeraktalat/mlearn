@@ -1,9 +1,11 @@
 import torch
+import wandb
 import numpy as np
 from mlearn import base
 from tqdm import tqdm, trange
 from collections import defaultdict
 from mlearn.utils.metrics import Metrics
+from mlearn.utils.pipeline import bayesian_search
 from mlearn.utils.early_stopping import EarlyStopping
 from mlearn.utils.evaluate import eval_torch_model, eval_sklearn_model
 from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV
@@ -11,7 +13,7 @@ from mlearn.data.fileio import write_predictions, write_results, mtl_batch_write
 
 
 def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: base.Callable, metrics: Metrics,
-                      batchers: base.DataType, clip: float = None, gpu: bool = True, **kwargs):
+                      batchers: base.DataType, clip: float = None, gpu: bool = True, **kwargs) -> None:
     """
     Training procedure for single task pytorch models.
 
@@ -21,7 +23,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: b
     :batchers (base.DataType): Batched training set.
     :clip (float, default = None): Add gradient clipping to prevent exploding gradients.
     :gpu (bool, default = True): Run on GPU
-    :returns: TODO
+    :bayes_hyper (bool, default = False): Run Bayesian Hyper-parameter search.
     """
     with tqdm(batchers, desc = "Batch", leave = False) as loop:
         predictions, labels = [], []
@@ -55,8 +57,8 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: b
 def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, batchers: base.DataType,
                            loss: base.Callable, optimizer: base.Callable, metrics: Metrics, dev: base.DataType = None,
                            dev_metrics: Metrics = None, clip: float = None, early_stopping: int = None,
-                           low: bool = False, shuffle: bool = True, gpu: bool = True, **kwargs
-                           ) -> base.Union[list, int, dict, dict]:
+                           low: bool = False, shuffle: bool = True, gpu: bool = True, bayes_hyper: bool = False, **kwargs
+                           ) -> None:
     """
     Train a single task pytorch model.
 
@@ -74,6 +76,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
     :low (bool, default = False): Lower scores indicate better performance.
     :shuffle (bool, default = True): Shuffle the dataset.
     :gpu (bool, default = True): Run on GPU
+    :bayes_hyper (bool, default = False): Run Bayesian Hyper-parameter search.
     """
     with trange(epochs, desc = "Training epochs", leave = False) as loop:
         if gpu:
@@ -91,6 +94,9 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
 
             _singletask_epoch(model, optimizer, loss, metrics, batchers, clip, gpu)
 
+            if bayes_hyper:
+                wandb.log(metrics.bayesian_search())
+
             try:
                 eval_torch_model(model, dev, loss, dev_metrics, gpu, store = False, **kwargs)
 
@@ -98,6 +104,9 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                                  dev_loss = f"{dev_metrics.get_last('loss'):.4f}",
                                  **metrics.display(),
                                  dev_score = f"{dev_metrics.last_display():.4f}")
+
+                if bayes_hyper:
+                    wandb.log(dev_metrics.bayesian_search(prepend = "Dev "))
 
                 if early_stopping is not None and early_stopping(model, dev_metrics.early_stopping()):
                     model = early_stopping.best_state
@@ -133,7 +142,8 @@ def run_singletask_model(train: bool, writer: base.Callable, pred_writer: base.C
 
 def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.DataType, optimizer: base.Callable,
                metrics: object, batchers: base.List[base.Batch], batch_count: int, dataset_weights: base.List[float],
-               taskid2name: dict, epoch_no: int, clip: float = None, gpu: bool = True, **kwargs) -> None:
+               taskid2name: dict, epoch_no: int, clip: float = None, gpu: bool = True, bayes_hyper: bool = True,
+               **kwargs) -> None:
     """
     Train one epoch of an MTL training loop.
 
@@ -148,6 +158,7 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
     :taskid2name (dict): Dictionary mapping task ID to dataset name.
     :epoch_no (int): The iteration of the epoch.
     :clip (float, default = None): Use gradient clipping.
+    :bayes_hyper (bool, default = False): Run Bayesian Hyper-parameter search.
     """
     with tqdm(range(batch_count), desc = 'Batch', leave = False) as loop:
         label_count = 0
@@ -184,6 +195,8 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
             task_name = taskid2name[task_id]
             mtl_batch_writer(model = model, batch = i, metrics = metrics, task_name = task_name, epoch = epoch_no,
                              **kwargs)
+            if bayes_hyper:
+                wandb.log(metrics.bayesian_search(prepend = "Batch ") + {'task_id': task_name})
 
             loop.set_postfix(batch_loss = f"{metrics.get_last('loss'):.4f}",
                              epoch_loss = f"{epoch_loss / label_count:.4f}",
@@ -196,7 +209,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                     earlystop: int = None, save_path: str = None, dev: base.DataType = None, dev_metrics: object = None,
                     dev_task_id: int = 0, batches_per_epoch: int = None, low: bool = True,
                     shuffle: bool = True, dataset_weights: base.DataType = None, loss_weights: base.DataType = None,
-                    gpu: bool = True, **kwargs) -> None:
+                    gpu: bool = True, bayes_hyper: bool = False, **kwargs) -> None:
     """
     Train a multi-task learning model.
 
@@ -220,6 +233,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
     :dataset_weights (base.DataType, default = None): Probability for each dataset to be chosen (must sum to 1.0).
     :loss_weights (base.DataType, default = None): Weight the loss by multiplication.
     :gpu (bool, default = True): Set tot rue if model runs on GPU.
+    :bayes_hyper (bool, default = False): Run Bayesian Hyper-parameter search.
     """
     with trange(epochs, desc = "Training model", leave = False) as loop:
         taskid2name = {i: batchers[i].data.name for i in range(len(batchers))}
@@ -259,6 +273,9 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                 loop.set_postfix(loss = f"{metrics.get_last('loss'):.4f}",
                                  dev_loss = f"{dev_metrics.get_last('loss'):.4f}",
                                  dev_score = f"{dev_metrics.last_display():.4f}")
+
+                if bayes_hyper:
+                    wandb.log(metrics.bayesian_search(prepend = "Dev ") + {'task_id': task_name})
 
                 if earlystop is not None and earlystop(model, dev_metrics.early_stopping()):
                     model = earlystop.best_state
