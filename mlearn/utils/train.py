@@ -187,7 +187,7 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
 
             loop.set_postfix(batch_loss = f"{metrics.get_last('loss'):.4f}",
                              epoch_loss = f"{epoch_loss / label_count:.4f}",
-                             **metrics.display(),
+                             task_score = f"{metrics.last_display():.4f},
                              task = task_id)
 
 
