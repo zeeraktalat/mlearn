@@ -104,9 +104,6 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                 if hyperopt:
                     hyperopt.report(dev_metrics.last_display(), ep)
 
-                if hyperopt.should_prune():
-                    raise optuna.exceptions.TrialPruned()
-
                 if early_stopping is not None and early_stopping(model, dev_metrics.early_stopping()):
                     model = early_stopping.best_state
                     break
@@ -271,9 +268,6 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
 
                 if hyperopt:
                     hyperopt.report(dev_metrics.last_display(), ep)
-
-                if hyperopt.should_prune():
-                    raise optuna.exceptions.TrialPruned()
 
                 if earlystop is not None and earlystop(model, dev_metrics.early_stopping()):
                     model = earlystop.best_state
