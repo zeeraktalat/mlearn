@@ -31,6 +31,17 @@ def _loader(args: dict, **kwargs) -> GeneralDataset:
     return dataset
 
 
+def mp_load_datasets(dataset: base.Callable, **kwargs) -> GeneralDataset:
+    """
+    Load datasets using multiprocessing.
+
+    :dataset (base.Callable): dataset to be loaded.
+    :returns loaded (GeneralDataset): Return oaded dataset.
+    """
+    loaded = dataset(**kwargs)
+    return loaded
+
+
 def davidson_to_binary(label: str) -> str:
     """
     Convert Davidson labels to binary labels.
