@@ -103,9 +103,7 @@ def param_selection(trial, parameters: dict) -> dict:
     params = defaultdict()
 
     for p in parameters:
-        if p in ['batch_size', 'epochs', 'nonlinearity', 'embedding', 'shared']:
+        if p in ['batch_size', 'epochs', 'nonlinearity', 'embedding', 'shared', 'learning_rate', 'dropout']:
             params[p] = trial.suggest_categorical(p, parameters[p])
-        elif p in ['learning_rate', 'dropout']:
-            params[p] = trial.suggest_float(p, parameters[p][0], parameters[p][1])
 
     return params
