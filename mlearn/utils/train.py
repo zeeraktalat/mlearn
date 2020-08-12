@@ -53,10 +53,10 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: b
 
 
 def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, batchers: base.DataType,
-                           loss: base.Callable, optimizer: base.Callable, metrics: Metrics, dev: base.DataType = None,
-                           dev_metrics: Metrics = None, clip: float = None, early_stopping: int = None,
-                           low: bool = False, shuffle: bool = True, gpu: bool = True, **kwargs
-                           ) -> base.Union[list, int, dict, dict]:
+                           loss: base.Callable, optimizer: base.Callable, metrics: Metrics,
+                           dev: base.DataType = None, dev_metrics: Metrics = None, clip: float = None,
+                           early_stopping: int = None, low: bool = False, shuffle: bool = True, gpu: bool = True,
+                           hyperopt = None, **kwargs) -> base.Union[list, int, dict, dict]:
     """
     Train a single task pytorch model.
 
@@ -74,6 +74,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
     :low (bool, default = False): Lower scores indicate better performance.
     :shuffle (bool, default = True): Shuffle the dataset.
     :gpu (bool, default = True): Run on GPU
+    :hyperopt (default = None): Do hyper parameter optimisation.
     """
     with trange(epochs, desc = "Training epochs", leave = False) as loop:
         if gpu:
@@ -98,6 +99,9 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                                  dev_loss = f"{dev_metrics.get_last('loss'):.4f}",
                                  **metrics.display(),
                                  dev_score = f"{dev_metrics.last_display():.4f}")
+
+                if hyperopt:
+                    hyperopt.report(dev_metrics.last_display(), ep)
 
                 if early_stopping is not None and early_stopping(model, dev_metrics.early_stopping()):
                     model = early_stopping.best_state
@@ -196,7 +200,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                     earlystop: int = None, save_path: str = None, dev: base.DataType = None, dev_metrics: object = None,
                     dev_task_id: int = 0, batches_per_epoch: int = None, low: bool = True,
                     shuffle: bool = True, dataset_weights: base.DataType = None, loss_weights: base.DataType = None,
-                    gpu: bool = True, **kwargs) -> None:
+                    gpu: bool = True, hyperopt = None, **kwargs) -> None:
     """
     Train a multi-task learning model.
 
@@ -220,6 +224,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
     :dataset_weights (base.DataType, default = None): Probability for each dataset to be chosen (must sum to 1.0).
     :loss_weights (base.DataType, default = None): Weight the loss by multiplication.
     :gpu (bool, default = True): Set tot rue if model runs on GPU.
+    :hyperopt (default = None): Trial object for hyper parameter search.
     """
     with trange(epochs, desc = "Training model", leave = False) as loop:
         taskid2name = {i: batchers[i].data.name for i in range(len(batchers))}
@@ -253,12 +258,16 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                     scores[score].append(sum(metrics.scores[score]))
                 else:
                     scores[score].append(np.mean(metrics.scores[score]))
+
             try:
                 eval_torch_model(model, dev, loss, dev_metrics, mtl = dev_task_id, store = False, gpu = gpu, **kwargs)
 
                 loop.set_postfix(loss = f"{metrics.get_last('loss'):.4f}",
                                  dev_loss = f"{dev_metrics.get_last('loss'):.4f}",
                                  dev_score = f"{dev_metrics.last_display():.4f}")
+
+                if hyperopt:
+                    hyperopt.report(dev_metrics.last_display(), epoch)
 
                 if earlystop is not None and earlystop(model, dev_metrics.early_stopping()):
                     model = earlystop.best_state

@@ -7,7 +7,7 @@ dist: "xenial"
 
 env:
   global:
-    - TQDM_DSIABLE=True
+    - TQDM_DISABLE=True
 
 services:
   - mongodb

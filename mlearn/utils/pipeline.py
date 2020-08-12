@@ -1,6 +1,7 @@
-from datetime import datetime
 from mlearn import base
 from functools import reduce
+from datetime import datetime
+from collections import defaultdict
 from mlearn.data.dataset import GeneralDataset
 from mlearn.data.batching import Batch, BatchExtractor
 from sklearn.feature_extraction import DictVectorizer
@@ -89,3 +90,22 @@ def hyperparam_space(search_space: base.List[dict], hyper_parameters: base.List[
                 additions.append({**comb_dict, **{param_name: param}})
         search_space = additions
     return search_space
+
+
+def params_selection(trial, parameters: dict) -> dict:
+    """
+    Run Optuna hyper-parameter optimisation.
+
+    :trials (): The trial that is about to be run.
+    :parameters (dict): Parameter names with their associated values.
+    :returns params (dict): Returns dict of parameters.
+    """
+    params = defaultdict()
+
+    for p in parameters:
+        if p in ['batch_size', 'epochs', 'nonlinearity', 'embedding', 'shared']:
+            params[p] = trial.suggest_categorical(p, parameters[p])
+        elif p in ['learning_rate', 'dropout']:
+            params[p] = trial.suggest_float(p, parameters[p]['low'], parameters[p]['high'])
+
+    return params
