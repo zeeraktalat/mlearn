@@ -92,7 +92,7 @@ def hyperparam_space(search_space: base.List[dict], hyper_parameters: base.List[
     return search_space
 
 
-def params_selection(trial, parameters: dict) -> dict:
+def param_selection(trial, parameters: dict) -> dict:
     """
     Run Optuna hyper-parameter optimisation.
 

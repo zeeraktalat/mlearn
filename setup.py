@@ -27,6 +27,8 @@ setuptools.setup(
         "scikit-learn==0.23.1",
         "torchtestcase",
         "torch==1.4.0",
+        'optuna',
+        'wandb',
         "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.5/en_core_web_sm-2.2.5.tar.gz#egg=en_core_web_sm"
     ],
     dependency_links=["https://download.pytorch.org/whl/cu90/torch_stable.html"]
