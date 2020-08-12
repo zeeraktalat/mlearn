@@ -316,7 +316,7 @@ class EmbeddingMLPClassifier(nn.Module):
     """Embedding MLP MTL classifier."""
 
     def __init__(self, input_dims: base.List[int], shared_dim: int, embedding_dims: base.List[int],
-                 output_dims: base.List[int], dropout: float = 0.0, batch_first = True,
+                 output_dims: base.List[int], dropout: float = 0.0, batch_first: bool = True,
                  **kwargs) -> None:
         """
         Initialise the Multitask LSTM.
@@ -326,7 +326,7 @@ class EmbeddingMLPClassifier(nn.Module):
         :param embedding_dims (base.List[int]): The dimensionality of the hidden dimensions for each task.
         :param output_dims (base.List[int]): Number of classes for to predict on.
         :param dropout (float, default = 0.0): Value of dropout layer.
-        :batch_first (boo, default = True): If input tensors have the batch dimension in the first dimensino.
+        :batch_first (bool, default = True): If input tensors have the batch dimension in the first dimension.
         """
         super(EmbeddingMLPClassifier, self).__init__()
         self.name = "onehot-mtl-mlp"

@@ -1,5 +1,6 @@
 import re
 import spacy
+from bpemb import BPEmb
 from mlearn import base
 from string import punctuation
 
@@ -189,6 +190,7 @@ class Cleaner(object):
         """
         self.processes = processes if processes is not None else []
         self.tagger = spacy.load('en_core_web_sm', disable = ['ner', 'parser', 'textcats'])
+        self.bpe = BPEmb(lang = 'en', vs = 200000)
         self.liwc_dict = None
 
     def clean_document(self, text: base.DocType, processes: base.List[str] = None):
@@ -224,4 +226,15 @@ class Cleaner(object):
         :returns toks: Document that has been passed through spacy's tagger.
         """
         toks = [tok.text for tok in self.tagger(self.clean_document(document, processes = processes))]
+        return toks
+
+    def bpe_tokenize(self, document: base.DocType, processes: base.List[str] = None):
+        """
+        Tokenize the document using BPE and clean it as it is processed.
+
+        :document: Document to be parsed.
+        :processes: The cleaning processes to engage in.
+        :returns toks: Document that has been passed through spacy's tagger.
+        """
+        toks = self.bpe(self.clean_document(document, processes = processes))
         return toks
