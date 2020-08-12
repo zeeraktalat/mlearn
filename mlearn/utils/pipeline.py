@@ -95,6 +95,7 @@ def hyperparam_space(search_space: base.List[dict], hyper_parameters: base.List[
 def params_selection(trial, parameters: dict) -> dict:
     """
     Run Optuna hyper-parameter optimisation.
+
     :trials (): The trial that is about to be run.
     :parameters (dict): Parameter names with their associated values.
     :returns params (dict): Returns dict of parameters.
