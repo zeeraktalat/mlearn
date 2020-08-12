@@ -1,5 +1,4 @@
 import torch
-import optuna
 import numpy as np
 from mlearn import base
 from tqdm import tqdm, trange
@@ -259,6 +258,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                     scores[score].append(sum(metrics.scores[score]))
                 else:
                     scores[score].append(np.mean(metrics.scores[score]))
+
             try:
                 eval_torch_model(model, dev, loss, dev_metrics, mtl = dev_task_id, store = False, gpu = gpu, **kwargs)
 
@@ -267,7 +267,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                                  dev_score = f"{dev_metrics.last_display():.4f}")
 
                 if hyperopt:
-                    hyperopt.report(dev_metrics.last_display(), ep)
+                    hyperopt.report(dev_metrics.last_display(), epoch)
 
                 if earlystop is not None and earlystop(model, dev_metrics.early_stopping()):
                     model = earlystop.best_state
