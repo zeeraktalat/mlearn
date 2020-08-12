@@ -251,7 +251,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                     batch.shuffle()
 
             _mtl_epoch(model, loss, loss_weights, optimizer, metrics, batchers, batches_per_epoch, dataset_weights,
-                       taskid2name, i, clip, **kwargs)
+                       taskid2name, i, clip, gpu = gpu, **kwargs)
 
             for score in metrics.scores:  # Compute average value of the scores computed in each epoch.
                 if score == 'loss':
@@ -298,7 +298,7 @@ def run_mtl_model(train: bool, writer: base.Callable, pred_writer: base.Callable
 
     write_results(writer, **kwargs)
 
-    if not train:
+    if not train and pred_writer is not None:
         write_predictions(pred_writer, **kwargs)
 
 
