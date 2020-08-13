@@ -74,7 +74,7 @@ class Metrics:
         scores = {}
         for name, metric in self.metrics.items():
             try:
-                scores[name] = float(metric(preds, labels, average = self.average, **kwargs))
+                scores[name] = float(metric(preds, labels, average = self.average, zero_division = 0, **kwargs))
             except TypeError:
                 scores[name] = float(metric(preds, labels, **kwargs))
         return scores
