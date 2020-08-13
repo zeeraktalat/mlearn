@@ -19,6 +19,33 @@ class Preprocessors(object):
         else:
             self.liwc_path = liwc_dir + 'liwc-2015.csv'
 
+    def select_experiment(self, exp: str, slur_window: int = None) -> base.Callable:
+        """
+        Select experiment to run.
+
+        :exp (str): The experiment to run.
+        :returns experiment: Return th experiment to run.
+        """
+        if exp == 'word':
+            experiment = self.word_token
+
+        elif exp == 'liwc':
+            experiment = self.compute_unigram_liwc
+
+        elif exp in ['ptb', 'pos']:
+            experiment = self.ptb_tokenize
+
+        elif exp == 'length':
+            experiment = self.word_length
+
+        elif exp == 'syllable':
+            experiment = self.syllable_count
+
+        elif exp == 'slur':
+            self.slur_window = slur_window
+            experiment = self.slur_replacement
+        return experiment
+
     def word_length(self, doc: base.DocType) -> base.List[int]:
         """
         Represent sentence as the length of each token.

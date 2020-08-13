@@ -303,7 +303,10 @@ class GeneralDataset(IterableDataset):
         :limiter (base.Callable): Function to limit the vocabulary.
         :kwargs: All arguments needed for the limiter function.
         """
-        self.itos = limiter(self.token_counts, **kwargs)
+        limited, deleted = limiter(self.token_counts, **kwargs)
+        for token in deleted:
+            del self.token_counts[token]
+        self.itos = {idx: tok for idx, tok in enumerate(self.token_counts)}
         self.itos[len(self.itos)] = '<pad>'
         self.itos[len(self.itos)] = '<unk>'
         self.stoi = {tok: ix for ix, tok in self.itos.items()}
