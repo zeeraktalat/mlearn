@@ -212,7 +212,7 @@ class Cleaner(object):
         if 'hashtag' in process:
             cleaned = re.sub(r'#[a-zA-Z0-9]*\b', 'HASHTAG', cleaned)
         if 'username' in process:
-            cleaned = re.sub(r'@\S+', 'AT_USER', cleaned)
+            cleaned = re.sub(r'@\S+', 'USER', cleaned)
         cleaned = re.sub("'", ' ', cleaned)
 
         return cleaned
