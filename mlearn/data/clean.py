@@ -190,7 +190,8 @@ class Cleaner(object):
         """
         self.processes = processes if processes is not None else []
         self.tagger = spacy.load('en_core_web_sm', disable = ['ner', 'parser', 'textcats'])
-        self.bpe = BPEmb(lang = 'en', vs = 200000)
+        bpe = BPEmb(lang = 'en', vs = 200000)
+        self.bpe = bpe.encode
         self.liwc_dict = None
 
     def clean_document(self, text: base.DocType, processes: base.List[str] = None):
