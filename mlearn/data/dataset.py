@@ -107,18 +107,12 @@ class GeneralDataset(IterableDataset):
                 data_line[field.name] = self.process_doc(line[idx].rstrip().replace('\n', '').replace('\r', '').strip())
                 data_line['original'] = line[idx].rstrip().replace('\n', '').replace('\r', '').strip()
 
-                if data_line[field.name] is None:
-                    __import__('pdb').set_trace()
-
             for field in self.label_fields:
                 idx = field.index if self.ftype in ['CSV', 'TSV'] else field.cname
                 if self.label_preprocessor:
                     data_line[field.name] = self.label_preprocessor(line[idx].rstrip())
                 else:
                     data_line[field.name] = line[idx].rstrip()
-
-                if data_line[field.name] is None:
-                    __import__('pdb').set_trace()
 
             for key, val in data_line.items():
                 setattr(datapoint, key, val)
