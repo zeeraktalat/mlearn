@@ -101,7 +101,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                                  dev_score = f"{dev_metrics.last_display():.4f}")
 
                 if hyperopt:
-                    hyperopt.report(dev_metrics.last_display(), ep)
+                    hyperopt.report(dev_metrics.early_stopping(), ep)
 
                 if early_stopping is not None and early_stopping(model, dev_metrics.early_stopping()):
                     model = early_stopping.best_state
@@ -267,7 +267,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                                  dev_score = f"{dev_metrics.last_display():.4f}")
 
                 if hyperopt:
-                    hyperopt.report(dev_metrics.last_display(), epoch)
+                    hyperopt.report(dev_metrics.early_stopping(), epoch)
 
                 if earlystop is not None and earlystop(model, dev_metrics.early_stopping()):
                     model = earlystop.best_state
