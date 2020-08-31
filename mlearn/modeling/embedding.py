@@ -192,7 +192,7 @@ class RNNClassifier(nn.Module):
                      'Hidden dim': hidden_dim,
                      'Output dim': output_dim,
                      'Dropout': dropout,
-                     'nonlinearity': 'tanh'
+                     'nonlinearity': nonlinearity
                      }
 
         # Initialise the hidden dim
