@@ -31,8 +31,6 @@ class EmbeddingLSTMClassifier(nn.Module):
         # Initialise the hidden dim
         self.all_parameters = nn.ParameterList()
 
-        assert len(input_dims) == len(hidden_dims) == len(output_dims)
-
         # Input layer (not shared) [Embedding]
         # hidden to hidden layer (shared) [Linear]
         # Hidden to hidden layer (not shared) [LSTM]
@@ -60,7 +58,7 @@ class EmbeddingLSTMClassifier(nn.Module):
 
         self.lstm = {}
         for task_ix, hdim in enumerate(hidden_dims):  # TODO Double check this loop
-            layer = nn.LSTM(hdim, hdim, batch_first = batch_first, num_layers = no_layers)
+            layer = nn.LSTM(hdim, hidden_dims[-1], batch_first = batch_first, num_layers = no_layers)
             self.lstm[task_ix] = layer
 
             # Add parameters
