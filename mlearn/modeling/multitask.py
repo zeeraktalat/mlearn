@@ -84,7 +84,7 @@ class EmbeddingLSTMClassifier(nn.Module):
         print(self)
         print(list(self.all_parameters))
 
-    def forward(self, sequence, task_id) -> base.DataType:
+    def forward(self, sequence, task_id, **kwargs) -> base.DataType:
         """
         Forward step in the classifier.
 
