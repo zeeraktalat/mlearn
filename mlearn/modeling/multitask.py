@@ -301,10 +301,10 @@ class OnehotMLPClassifier(nn.Module):
         res = self.dropout(self.nonlinearity(self.inputs[task_id](sequence.float())))
 
         for layer in self.shared:
-            res = self.dropout(self.nonlinearity(layer(res)))
+            res = self.dropout(layer(res))
 
         res = res.mean(0)
-        res = self.outputs[task_id](res)
+        res = self.outputs[task_id](self.nonlinearity(res))
         prob_dist = self.softmax(res)
 
         return prob_dist
@@ -315,7 +315,7 @@ class EmbeddingMLPClassifier(nn.Module):
 
     def __init__(self, input_dims: base.List[int], shared_dim: int, embedding_dims: base.List[int],
                  output_dims: base.List[int], dropout: float = 0.0, batch_first: bool = True,
-                 **kwargs) -> None:
+                 nonlinearity: str = 'tanh', **kwargs) -> None:
         """
         Initialise the Multitask LSTM.
 
@@ -332,7 +332,7 @@ class EmbeddingMLPClassifier(nn.Module):
         self.info = {'Input dim': ", ".join([str(it) for it in input_dims]), 'Shared dim': shared_dim,
                      'Embedding dim': ", ".join([str(it) for it in embedding_dims]),
                      'Output dim': ", ".join([str(it) for it in output_dims]),
-                     'Dropout': dropout, 'Model': self.name}
+                     'Dropout': dropout, 'Model': self.name, 'nonlinearity': nonlinearity}
 
         # Initialise the hidden dim
         self.all_parameters = nn.ParameterList()
@@ -341,7 +341,6 @@ class EmbeddingMLPClassifier(nn.Module):
 
         # Input layer (not shared) [Embedding]
         # hidden to hidden layer (shared) [Linear]
-        # Hidden to hidden layer (not shared) [LSTM]
         # Output layer (not shared) [Linear}
 
         self.inputs = {}  # Define task inputs
@@ -373,6 +372,7 @@ class EmbeddingMLPClassifier(nn.Module):
         # Set the method for producing "probability" distribution.
         self.dropout = nn.Dropout(dropout)
         self.softmax = nn.LogSoftmax(dim = 1)
+        self.nonlinearity = torch.tanh if nonlinearity == 'tanh' else torch.relu
 
         # Ensure that the model is deterministic (the bias term is added)
         # print(self)
@@ -389,13 +389,13 @@ class EmbeddingMLPClassifier(nn.Module):
         if self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        res = self.dropout(self.inputs[task_id](sequence))
+        res = self.dropout(self.nonlinearity(self.inputs[task_id](sequence)))
 
         for layer in self.shared:
             res = self.dropout(layer(res))
 
         res = res.mean(0)
-        res = self.outputs[task_id](res)
+        res = self.outputs[task_id](self.nonlinearity(res))
         prob_dist = self.softmax(res)
 
         return prob_dist
