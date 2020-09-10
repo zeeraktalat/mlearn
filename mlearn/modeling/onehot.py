@@ -200,7 +200,7 @@ class RNNClassifier(nn.Module):
 
         # Define layers of the network
         self.itoh = nn.Linear(input_dim, hidden_dim)
-        self.rnn = nn.RNN(hidden_dim, hidden_dim, batch_first = batch_first)
+        self.rnn = nn.RNN(hidden_dim, hidden_dim, batch_first = batch_first, nonlinearity = nonlinearity)
         self.htoo = nn.Linear(hidden_dim, output_dim)
 
         # Set the method for producing "probability" distribution.

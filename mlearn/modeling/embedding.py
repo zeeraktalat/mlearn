@@ -182,7 +182,6 @@ class RNNClassifier(nn.Module):
         :nonlinearity (str, default = 'tanh'): Set nonlinearity function.
         :batch_first (bool): Is batch the first dimension?
         """
-        nonlinearity = nonlinearity
         super(RNNClassifier, self).__init__()
         self.batch_first = batch_first
         self.name = 'emb_rnn'
@@ -200,7 +199,7 @@ class RNNClassifier(nn.Module):
 
         # Define layers of the network
         self.itoe = nn.Embedding(input_dim, embedding_dim)
-        self.rnn = nn.RNN(embedding_dim, hidden_dim, batch_first = batch_first)
+        self.rnn = nn.RNN(embedding_dim, hidden_dim, batch_first = batch_first, nonlinearity = nonlinearity)
         self.htoo = nn.Linear(hidden_dim, output_dim)
 
         # Set the method for producing "probability" distribution.
