@@ -208,7 +208,7 @@ class OnehotLSTMClassifier(nn.Module):
 
         lstm_out, (lstm_hidden, _) = self.lstm[task_id](res)
 
-        output = self.outputs[task_id](lstm_hidden)
+        output = self.outputs[task_id](self.dropout(lstm_hidden))
 
         prob_dist = self.softmax(output)  # The probability distribution
 
