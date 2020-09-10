@@ -6,7 +6,7 @@ from collections import defaultdict
 from mlearn.utils.metrics import Metrics
 from mlearn.utils.early_stopping import EarlyStopping
 from mlearn.utils.evaluate import eval_torch_model, eval_sklearn_model
-from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV
+from sklearn.model_selection import KFold, StratifiedKFold, RandomizedSearchCV
 from mlearn.data.fileio import write_predictions, write_results, mtl_batch_writer
 
 
@@ -373,7 +373,7 @@ def train_sklearn_gridsearch_model(model: base.ModelType, vectorizer: base.VectT
     labels = [doc.label for doc in dataset.train]
 
     with trange(1, desc = "Training model") as loop:
-        model = GridSearchCV(model, grid_search, scoring, n_jobs = n_jobs, cv = cross_validate, refit = True)
+        model = RandomizedSearchCV(model, grid_search, scoring, n_jobs = n_jobs, cv = cross_validate, refit = True)
         model.fit(train, labels)
 
         try:
