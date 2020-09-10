@@ -44,17 +44,13 @@ def get_deep_dict_value(source: dict, keys: str, default = None):
     return value
 
 
-def select_vectorizer(vectorizer: str) -> base.VectType:
+def select_vectorizer(vectorizer: str = 'dict') -> base.VectType:
     """
     Identify vectorizer used and return it to be used.
 
-    :param vectorizer: Vectorizer to be used.
+    :vectorizer, default = 'dict': Vectorizer to be used.
     :return v: Vectorizer function.
     """
-    if not any(vec in vectorizer for vec in ['dict', 'count', 'tfidf']):
-        print("You need to select from the options: dict, count, tfidf. Defaulting to Dict.")
-        return DictVectorizer
-
     vect = vectorizer.lower()
     if 'dict' in vect:
         v = DictVectorizer()
