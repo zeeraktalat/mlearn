@@ -12,13 +12,13 @@ class EmbeddingLSTMClassifier(nn.Module):
         """
         Initialise the Multitask LSTM.
 
-        :param input_dims (base.List[int]): The dimensionality of the input.
-        :param shared_dim (int): The dimensionality of the shared layers.
-        :param hidden_dim (base.List[int]): The dimensionality of the hidden dimensions for each task.
-        :param embedding_dim (int): The dimensionality of the the produced embeddings.
-        :param no_classes: Number of classes for to predict on.
-        :param no_layers: The number of recurrent layers in the LSTM (1-3).
-        :param dropout: Value fo dropout
+        :input_dims (base.List[int]): The dimensionality of the input.
+        :shared_dim (int): The dimensionality of the shared layers.
+        :hidden_dim (base.List[int]): The dimensionality of the hidden dimensions for each task.
+        :embedding_dim (int): The dimensionality of the the produced embeddings.
+        :no_classes: Number of classes for to predict on.
+        :no_layers: The number of recurrent layers in the LSTM (1-3).
+        :dropout: Value fo dropout
         """
         super(EmbeddingLSTMClassifier, self).__init__()
         self.name = "emb-mtl-lstm"
@@ -88,8 +88,8 @@ class EmbeddingLSTMClassifier(nn.Module):
         """
         Forward step in the classifier.
 
-        :param sequence: The sequence to pass through the network.
-        :param task_id: The task on which to perform forward pass.
+        :sequence: The sequence to pass through the network.
+        :task_id: The task on which to perform forward pass.
         :return (base.DataType): The "probability" distribution for the classes.
         """
         if not self.batch_first:
@@ -102,7 +102,7 @@ class EmbeddingLSTMClassifier(nn.Module):
 
         lstm_out, (lstm_hidden, _) = self.lstm[task_id](res)
 
-        output = self.outputs[task_id](lstm_hidden)
+        output = self.outputs[task_id](self.dropout(lstm_hidden))
 
         prob_dist = self.softmax(output)  # The probability distribution
 
@@ -118,12 +118,12 @@ class OnehotLSTMClassifier(nn.Module):
         """
         Initialise the Multitask LSTM.
 
-        :param input_dims (base.List[int]): The dimensionality of the input.
-        :param shared_dim (int): The dimensionality of the shared layer.
-        :param hidden_dims (base.List[int]): The dimensionality of the hidden dimensions for each task.
-        :param output_dims (base.List[int]): Number of classes for to predict on.
-        :param no_layers (int, default = 1): The number of recurrent layers in the LSTM (1-3).
-        :param dropout (float, default = 0.0): Value of dropout layer.
+        :input_dims (base.List[int]): The dimensionality of the input.
+        :shared_dim (int): The dimensionality of the shared layer.
+        :hidden_dims (base.List[int]): The dimensionality of the hidden dimensions for each task.
+        :output_dims (base.List[int]): Number of classes for to predict on.
+        :no_layers (int, default = 1): The number of recurrent layers in the LSTM (1-3).
+        :dropout (float, default = 0.0): Value of dropout layer.
         :batch_first (boo, default = True): If input tensors have the batch dimension in the first dimensino.
         """
         super(OnehotLSTMClassifier, self).__init__()
@@ -194,8 +194,8 @@ class OnehotLSTMClassifier(nn.Module):
         """
         Forward step in the classifier.
 
-        :param sequence: The sequence to pass through the network.
-        :param task_id: The task on which to perform forward pass.
+        :sequence: The sequence to pass through the network.
+        :task_id: The task on which to perform forward pass.
         :return (base.DataType): The "probability" distribution for the classes.
         """
         if not self.batch_first:
@@ -224,11 +224,11 @@ class OnehotMLPClassifier(nn.Module):
         """
         Initialise the Multitask LSTM.
 
-        :param input_dims (base.List[int]): The dimensionality of the input.
-        :param shared_dim (int): The dimensionality of the shared layer.
-        :param hidden_dims (base.List[int]): The dimensionality of the hidden dimensions for each task.
-        :param output_dims (base.List[int]): Number of classes for to predict on.
-        :param dropout (float, default = 0.0): Value of dropout layer.
+        :input_dims (base.List[int]): The dimensionality of the input.
+        :shared_dim (int): The dimensionality of the shared layer.
+        :hidden_dims (base.List[int]): The dimensionality of the hidden dimensions for each task.
+        :output_dims (base.List[int]): Number of classes for to predict on.
+        :dropout (float, default = 0.0): Value of dropout layer.
         :batch_first (boo, default = True): If input tensors have the batch dimension in the first dimensino.
         """
         super(OnehotMLPClassifier, self).__init__()
@@ -291,8 +291,8 @@ class OnehotMLPClassifier(nn.Module):
         """
         Forward step in the classifier.
 
-        :param sequence: The sequence to pass through the network.
-        :param task_id: The task on which to perform forward pass.
+        :sequence: The sequence to pass through the network.
+        :task_id: The task on which to perform forward pass.
         :return (base.DataType): The "probability" distribution for the classes.
         """
         if self.batch_first:
@@ -319,11 +319,11 @@ class EmbeddingMLPClassifier(nn.Module):
         """
         Initialise the Multitask LSTM.
 
-        :param input_dims (base.List[int]): The dimensionality of the input.
-        :param shared_dim (int): The dimensionality of the shared layer.
-        :param embedding_dims (base.List[int]): The dimensionality of the hidden dimensions for each task.
-        :param output_dims (base.List[int]): Number of classes for to predict on.
-        :param dropout (float, default = 0.0): Value of dropout layer.
+        :input_dims (base.List[int]): The dimensionality of the input.
+        :shared_dim (int): The dimensionality of the shared layer.
+        :embedding_dims (base.List[int]): The dimensionality of the hidden dimensions for each task.
+        :output_dims (base.List[int]): Number of classes for to predict on.
+        :dropout (float, default = 0.0): Value of dropout layer.
         :batch_first (bool, default = True): If input tensors have the batch dimension in the first dimension.
         """
         super(EmbeddingMLPClassifier, self).__init__()
@@ -382,8 +382,8 @@ class EmbeddingMLPClassifier(nn.Module):
         """
         Forward step in the classifier.
 
-        :param sequence: The sequence to pass through the network.
-        :param task_id: The task on which to perform forward pass.
+        :sequence: The sequence to pass through the network.
+        :task_id: The task on which to perform forward pass.
         :return (base.DataType): The "probability" distribution for the classes.
         """
         if self.batch_first:
