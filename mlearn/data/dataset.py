@@ -481,7 +481,7 @@ class GeneralDataset(IterableDataset):
         :vect (base.VectType): Vectorizer to use.
         :returns vectorized (base.DataType): Return vectorized dataset.
         """
-        data = [getattr(doc, getattr(f, 'name')) for f in self.train_fields for doc in data]
+        data = [" ".join(getattr(doc, getattr(f, 'name'))) for f in self.train_fields for doc in data]
 
         if vectorizer.fitted:
             vectorized = vectorizer.transform(data)
