@@ -197,8 +197,8 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
 
 def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], optimizer: base.Callable,
                     loss: base.Callable, metrics: object, batch_size: int = 64, epochs: int = 2, clip: float = None,
-                    earlystop: int = None, save_path: str = None, dev: base.DataType = None, dev_metrics: object = None,
-                    dev_task_id: int = 0, batches_per_epoch: int = None, low: bool = True,
+                    early_stopping: int = None, save_path: str = None, dev: base.DataType = None,
+                    dev_metrics: object = None, dev_task_id: int = 0, batches_per_epoch: int = None, low: bool = True,
                     shuffle: bool = True, dataset_weights: base.DataType = None, loss_weights: base.DataType = None,
                     gpu: bool = True, hyperopt = None, **kwargs) -> None:
     """
@@ -213,7 +213,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
     :batch_size (int): Training batch size.
     :epochs (int): Maximum number of epochs (if no early stopping).
     :clip (float, default = None): Use gradient clipping.
-    :earlystop (int, default = None): Number of epochs to observe non-improving dev performance before early stopping.
+    :early_stopping (int, default = None): Number of epochs to observe non-improving dev performance before stopping.
     :dev (base.DataType): Batched dev object.
     :dev_metrics (object): Initialized dev_metrics object.
     :dev_task_id (int, default = 0): Task ID for task to use for early stopping, in case of multitask learning.
@@ -242,8 +242,8 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
         if batches_per_epoch is None:
             batches_per_epoch = sum([len(dataset) * batch_size for dataset in batchers]) // batch_size
 
-        if earlystop is not None:
-            earlystop = EarlyStopping(save_path, model, earlystop, low_is_good = low)
+        if early_stopping is not None:
+            earlystop = EarlyStopping(save_path, model, early_stopping, low_is_good = low)
 
         for i, epoch in enumerate(loop):
             if shuffle:
@@ -269,7 +269,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                 if hyperopt:
                     hyperopt.report(dev_metrics.early_stopping(), epoch)
 
-                if earlystop is not None and earlystop(model, dev_metrics.early_stopping()):
+                if early_stopping is not None and earlystop(model, dev_metrics.early_stopping()):
                     model = earlystop.best_state
                     break
             except Exception:
