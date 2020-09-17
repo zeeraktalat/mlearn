@@ -47,11 +47,11 @@ class EmbeddingLSTMClassifier(nn.Module):
             self.all_parameters.append(layer.weight)
 
         self.shared = []
-        for i in range(len(hidden_dims)):
+        for i in range(len(hidden_dims) - 1):
             if i == 0:
                 layer = nn.Linear(embedding_dims, hidden_dims[0])
             else:
-                layer = nn.Linear(hidden_dims[i - 1], hidden_dims[i])
+                layer = nn.Linear(hidden_dims[i], hidden_dims[i + 1])
             self.shared.append(layer)
 
             # Add parameters
@@ -59,8 +59,8 @@ class EmbeddingLSTMClassifier(nn.Module):
             self.all_parameters.append(layer.bias)
 
         self.lstm = {}
-        for task_ix, hdim in enumerate(hidden_dims):  # TODO Double check this loop
-            layer = nn.LSTM(hdim, hidden_dims[-1], batch_first = batch_first, num_layers = no_layers)
+        for task_ix, _ in enumerate(input_dims):  # TODO Double check this loop
+            layer = nn.LSTM(hidden_dims[task_ix], hidden_dims[-1], batch_first = batch_first, num_layers = no_layers)
             self.lstm[task_ix] = layer
 
             # Add parameters
