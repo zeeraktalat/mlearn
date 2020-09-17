@@ -6,7 +6,7 @@ from mlearn import base
 class EmbeddingLSTMClassifier(nn.Module):
     """Multitask LSTM Classifier."""
 
-    def __init__(self, input_dims: base.List[int], embedding_dim: int, shared_dim: int, hidden_dims: base.List[int],
+    def __init__(self, input_dims: base.List[int], embedding_dims: int, shared_dim: int, hidden_dims: base.List[int],
                  output_dims: base.List[int], no_layers: int = 1, dropout: float = 0.0, batch_first = True,
                  **kwargs) -> None:
         """
@@ -23,10 +23,12 @@ class EmbeddingLSTMClassifier(nn.Module):
         super(EmbeddingLSTMClassifier, self).__init__()
         self.name = "emb-mtl-lstm"
         self.batch_first = batch_first
-        self.info = {'Input dim': ", ".join([str(it) for it in input_dims]), 'Embedding dim': embedding_dim,
+        self.info = {'Input dim': ", ".join([str(it) for it in input_dims]), 'Embedding dim': embedding_dims,
                      'Shared dim': shared_dim, 'Hidden dim': ", ".join([str(it) for it in hidden_dims]),
                      'Output dim': ", ".join([str(it) for it in output_dims]),
                      '# layers': no_layers, 'Dropout': dropout, 'Model': self.name}
+
+        assert len(input_dims) == len(output_dims)
 
         # Initialise the hidden dim
         self.all_parameters = nn.ParameterList()
@@ -38,7 +40,7 @@ class EmbeddingLSTMClassifier(nn.Module):
 
         self.inputs = {}  # Define task inputs
         for task_id, input_dim in enumerate(input_dims):
-            layer = nn.Embedding(input_dim, embedding_dim)
+            layer = nn.Embedding(input_dim, embedding_dims)
             self.inputs[task_id] = layer
 
             # Add parameters
@@ -47,7 +49,7 @@ class EmbeddingLSTMClassifier(nn.Module):
         self.shared = []
         for i in range(len(hidden_dims)):
             if i == 0:
-                layer = nn.Linear(embedding_dim, hidden_dims[0])
+                layer = nn.Linear(embedding_dims, hidden_dims[0])
             else:
                 layer = nn.Linear(hidden_dims[i - 1], hidden_dims[i])
             self.shared.append(layer)
@@ -137,7 +139,7 @@ class OnehotLSTMClassifier(nn.Module):
         # Initialise the hidden dim
         self.all_parameters = nn.ParameterList()
 
-        assert len(input_dims) == len(hidden_dims) == len(output_dims)
+        assert len(input_dims) == len(output_dims)
 
         # Input layer (not shared) [Linear]
         # hidden to hidden layer (shared) [Linear]
