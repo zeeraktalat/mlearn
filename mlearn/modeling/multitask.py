@@ -82,9 +82,9 @@ class EmbeddingLSTMClassifier(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.softmax = nn.LogSoftmax(dim = 1)
 
-        # TODO Ensure that the model is deterministic (the bias term is added)
-        print(self)
-        print(list(self.all_parameters))
+        # Ensure that the model is deterministic (the bias term is added)
+        # print(self)
+        # print(list(self.all_parameters))
 
     def forward(self, sequence, task_id, **kwargs) -> base.DataType:
         """
@@ -102,6 +102,7 @@ class EmbeddingLSTMClassifier(nn.Module):
         for layer in self.shared:
             res = self.dropout(layer(res))
 
+        self.lstm[task_id].flatten_parameters()
         lstm_out, (lstm_hidden, _) = self.lstm[task_id](res)
 
         output = self.outputs[task_id](self.dropout(lstm_hidden))
