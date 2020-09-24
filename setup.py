@@ -29,6 +29,7 @@ setuptools.setup(
         "torch==1.4.0",
         'optuna',
         'bpemb',
+        'ekphrasis',
         'wandb',
         "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.5/en_core_web_sm-2.2.5.tar.gz#egg=en_core_web_sm"
     ],
