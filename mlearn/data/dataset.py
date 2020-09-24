@@ -423,7 +423,7 @@ class GeneralDataset(IterableDataset):
                 pass  # All labels previously processed
             raise KeyError(f"ERROR: Some string labels have not previously been seen: {label}\n{e}")
 
-    def process_doc(self, doc: base.DocType) -> list:
+    def process_doc(self, doc: base.DocType, **kwargs) -> list:
         """
         Process a single document.
 
@@ -433,7 +433,7 @@ class GeneralDataset(IterableDataset):
         if isinstance(doc, list):
             doc = " ".join(doc)
 
-        doc = self.tokenizer(doc.replace("\n", " "))
+        doc = self.tokenizer(doc.replace("\n", " "), **kwargs)
 
         if self.preprocessor is not None:
             doc = self.preprocessor(doc)
