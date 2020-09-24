@@ -94,7 +94,8 @@ def waseem_to_binary(label: str) -> str:
 
 
 def waseem(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-           transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
+           transformer: base.Callable = None, label_processor: base.Callable = None, annotate: set = None,
+           filters: base.List[str] = None, **kwargs) -> GeneralDataset:
     """
     Load the Waseem dataset (expert annotations).
 
@@ -104,6 +105,8 @@ def waseem(cleaners: base.Callable, data_path: str, length: int = None, preproce
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :transformer (base.Callable, default = None): Additional document processing, if required.
     :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :annotate (set, default = None): The annotations to provide ekphrasis with.
+    :filters (base.List[str], default = None): Filters to remove the annotations provided by Ekphrasis.
     :returns (GeneralDataset): Loaded datasets.
     """
     args = {'data_dir': data_path,
@@ -119,7 +122,9 @@ def waseem(cleaners: base.Callable, data_path: str, length: int = None, preproce
             'label_preprocessor': label_processor,
             'name': 'Waseem',
             'skip_header': False,
-            'line_count': 6909
+            'line_count': 6909,
+            'annotate': annotate,
+            'filters': filters
             }
 
     text_field = base.Field('text', train = True, label = False, ignore = False, cname = 'text')
@@ -129,9 +134,9 @@ def waseem(cleaners: base.Callable, data_path: str, length: int = None, preproce
     return _loader(args, **kwargs)
 
 
-def waseem_hovy(cleaners: base.Callable, data_path: str, length: int = None,
-                preprocessor: base.Callable = None, transformer: base.Callable = None,
-                label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
+def waseem_hovy(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
+                transformer: base.Callable = None, label_processor: base.Callable = None, annotate: set = None,
+                filters: base.List[str] = None, **kwargs) -> GeneralDataset:
     """
     Load the Waseem-Hovy dataset.
 
@@ -140,6 +145,9 @@ def waseem_hovy(cleaners: base.Callable, data_path: str, length: int = None,
     :length (int), default = None): Maximum length of sequence.
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :transformer (base.Callable, default = None): Additional document processing, if required.
+    :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :annotate (set, default = None): The annotations to provide ekphrasis with.
+    :filters (base.List[str], default = None): Filters to remove the annotations provided by Ekphrasis.
     :returns (GeneralDataset): Loaded datasets.
     """
     args = {'data_dir': data_path,
@@ -155,7 +163,9 @@ def waseem_hovy(cleaners: base.Callable, data_path: str, length: int = None,
             'label_preprocessor': label_processor,
             'name': 'Waseem-Hovy',
             'skip_header': False,
-            'line_count': 16907
+            'line_count': 16907,
+            'annotate': annotate,
+            'filters': filters
             }
 
     text_field = base.Field('text', train = True, label = False, ignore = False, cname = 'text')
@@ -177,9 +187,9 @@ def binarize_garcia(label: str) -> str:
         return 'not-abuse'
 
 
-def garcia(cleaners: base.Callable, data_path: str, length: int = None,
-           preprocessor: base.Callable = None, transformer: base.Callable = None,
-           label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
+def garcia(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
+           transformer: base.Callable = None, label_processor: base.Callable = None, annotate: set = None,
+           filters: base.List[str] = None, **kwargs) -> GeneralDataset:
     """
     Load the Garcia et al. dataset.
 
@@ -189,6 +199,8 @@ def garcia(cleaners: base.Callable, data_path: str, length: int = None,
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :transformer (base.Callable, default = None): Additional document processing, if required.
     :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :annotate (set, default = None): The annotations to provide ekphrasis with.
+    :filters (base.List[str], default = None): Filters to remove the annotations provided by Ekphrasis.
     :returns (GeneralDataset): Loaded datasets.
     """
     args = {'data_dir': data_path,
@@ -204,7 +216,9 @@ def garcia(cleaners: base.Callable, data_path: str, length: int = None,
             'label_preprocessor': label_processor,
             'name': 'Garcia et al.',
             'skip_header': True,
-            'line_count': 1915
+            'line_count': 1915,
+            'annotate': annotate,
+            'filters': filters
             }
 
     text_field = base.Field('text', train = True, label = False, ignore = False, cname = 'text', ix = 5)
@@ -219,7 +233,8 @@ def garcia(cleaners: base.Callable, data_path: str, length: int = None,
 
 
 def wulczyn(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-            transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
+            transformer: base.Callable = None, label_processor: base.Callable = None, annotate: set = None,
+            filters: base.List[str] = None, **kwargs) -> GeneralDataset:
     """
     Load the Wulczyn et al. dataset.
 
@@ -229,6 +244,8 @@ def wulczyn(cleaners: base.Callable, data_path: str, length: int = None, preproc
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :transformer (base.Callable, default = None): Additional document processing, if required.
     :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :annotate (set, default = None): The annotations to provide ekphrasis with.
+    :filters (base.List[str], default = None): Filters to remove the annotations provided by Ekphrasis.
     :returns (GeneralDataset): Loaded datasets.
     """
     # Labelfield needs to be set to nothing, then fields need to be modified
@@ -245,7 +262,9 @@ def wulczyn(cleaners: base.Callable, data_path: str, length: int = None, preproc
             'label_preprocessor': label_processor,
             'name': 'Wulczyn et al.',
             'skip_header': True,
-            'line_count': 159689
+            'line_count': 159689,
+            'annotate': annotate,
+            'filters': filters
             }
 
     text = base.Field('text', train = True, label = False, cname = 'comment', ix = 1)
@@ -259,7 +278,8 @@ def wulczyn(cleaners: base.Callable, data_path: str, length: int = None, preproc
 
 
 def hoover(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-           transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
+           transformer: base.Callable = None, label_processor: base.Callable = None, annotate: set = None,
+           filters: base.List[str] = None, **kwargs) -> GeneralDataset:
     """
     Load the Hoover et al. dataset.
 
@@ -269,6 +289,8 @@ def hoover(cleaners: base.Callable, data_path: str, length: int = None, preproce
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :transformer (base.Callable, default = None): Additional document processing, if required.
     :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :annotate (set, default = None): The annotations to provide ekphrasis with.
+    :filters (base.List[str], default = None): Filters to remove the annotations provided by Ekphrasis.
     :returns: Loaded datasets.
     """
     args = {'data_dir': data_path,
@@ -283,7 +305,9 @@ def hoover(cleaners: base.Callable, data_path: str, length: int = None, preproce
             'label_preprocessor': label_processor,
             'name': 'Hoover et al.',
             'skip_header': True,
-            'line_count': 95693
+            'line_count': 95693,
+            'annotate': annotate,
+            'filters': filters
             }
 
     text = base.Field('text', train = True, label = False, cname = 'text', ix = 1)
@@ -330,7 +354,9 @@ def vidgen_to_multiclass(label: str) -> str:
 
 
 def vidgen(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-           transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
+           transformer: base.Callable = None, label_processor: base.Callable = None, annotate: set = None,
+           filters: base.List[str] = None, **kwargs) -> GeneralDataset:
+
     """
     Load the Vidgen et al. dataset.
 
@@ -340,6 +366,8 @@ def vidgen(cleaners: base.Callable, data_path: str, length: int = None, preproce
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :transformer (base.Callable, default = None): Additional document processing, if required.
     :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :annotate (set, default = None): The annotations to provide ekphrasis with.
+    :filters (base.List[str], default = None): Filters to remove the annotations provided by Ekphrasis.
     :returns: Loaded datasets.
     """
     args = {'data_dir': data_path,
@@ -354,7 +382,9 @@ def vidgen(cleaners: base.Callable, data_path: str, length: int = None, preproce
             'label_preprocessor': label_processor,
             'name': 'Vidgen et al.',
             'skip_header': True,
-            'line_count': 20000
+            'line_count': 20000,
+            'annotate': annotate,
+            'filters': filters
             }
 
     text = base.Field('text', train = True, label = False, cname = 'text', ix = 3)
@@ -367,8 +397,8 @@ def vidgen(cleaners: base.Callable, data_path: str, length: int = None, preproce
 
 
 def preotiuc_user(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-                  transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs
-                  ) -> GeneralDataset:
+                  transformer: base.Callable = None, label_processor: base.Callable = None, annotate: set = None,
+                  filters: base.List[str] = None, **kwargs) -> GeneralDataset:
     """
     Load Preotiuc (user-based).
 
@@ -378,6 +408,8 @@ def preotiuc_user(cleaners: base.Callable, data_path: str, length: int = None, p
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :transformer (base.Callable, default = None): Additional document processing, if required.
     :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :annotate (set, default = None): The annotations to provide ekphrasis with.
+    :filters (base.List[str], default = None): Filters to remove the annotations provided by Ekphrasis.
     :returns: Loaded datasets.
     """
     args = {'data_dir': data_path,
@@ -392,7 +424,9 @@ def preotiuc_user(cleaners: base.Callable, data_path: str, length: int = None, p
             'label_preprocessor': label_processor,
             'name': 'Preotiuc (Users)',
             'skip_header': True,
-            'line_count': 3531
+            'line_count': 3531,
+            'annotate': annotate,
+            'filters': filters
             }
 
     text = base.Field('text', train = True, label = False, cname = 'text', ix = 0)
@@ -405,8 +439,8 @@ def preotiuc_user(cleaners: base.Callable, data_path: str, length: int = None, p
 
 
 def oraby_sarcasm(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-                  transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs
-                  ) -> GeneralDataset:
+                  transformer: base.Callable = None, label_processor: base.Callable = None, annotate: set = None,
+                  filters: base.List[str] = None, **kwargs) -> GeneralDataset:
     """
     Load Oraby et al. Sarcasm dataset.
 
@@ -416,6 +450,8 @@ def oraby_sarcasm(cleaners: base.Callable, data_path: str, length: int = None, p
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :transformer (base.Callable, default = None): Additional document processing, if required.
     :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :annotate (set, default = None): The annotations to provide ekphrasis with.
+    :filters (base.List[str], default = None): Filters to remove the annotations provided by Ekphrasis.
     :returns: Loaded datasets.
     """
     args = {'data_dir': data_path,
@@ -430,7 +466,9 @@ def oraby_sarcasm(cleaners: base.Callable, data_path: str, length: int = None, p
             'label_preprocessor': label_processor,
             'name': 'Oraby et al. (Sarcasm)',
             'skip_header': True,
-            'line_count': 11650
+            'line_count': 11650,
+            'annotate': annotate,
+            'filters': filters
             }
 
     text = base.Field('text', train = True, label = False, cname = 'text', ix = 2)
@@ -443,8 +481,8 @@ def oraby_sarcasm(cleaners: base.Callable, data_path: str, length: int = None, p
 
 
 def oraby_fact_feel(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-                    transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs
-                    ) -> GeneralDataset:
+                    transformer: base.Callable = None, label_processor: base.Callable = None, annotate: set = None,
+                    filters: base.List[str] = None, **kwargs) -> GeneralDataset:
     """
     Load Oraby et al. Fact-Feel dataset.
 
@@ -454,6 +492,8 @@ def oraby_fact_feel(cleaners: base.Callable, data_path: str, length: int = None,
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :transformer (base.Callable, default = None): Additional document processing, if required.
     :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :annotate (set, default = None): The annotations to provide ekphrasis with.
+    :filters (base.List[str], default = None): Filters to remove the annotations provided by Ekphrasis.
     :returns: Loaded datasets.
     """
     args = {'data_dir': data_path,
@@ -468,7 +508,9 @@ def oraby_fact_feel(cleaners: base.Callable, data_path: str, length: int = None,
             'label_preprocessor': label_processor,
             'name': 'Oraby et al. (Fact-feel)',
             'skip_header': True,
-            'line_count': 10191
+            'line_count': 10191,
+            'annotate': annotate,
+            'filters': filters
             }
 
     text = base.Field('text', train = True, label = False, cname = 'text', ix = 2)
