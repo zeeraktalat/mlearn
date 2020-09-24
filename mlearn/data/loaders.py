@@ -314,7 +314,7 @@ def hoover(cleaners: base.Callable, data_path: str, length: int = None, preproce
             'label_preprocessor': label_processor,
             'name': 'Hoover et al.',
             'skip_header': True,
-            'line_count': 95693,
+            'line_count': 34987,
             'annotate': annotate,
             'filters': filters
             }
