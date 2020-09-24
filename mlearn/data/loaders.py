@@ -2,24 +2,22 @@ from mlearn import base
 from mlearn.data.dataset import GeneralDataset
 
 
-def _loader(args: dict, **kwargs) -> GeneralDataset:
+def _loader(**kwargs) -> GeneralDataset:
     """
     Load the dataset.
-
-    :args (dict): Dict containing arguments to load dataaset.
     :returns (GeneralDataset): Loaded and splitted dataset.
     """
-    dataset = GeneralDataset(**args)
+    dataset = GeneralDataset(**kwargs)
     dataset.load('train', **kwargs)
 
-    if (args['dev'], args['test']) == (None, None):
+    if (kwargs['dev'], kwargs['test']) == (None, None):
         dataset.split(dataset.data, [0.8, 0.1, 0.1], **kwargs)
 
-    elif args['dev'] is not None and args['test'] is None:
+    elif kwargs['dev'] is not None and kwargs['test'] is None:
         dataset.load('dev', **kwargs)
         dataset.split(dataset.data, [0.8], **kwargs)
 
-    elif args['dev'] is None and args['test'] is not None:
+    elif kwargs['dev'] is None and kwargs['test'] is not None:
         dataset.split(dataset.data, [0.8], **kwargs)
         dataset.dev_set = dataset.test
         dataset.load('test')
@@ -45,7 +43,8 @@ def davidson_to_binary(label: str) -> str:
 
 
 def davidson(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
-             transformer: base.Callable = None, label_processor: base.Callable = None, **kwargs) -> GeneralDataset:
+             transformer: base.Callable = None, label_processor: base.Callable = None, annotate: set = None,
+             filters: base.List[str] = None, **kwargs) -> GeneralDataset:
     """
     Load the davidson dataset.
 
@@ -55,6 +54,8 @@ def davidson(cleaners: base.Callable, data_path: str, length: int = None, prepro
     :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
     :transformer (base.Callable, default = None): Document processing, if additional processing is required.
     :label_preprocessor (base.Callable, default = None): Label preprocessing, allowing for modifying the labelset.
+    :annotate (set, default = None): The annotations to provide ekphrasis with.
+    :filters (base.List[str], default = None): Filters to remove the annotations provided by Ekphrasis.
     :returns (GeneralDataset): Loaded datasets.
     """
     args = {'data_dir': data_path,
@@ -68,7 +69,9 @@ def davidson(cleaners: base.Callable, data_path: str, length: int = None, prepro
             'transformations': transformer,
             'length': length,
             'label_preprocessor': label_processor,
-            'name': 'Davidson et al.'
+            'name': 'Davidson et al.',
+            'annotate': annotate,
+            'filters': filters
             }
 
     ignore = base.Field('ignore', train = False, label = False, ignore = True)
