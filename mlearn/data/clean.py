@@ -235,16 +235,17 @@ class Cleaner(object):
         :returns cleaned: Return the cleaned text.
         """
         if processes is None:
-            process = []
-        process = processes if processes is not None else self.processes
+            processes = self.processes
+
         cleaned = str(text)
-        if 'lower' in process:
+
+        if 'lower' in processes:
             cleaned = cleaned.lower()
-        if 'url' in process:
+        if 'url' in processes:
             cleaned = re.sub(r'https?:/\/\S+', 'URL', cleaned)
-        if 'hashtag' in process:
+        if 'hashtag' in processes:
             cleaned = re.sub(r'#[a-zA-Z0-9]*\b', 'HASHTAG', cleaned)
-        if 'username' in process:
+        if 'username' in processes:
             cleaned = re.sub(r'@\S+', 'USER', cleaned)
 
         if self.ekphrasis_base:
