@@ -212,19 +212,21 @@ class Preprocessors(object):
 class Cleaner(object):
     """A class for methods for cleaning."""
 
-    def __init__(self, processes: base.List[str] = None):
+    def __init__(self, processes: base.List[str] = None, ekphrasis_base: bool = False):
         """
         Initialise cleaner class.
 
-        :processes base.List[str]: Cleaning operations to be taken.
+        :processes (base.List[str]): Cleaning operations to be taken.
+        :ekprhasis_base (bool, default = False): Use ekphrasis to pre-process data in cleaner.
         """
         self.processes = processes if processes is not None else []
         self.tagger = spacy.load('en_core_web_sm', disable = ['ner', 'parser', 'textcats'])
         self.bpe = BPEmb(lang = 'en', vs = 200000).encode
+        self.ekphrasis_base = ekphrasis_base
         self.ekphrasis = None
         self.liwc_dict = None
 
-    def clean_document(self, text: base.DocType, processes: base.List[str] = None):
+    def clean_document(self, text: base.DocType, processes: base.List[str] = None, annotate: set = {'elongated'}):
         """
         Clean document.
 
@@ -244,6 +246,9 @@ class Cleaner(object):
             cleaned = re.sub(r'#[a-zA-Z0-9]*\b', 'HASHTAG', cleaned)
         if 'username' in process:
             cleaned = re.sub(r'@\S+', 'USER', cleaned)
+
+        if self.ekphrasis_base:
+            cleaned = self.ekphrasis_tokenize(cleaned, annotate, filters = [f"<{filtr}>" for filtr in annotate])
 
         return cleaned
 
