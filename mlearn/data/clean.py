@@ -261,7 +261,7 @@ class Cleaner(object):
         :processes: The cleaning processes to engage in.
         :returns toks: Document that has been passed through spacy's tagger.
         """
-        toks = [tok.text for tok in self.tagger(self.clean_document(document, processes = processes))]
+        toks = [tok.text for tok in self.tagger(self.clean_document(document, processes = processes, **kwargs))]
         return toks
 
     def bpe_tokenize(self, document: base.DocType, processes: base.List[str] = None, **kwargs):
@@ -272,12 +272,12 @@ class Cleaner(object):
         :processes: The cleaning processes to engage in.
         :returns toks: Document that has been passed through spacy's tagger.
         """
-        toks = self.bpe(self.clean_document(document, processes = processes))
+        toks = self.bpe(self.clean_document(document, processes = processes, **kwargs))
         return toks
 
     def _load_ekphrasis(self, annotate: set, normalize: base.List[str] = None,
                         segmenter: str = 'twitter', corrector: str = 'twitter', hashtags: bool = False,
-                        elong_spell: bool = False, **kwargs) -> None:
+                        contractions: bool = True, elong_spell: bool = False, **kwargs) -> None:
         """
         Set up ekphrasis tokenizer.
 
@@ -286,6 +286,7 @@ class Cleaner(object):
         :segmenter (str, default = 'twitter'): Choose which ekphrasis segmenter to use.
         :corrector (str, default = 'twitter'): Choose which ekphrasis spell correction to use.
         :hashtags (bool, default = False): Unpack hashtags into multiple tokens (e.g. #PhDLife -> PhD Life).
+        :contractions (bool, default = True): Unpack contractions into multiple tokens (e.g. can't -> can not)
         :elong_spell (bool, default = True): Spell correct elongations.
         """
         self.ekphrasis = TextPreProcessor(normalize = normalize if normalize is not None else [],
@@ -294,6 +295,7 @@ class Cleaner(object):
                                           segmenter = segmenter,
                                           corrector = corrector,
                                           unpack_hashtags = hashtags,
+                                          unpack_contractions = contractions,
                                           spell_correct_elong = elong_spell,
                                           tokenize = SocialTokenizer(lowercase = True).tokenize)
 
@@ -329,7 +331,7 @@ class Cleaner(object):
             document = " ".join(document)
 
         doc = unpack_contractions(document)
-        doc = self.clean_document(doc, processes)
+        doc = self.clean_document(doc, processes, **kwargs)
         doc = self.ekphrasis.pre_process_doc(doc)
 
         return self._filter_ekphrasis(doc, **kwargs)
