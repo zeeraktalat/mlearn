@@ -3,7 +3,6 @@ import spacy
 from bpemb import BPEmb
 from mlearn import base
 from string import punctuation
-from ekphrasis.utils.nlp import unpack_contractions
 from ekphrasis.classes.tokenizer import SocialTokenizer
 from ekphrasis.classes.preprocessor import TextPreProcessor
 
@@ -330,8 +329,7 @@ class Cleaner(object):
         if isinstance(document, list):
             document = " ".join(document)
 
-        doc = unpack_contractions(document)
-        doc = self.clean_document(doc, processes, **kwargs)
-        doc = self.ekphrasis.pre_process_doc(doc)
+        document = self.clean_document(document, processes, **kwargs)
+        document = self.ekphrasis.pre_process_doc(document)
 
-        return self._filter_ekphrasis(doc, **kwargs)
+        return self._filter_ekphrasis(document, **kwargs)
