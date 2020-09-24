@@ -79,8 +79,9 @@ def davidson(cleaners: base.Callable, data_path: str, length: int = None, prepro
     d_label = base.Field('label', train = False, label = True, cname = 'label', ignore = False, ix = 5)
 
     args['fields'] = [ignore, ignore, ignore, ignore, ignore, d_label, d_text]
+    args.update(kwargs)
 
-    return _loader(args, **kwargs)
+    return _loader(**args)
 
 
 def waseem_to_binary(label: str) -> str:
@@ -133,8 +134,9 @@ def waseem(cleaners: base.Callable, data_path: str, length: int = None, preproce
     text_field = base.Field('text', train = True, label = False, ignore = False, cname = 'text')
     label_field = base.Field('label', train = False, label = True, ignore = False, cname = 'Annotation')
     args['fields'] = [text_field, label_field]
+    args.update(kwargs)
 
-    return _loader(args, **kwargs)
+    return _loader(**args)
 
 
 def waseem_hovy(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
@@ -174,8 +176,9 @@ def waseem_hovy(cleaners: base.Callable, data_path: str, length: int = None, pre
     text_field = base.Field('text', train = True, label = False, ignore = False, cname = 'text')
     label_field = base.Field('label', train = False, label = True, ignore = False, cname = 'Annotation')
     args['fields'] = [text_field, label_field]
+    args.update(kwargs)
 
-    return _loader(args, **kwargs)
+    return _loader(**args)
 
 
 def binarize_garcia(label: str) -> str:
@@ -231,8 +234,9 @@ def garcia(cleaners: base.Callable, data_path: str, length: int = None, preproce
     ignore = base.Field('ignore', train = False, label = False, ignore = True)
 
     args['fields'] = [id_field, user_field, ignore, ignore, label_field, text_field]
+    args.update(kwargs)
 
-    return _loader(args, **kwargs)
+    return _loader(**args)
 
 
 def wulczyn(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
@@ -276,8 +280,9 @@ def wulczyn(cleaners: base.Callable, data_path: str, length: int = None, preproc
     ignore = base.Field('ignore', train = False, label = False, ignore = True)
 
     args['fields'] = [idx, text, label, ignore]
+    args.update(kwargs)
 
-    return _loader(args, **kwargs)
+    return _loader(**args)
 
 
 def hoover(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
@@ -318,8 +323,9 @@ def hoover(cleaners: base.Callable, data_path: str, length: int = None, preproce
     ignore = base.Field('ignore', train = False, label = False, cname = 'ignore', ignore = True)
 
     args['fields'] = [ignore, text] + 16 * [ignore] + [label, ignore]
+    args.update(kwargs)
 
-    return _loader(args, **kwargs)
+    return _loader(**args)
 
 
 def vidgen_to_binary(label: str) -> str:
@@ -395,8 +401,9 @@ def vidgen(cleaners: base.Callable, data_path: str, length: int = None, preproce
     ignore = base.Field('ignore', train = False, label = False, cname = 'ignore', ignore = True)
 
     args['fields'] = [ignore, text] + 16 * [ignore] + [label, ignore]
+    args.update(kwargs)
 
-    return _loader(args, **kwargs)
+    return _loader(**args)
 
 
 def preotiuc_user(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
@@ -437,8 +444,9 @@ def preotiuc_user(cleaners: base.Callable, data_path: str, length: int = None, p
     ignore = base.Field('ignore', ignore = True)
 
     args['fields'] = [text, label, ignore, ignore, ignore]
+    args.update(kwargs)
 
-    return _loader(args, **kwargs)
+    return _loader(**args)
 
 
 def oraby_sarcasm(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
@@ -479,8 +487,9 @@ def oraby_sarcasm(cleaners: base.Callable, data_path: str, length: int = None, p
     ignore = base.Field('ignore', ignore = True)
 
     args['fields'] = [label, ignore, text]
+    args.update(kwargs)
 
-    return _loader(args, **kwargs)
+    return _loader(**args)
 
 
 def oraby_fact_feel(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
@@ -521,5 +530,6 @@ def oraby_fact_feel(cleaners: base.Callable, data_path: str, length: int = None,
     ignore = base.Field('ignore', ignore = True)
 
     args['fields'] = [ignore, label, text]
+    args.update(kwargs)
 
-    return _loader(args, **kwargs)
+    return _loader(**args)
