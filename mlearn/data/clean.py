@@ -3,6 +3,7 @@ import spacy
 from bpemb import BPEmb
 from mlearn import base
 from string import punctuation
+from ekphrasis.utils.nlp import unpack_contractions
 from ekphrasis.classes.tokenizer import SocialTokenizer
 from ekphrasis.classes.preprocessor import TextPreProcessor
 
@@ -270,7 +271,7 @@ class Cleaner(object):
 
     def _load_ekphrasis(self, annotate: set, normalize: base.List[str] = None,
                         segmenter: str = 'twitter', corrector: str = 'twitter', hashtags: bool = False,
-                        contractions: bool = True, elong_spell: bool = False, **kwargs) -> None:
+                        elong_spell: bool = False, **kwargs) -> None:
         """
         Set up ekphrasis tokenizer.
 
@@ -279,17 +280,14 @@ class Cleaner(object):
         :segmenter (str, default = 'twitter'): Choose which ekphrasis segmenter to use.
         :corrector (str, default = 'twitter'): Choose which ekphrasis spell correction to use.
         :hashtags (bool, default = False): Unpack hashtags into multiple tokens (e.g. #PhDLife -> PhD Life).
-        :contractions (bool, default = True): Unpack contractions into multiple words (e.g. can't -> can not).
         :elong_spell (bool, default = True): Spell correct elongations.
         """
-
         self.ekphrasis = TextPreProcessor(normalize = normalize if normalize is not None else [],
                                           annotate = annotate,
                                           fix_html = True,
                                           segmenter = segmenter,
                                           corrector = corrector,
                                           unpack_hashtags = hashtags,
-                                          unpack_contractions = contractions,
                                           spell_correct_elong = elong_spell,
                                           tokenize = SocialTokenizer(lowercase = True).tokenize)
 
@@ -307,11 +305,6 @@ class Cleaner(object):
                 document = document.replace(filtr, '')
 
             document = document.split()
-
-            # for i, tok in enumerate(document):
-            #     if tok.endswith("'") and document[i + 1] in ['t', 'nt', 've', 'm', 's', 'll', 're']:
-            #         and
-
         return document
 
     def ekphrasis_tokenize(self, document: base.DocType, processes: base.List[str] = None, **kwargs
@@ -329,7 +322,8 @@ class Cleaner(object):
         if isinstance(document, list):
             document = " ".join(document)
 
-        doc = self.clean_document(document, processes)
+        doc = unpack_contractions(document)
+        doc = self.clean_document(doc, processes)
         doc = self.ekphrasis.pre_process_doc(doc)
 
         return self._filter_ekphrasis(doc, **kwargs)
