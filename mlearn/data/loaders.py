@@ -70,6 +70,7 @@ def davidson(cleaners: base.Callable, data_path: str, length: int = None, prepro
             'length': length,
             'label_preprocessor': label_processor,
             'name': 'Davidson et al.',
+            'line_count': 24783,
             'annotate': annotate,
             'filters': filters
             }
