@@ -225,7 +225,8 @@ class Cleaner(object):
         self.ekphrasis = None
         self.liwc_dict = None
 
-    def clean_document(self, text: base.DocType, processes: base.List[str] = None, annotate: set = {'elongated'}):
+    def clean_document(self, text: base.DocType, processes: base.List[str] = None, annotate: set = {'elongated'},
+                       **kwargs):
         """
         Clean document.
 
@@ -248,7 +249,8 @@ class Cleaner(object):
             cleaned = re.sub(r'@\S+', 'USER', cleaned)
 
         if self.ekphrasis_base:
-            cleaned = self.ekphrasis_tokenize(cleaned, annotate, filters = [f"<{filtr}>" for filtr in annotate])
+            filters = [f"<{filtr}>" for filtr in annotate]
+            cleaned = self.ekphrasis_tokenize(cleaned, annotate = annotate, filters = filters)
 
         return cleaned
 
