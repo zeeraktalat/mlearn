@@ -243,7 +243,6 @@ class Cleaner(object):
             cleaned = re.sub(r'#[a-zA-Z0-9]*\b', 'HASHTAG', cleaned)
         if 'username' in process:
             cleaned = re.sub(r'@\S+', 'USER', cleaned)
-        cleaned = re.sub("'", ' ', cleaned)
 
         return cleaned
 
@@ -269,13 +268,13 @@ class Cleaner(object):
         toks = self.bpe(self.clean_document(document, processes = processes))
         return toks
 
-    def _load_ekphrasis(self, annotate: base.Set[str], normalize: base.List[str] = None,
+    def _load_ekphrasis(self, annotate: set, normalize: base.List[str] = None,
                         segmenter: str = 'twitter', corrector: str = 'twitter', hashtags: bool = False,
-                        contractions: bool = True, elong_spell: bool = True, **kwargs) -> None:
+                        contractions: bool = True, elong_spell: bool = False, **kwargs) -> None:
         """
         Set up ekphrasis tokenizer.
 
-        :annotate (base.Set[str]): Set of annotations to use (controls corrections).
+        :annotate (set): Set of annotations to use (controls corrections).
         :normalize (base.List[str], default = None): List of normalisations.
         :segmenter (str, default = 'twitter'): Choose which ekphrasis segmenter to use.
         :corrector (str, default = 'twitter'): Choose which ekphrasis spell correction to use.
@@ -284,7 +283,7 @@ class Cleaner(object):
         :elong_spell (bool, default = True): Spell correct elongations.
         """
 
-        self.ekphrasis = TextPreProcessor(normalize = normalize,
+        self.ekphrasis = TextPreProcessor(normalize = normalize if normalize is not None else [],
                                           annotate = annotate,
                                           fix_html = True,
                                           segmenter = segmenter,
@@ -292,9 +291,9 @@ class Cleaner(object):
                                           unpack_hashtags = hashtags,
                                           unpack_contractions = contractions,
                                           spell_correct_elong = elong_spell,
-                                          tokenize = SocialTokenizer().tokenize)
+                                          tokenize = SocialTokenizer(lowercase = True).tokenize)
 
-    def _filter_ekphrasis(self, document: base.DocType, removals: base.List[str] = None, **kwargs) -> base.List[str]:
+    def _filter_ekphrasis(self, document: base.DocType, filters: base.List[str] = None, **kwargs) -> base.List[str]:
         """
         Remove Ekphrasis specific tokens.
 
@@ -302,17 +301,21 @@ class Cleaner(object):
         :removals (base.List[str]): The ekphrasis tokens to remove.
         :returns document: Document filtered for ekphrasis specific tokens.
         """
-        if removals is not None:
-            document = " ".join(document)
+        if filters is not None:
 
-            for rm in removals:
-                document.replace(rm, '')
+            for filtr in filters:
+                document = document.replace(filtr, '')
+
             document = document.split()
+
+            # for i, tok in enumerate(document):
+            #     if tok.endswith("'") and document[i + 1] in ['t', 'nt', 've', 'm', 's', 'll', 're']:
+            #         and
 
         return document
 
     def ekphrasis_tokenize(self, document: base.DocType, processes: base.List[str] = None, **kwargs
-                           ) -> base.DocType[str]:
+                           ) -> base.DocType:
         """
         Tokenize the document using BPE and clean it as it is processed.
 
@@ -326,4 +329,7 @@ class Cleaner(object):
         if isinstance(document, list):
             document = " ".join(document)
 
-        return self._filter_ekphrasis(self.ekphrasis(self.clean_document(document, processes), **kwargs), **kwargs)
+        doc = self.clean_document(document, processes)
+        doc = self.ekphrasis.pre_process_doc(doc)
+
+        return self._filter_ekphrasis(doc, **kwargs)
