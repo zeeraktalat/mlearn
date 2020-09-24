@@ -3,6 +3,8 @@ import spacy
 from bpemb import BPEmb
 from mlearn import base
 from string import punctuation
+from ekphrasis.classes.tokenizer import SocialTokenizer
+from ekphrasis.classes.preprocessor import TextPreProcessor
 
 
 class Preprocessors(object):
@@ -217,8 +219,8 @@ class Cleaner(object):
         """
         self.processes = processes if processes is not None else []
         self.tagger = spacy.load('en_core_web_sm', disable = ['ner', 'parser', 'textcats'])
-        bpe = BPEmb(lang = 'en', vs = 200000)
-        self.bpe = bpe.encode
+        self.bpe = BPEmb(lang = 'en', vs = 200000).encode
+        self.ekphrasis = None
         self.liwc_dict = None
 
     def clean_document(self, text: base.DocType, processes: base.List[str] = None):
@@ -245,7 +247,7 @@ class Cleaner(object):
 
         return cleaned
 
-    def tokenize(self, document: base.DocType, processes: base.List[str] = None):
+    def tokenize(self, document: base.DocType, processes: base.List[str] = None, **kwargs):
         """
         Tokenize the document using SpaCy and clean it as it is processed.
 
@@ -256,7 +258,7 @@ class Cleaner(object):
         toks = [tok.text for tok in self.tagger(self.clean_document(document, processes = processes))]
         return toks
 
-    def bpe_tokenize(self, document: base.DocType, processes: base.List[str] = None):
+    def bpe_tokenize(self, document: base.DocType, processes: base.List[str] = None, **kwargs):
         """
         Tokenize the document using BPE and clean it as it is processed.
 
@@ -266,3 +268,62 @@ class Cleaner(object):
         """
         toks = self.bpe(self.clean_document(document, processes = processes))
         return toks
+
+    def _load_ekphrasis(self, annotate: base.Set[str], normalize: base.List[str] = None,
+                        segmenter: str = 'twitter', corrector: str = 'twitter', hashtags: bool = False,
+                        contractions: bool = True, elong_spell: bool = True, **kwargs) -> None:
+        """
+        Set up ekphrasis tokenizer.
+
+        :annotate (base.Set[str]): Set of annotations to use (controls corrections).
+        :normalize (base.List[str], default = None): List of normalisations.
+        :segmenter (str, default = 'twitter'): Choose which ekphrasis segmenter to use.
+        :corrector (str, default = 'twitter'): Choose which ekphrasis spell correction to use.
+        :hashtags (bool, default = False): Unpack hashtags into multiple tokens (e.g. #PhDLife -> PhD Life).
+        :contractions (bool, default = True): Unpack contractions into multiple words (e.g. can't -> can not).
+        :elong_spell (bool, default = True): Spell correct elongations.
+        """
+
+        self.ekphrasis = TextPreProcessor(normalize = normalize,
+                                          annotate = annotate,
+                                          fix_html = True,
+                                          segmenter = segmenter,
+                                          corrector = corrector,
+                                          unpack_hashtags = hashtags,
+                                          unpack_contractions = contractions,
+                                          spell_correct_elong = elong_spell,
+                                          tokenize = SocialTokenizer().tokenize)
+
+    def _filter_ekphrasis(self, document: base.DocType, removals: base.List[str] = None, **kwargs) -> base.List[str]:
+        """
+        Remove Ekphrasis specific tokens.
+
+        :document (base.DocType): The document to process.
+        :removals (base.List[str]): The ekphrasis tokens to remove.
+        :returns document: Document filtered for ekphrasis specific tokens.
+        """
+        if removals is not None:
+            document = " ".join(document)
+
+            for rm in removals:
+                document.replace(rm, '')
+            document = document.split()
+
+        return document
+
+    def ekphrasis_tokenize(self, document: base.DocType, processes: base.List[str] = None, **kwargs
+                           ) -> base.DocType[str]:
+        """
+        Tokenize the document using BPE and clean it as it is processed.
+
+        :document: Document to be parsed.
+        :processes: The cleaning processes to engage in.
+        :returns toks: Document that has been passed through spacy's tagger.
+        """
+        if self.ekphrasis is None:
+            self._load_ekphrasis(**kwargs)
+
+        if isinstance(document, list):
+            document = " ".join(document)
+
+        return self._filter_ekphrasis(self.ekphrasis(self.clean_document(document, processes), **kwargs), **kwargs)

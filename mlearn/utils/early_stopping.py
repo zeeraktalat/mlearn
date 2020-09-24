@@ -68,8 +68,12 @@ class EarlyStopping:
     @property
     def best_state(self):
         """Load/save the best model state prior to early stopping being activated."""
-        print("Loading weights from epoch {0}".format(self.best_epoch))
-        self.model.load_state_dict(torch.load(self.path_prefix)['model_state_dict'])
+        tqdm.write("Loading weights from epoch {0}".format(self.best_epoch))
+        try:
+            self.model.load_state_dict(torch.load(self.path_prefix)['model_state_dict'])
+        except Exception:
+            tqdm.write("Exception occurred loading the model after early termination.")
+            raise RuntimeError
         return self.model
 
     @best_state.setter
