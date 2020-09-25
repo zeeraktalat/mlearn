@@ -70,7 +70,7 @@ def davidson(cleaners: base.Callable, data_path: str, length: int = None, prepro
             'length': length,
             'label_preprocessor': label_processor,
             'name': 'Davidson et al.',
-            'line_count': 24783,
+            'line_count': {'train': 24783},
             'annotate': annotate,
             'filters': filters
             }
@@ -127,7 +127,7 @@ def waseem(cleaners: base.Callable, data_path: str, length: int = None, preproce
             'label_preprocessor': label_processor,
             'name': 'Waseem',
             'skip_header': False,
-            'line_count': 6909,
+            'line_count': {'train': 6909},
             'annotate': annotate,
             'filters': filters
             }
@@ -169,7 +169,7 @@ def waseem_hovy(cleaners: base.Callable, data_path: str, length: int = None, pre
             'label_preprocessor': label_processor,
             'name': 'Waseem-Hovy',
             'skip_header': False,
-            'line_count': 16907,
+            'line_count': {'train': 16907},
             'annotate': annotate,
             'filters': filters
             }
@@ -223,7 +223,7 @@ def garcia(cleaners: base.Callable, data_path: str, length: int = None, preproce
             'label_preprocessor': label_processor,
             'name': 'Garcia et al.',
             'skip_header': True,
-            'line_count': 1915,
+            'line_count': {'train': 1914, 'test': 478},
             'annotate': annotate,
             'filters': filters
             }
@@ -270,7 +270,7 @@ def wulczyn(cleaners: base.Callable, data_path: str, length: int = None, preproc
             'label_preprocessor': label_processor,
             'name': 'Wulczyn et al.',
             'skip_header': True,
-            'line_count': 159689,
+            'line_count': {'train': 95692, 'dev': 32128, 'test': 31866},
             'annotate': annotate,
             'filters': filters
             }
@@ -314,7 +314,7 @@ def hoover(cleaners: base.Callable, data_path: str, length: int = None, preproce
             'label_preprocessor': label_processor,
             'name': 'Hoover et al.',
             'skip_header': True,
-            'line_count': 34987,
+            'line_count': {'train': 34987},
             'annotate': annotate,
             'filters': filters
             }
@@ -392,7 +392,7 @@ def vidgen(cleaners: base.Callable, data_path: str, length: int = None, preproce
             'label_preprocessor': label_processor,
             'name': 'Vidgen et al.',
             'skip_header': True,
-            'line_count': 20000,
+            'line_count': {'train': 20000},
             'annotate': annotate,
             'filters': filters
             }
@@ -435,7 +435,7 @@ def preotiuc_user(cleaners: base.Callable, data_path: str, length: int = None, p
             'label_preprocessor': label_processor,
             'name': 'Preotiuc (Users)',
             'skip_header': True,
-            'line_count': 3531,
+            'line_count': {'train': 3531},
             'annotate': annotate,
             'filters': filters
             }
@@ -478,7 +478,7 @@ def oraby_sarcasm(cleaners: base.Callable, data_path: str, length: int = None, p
             'label_preprocessor': label_processor,
             'name': 'Oraby et al. (Sarcasm)',
             'skip_header': True,
-            'line_count': 11650,
+            'line_count': {'train': 11650},
             'annotate': annotate,
             'filters': filters
             }
@@ -521,7 +521,7 @@ def oraby_fact_feel(cleaners: base.Callable, data_path: str, length: int = None,
             'label_preprocessor': label_processor,
             'name': 'Oraby et al. (Fact-feel)',
             'skip_header': True,
-            'line_count': 10191,
+            'line_count': {'train': 8434, 'dev': 1170, 'test': 587},
             'annotate': annotate,
             'filters': filters
             }
