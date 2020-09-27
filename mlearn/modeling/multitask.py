@@ -392,7 +392,7 @@ class EmbeddingMLPClassifier(nn.Module):
         if self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        res = self.dropout(self.nonlinearity(self.inputs[task_id](sequence)))
+        res = self.nonlinearity(self.inputs[task_id](sequence))
 
         for layer in self.shared:
             res = self.dropout(layer(res))

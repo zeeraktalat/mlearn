@@ -271,13 +271,15 @@ class Cleaner(object):
         toks = self.bpe(self.clean_document(document, processes = processes, **kwargs))
         return toks
 
-    def _load_ekphrasis(self, annotate: set, normalize: base.List[str] = None,
+    def _load_ekphrasis(self, annotate: set, filters: base.List[str] = None, normalize: base.List[str] = None,
                         segmenter: str = 'twitter', corrector: str = 'twitter', hashtags: bool = False,
-                        contractions: bool = True, elong_spell: bool = False, **kwargs) -> None:
+                        contractions: bool = True, elong_spell: bool = False,
+                        **kwargs) -> None:
         """
         Set up ekphrasis tokenizer.
 
         :annotate (set): Set of annotations to use (controls corrections).
+        :filters (base.List[str], default = None): List of tokens to remove from documents.
         :normalize (base.List[str], default = None): List of normalisations.
         :segmenter (str, default = 'twitter'): Choose which ekphrasis segmenter to use.
         :corrector (str, default = 'twitter'): Choose which ekphrasis spell correction to use.
@@ -294,18 +296,18 @@ class Cleaner(object):
                                           unpack_contractions = contractions,
                                           spell_correct_elong = elong_spell,
                                           tokenize = SocialTokenizer(lowercase = True).tokenize)
+        self.filters = filters
 
-    def _filter_ekphrasis(self, document: base.DocType, filters: base.List[str] = None, **kwargs) -> base.List[str]:
+    def _filter_ekphrasis(self, document: base.DocType, **kwargs) -> base.List[str]:
         """
         Remove Ekphrasis specific tokens.
 
         :document (base.DocType): The document to process.
-        :removals (base.List[str]): The ekphrasis tokens to remove.
         :returns document: Document filtered for ekphrasis specific tokens.
         """
-        if filters is not None:
+        if self.filters is not None:
 
-            for filtr in filters:
+            for filtr in self.filters:
                 document = document.replace(filtr, '')
 
             document = document.split()
