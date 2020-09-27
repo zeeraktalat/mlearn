@@ -322,9 +322,6 @@ class Cleaner(object):
         :processes: The cleaning processes to engage in.
         :returns toks: Document that has been passed through spacy's tagger.
         """
-        if self.ekphrasis is None:
-            self._load_ekphrasis(**kwargs)
-
         if isinstance(document, list):
             document = " ".join(document)
 
