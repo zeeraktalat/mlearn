@@ -2,6 +2,29 @@ import torch
 from mlearn import base
 
 
+class TorchtextExtractor:
+    """A class to extract information from batches."""
+
+    def __init__(self, datafield, labelfield, dataname, data, vocab_size = None):
+        self.data = data
+        self.datafield = datafield
+        self.labelfield = labelfield
+        self.data.name = dataname
+        self.vocab_size = None
+
+    def __len__(self):
+        return len(self.data)
+
+    def __iter__(self):
+        for batch in self.data:
+            if self.vocab_size is not None:
+                X = torch.nn.functional.one_hot(getattr(batch, self.datafield), self.vocab_size)
+            else:
+                X = getattr(batch, self.datafield)
+            y = getattr(batch, self.labelfield)
+            yield (X, y)
+
+
 class Batch(base.Batch):
     """Create batches."""
 
