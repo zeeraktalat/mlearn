@@ -9,7 +9,7 @@ class TorchtextExtractor:
         self.data = data
         self.datafield = datafield
         self.labelfield = labelfield
-        self.data.name = dataname
+        setattr(self.data, 'name', dataname)
         self.vocab_size = None
 
     def __len__(self):
