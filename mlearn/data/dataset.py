@@ -196,7 +196,7 @@ class GeneralDataset(IterableDataset):
             data_out = self.test
 
         file_path = os.path.abspath(write_path) if '~' not in write_path else os.path.expanduser(write_path)
-        writepath = os.path.join(file_path, f"{data}.{format}")
+        writepath = os.path.join(file_path, f"{self.name}_{data}.{format}")
         if os.path.exists(writepath):
             tqdm.write(f"Path {writepath} already exists. creating {writepath}.dump")
             writepath = f"{writepath}.dump"
