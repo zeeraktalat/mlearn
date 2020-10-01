@@ -478,7 +478,7 @@ def oraby_sarcasm(cleaners: base.Callable, data_path: str, length: int = None, p
             'label_preprocessor': label_processor,
             'name': 'Oraby et al. (Sarcasm)',
             'skip_header': True,
-            'line_count': {'train': 11650},
+            'line_count': {'train': 9386},
             'annotate': annotate,
             'filters': filters
             }
