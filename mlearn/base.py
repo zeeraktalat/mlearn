@@ -35,7 +35,8 @@ class Field(object):
 class Datapoint(object):
     """A class for each datapoint to instantiated as an object, which can allow for getting and setting attributes."""
 
-    pass
+    def __repr__(self):
+        return self.__dict__
 
 
 class Batch(object):
