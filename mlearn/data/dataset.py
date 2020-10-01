@@ -123,7 +123,7 @@ class GeneralDataset(IterableDataset):
                 else:
                     data_line[field.name] = line[idx].rstrip()
 
-            data_line['fields'] = set(data_line['fields'])
+            data_line['fields'] = data_line['fields']
             for key, val in data_line.items():
                 setattr(datapoint, key, val)
             data.append(datapoint)
@@ -195,8 +195,11 @@ class GeneralDataset(IterableDataset):
         else:
             data_out = self.test
 
+        name = self.name.strip("'").strip('et al.')
+
         file_path = os.path.abspath(write_path) if '~' not in write_path else os.path.expanduser(write_path)
-        writepath = os.path.join(file_path, f"{self.name}_{data}.{format}")
+        writepath = os.path.join(file_path, f"{name}_{data}.{format}")
+
         if os.path.exists(writepath):
             tqdm.write(f"Path {writepath} already exists. creating {writepath}.dump")
             writepath = f"{writepath}.dump"
