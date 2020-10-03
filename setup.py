@@ -26,6 +26,7 @@ setuptools.setup(
         "spacy==2.2.2",
         "scikit-learn==0.23.1",
         "torchtestcase",
+        "torchtext==0.7.0",
         "torch==1.4.0",
         'optuna',
         'bpemb',
