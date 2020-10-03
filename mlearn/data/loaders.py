@@ -20,7 +20,7 @@ def _loader(**kwargs) -> GeneralDataset:
     elif kwargs['dev'] is None and kwargs['test'] is not None:
         dataset.split(dataset.data, [0.8], **kwargs)
         dataset.dev_set = dataset.test
-        dataset.load('test')
+        dataset.load('test', **kwargs)
 
     else:
         dataset.load('dev', **kwargs)

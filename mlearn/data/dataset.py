@@ -123,7 +123,6 @@ class GeneralDataset(IterableDataset):
                 else:
                     data_line[field.name] = line[idx].rstrip()
 
-            data_line['fields'] = data_line['fields']
             for key, val in data_line.items():
                 setattr(datapoint, key, val)
             data.append(datapoint)
@@ -206,16 +205,18 @@ class GeneralDataset(IterableDataset):
 
         with open(writepath, 'a', encoding = 'utf-8') as outf:
             if format == 'tsv':
+                fields = data_out[0].fields
                 filewriter = csv.writer(outf, delimiter = '\t')
-                filewriter.writerow(data_out[0].fields)
+                filewriter.writerow(fields)
             else:
                 filewriter = outf
 
             for datapoint in tqdm(data_out, desc = f"Dumping {data} to {writepath}"):
+                out = {'text': datapoint.original, 'label': datapoint.label}
                 if format == 'json':
-                    filewriter.write(json.dumps(datapoint) + '\n')
+                    filewriter.write(json.dumps(out) + '\n')
                 else:
-                    filewriter.writerow([datapoint[key] for key in data_out[0].fields])
+                    filewriter.writerow([datapoint[key] for key in fields])
 
     def set_labels(self, data: base.DataType, labels: base.DataType) -> None:
         """
