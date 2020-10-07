@@ -194,7 +194,7 @@ class GeneralDataset(IterableDataset):
         else:
             data_out = self.test
 
-        name = self.name.strip("'").strip('et al.')
+        name = self.name.replace("'", '').replace(' et al.', '').lower().replece('-', '_')
 
         file_path = os.path.abspath(write_path) if '~' not in write_path else os.path.expanduser(write_path)
         writepath = os.path.join(file_path, f"{name}_{data}.{format}")
@@ -203,7 +203,7 @@ class GeneralDataset(IterableDataset):
             tqdm.write(f"Path {writepath} already exists. creating {writepath}.dump")
             writepath = f"{writepath}.dump"
 
-        with open(writepath, 'a', encoding = 'utf-8') as outf:
+        with open(writepath, 'w', encoding = 'utf-8') as outf:
             if format == 'tsv':
                 fields = data_out[0].fields
                 filewriter = csv.writer(outf, delimiter = '\t')

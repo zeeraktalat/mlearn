@@ -37,7 +37,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: b
             loss.backward()
 
             if clip is not None:
-                torch.nn.utils.clip_grad_norm(model.parameters(), clip)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
 
             optimizer.step()
 
@@ -175,7 +175,7 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
             loss.backward()
 
             if clip is not None:
-                torch.nn.utils.clip_grad_norm(model.parameters(), clip)  # Prevent exploding gradients
+                torch.nn.utils.clip_grad_norm_(model.parameters(), clip)  # Prevent exploding gradients
 
             optimizer.step()
 

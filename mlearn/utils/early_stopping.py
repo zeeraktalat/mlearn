@@ -71,9 +71,10 @@ class EarlyStopping:
         tqdm.write("Loading weights from epoch {0}".format(self.best_epoch))
         try:
             self.model.load_state_dict(torch.load(self.path_prefix)['model_state_dict'])
-        except Exception:
+        except Exception as e:
             tqdm.write("Exception occurred loading the model after early termination.")
-            raise RuntimeError
+            tqdm.write(e)
+            raise e
         return self.model
 
     @best_state.setter
