@@ -104,7 +104,7 @@ class Metrics:
         """
         return self.scores[key][-1]
 
-    def last_round(self) -> base.Dict[str, float]:
+    def epoch_scores(self) -> base.Dict[str, float]:
         """
         Get the last value for every metric that is computed.
 
