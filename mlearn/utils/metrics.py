@@ -23,13 +23,17 @@ class Metrics:
 
         self.select_metrics(metrics)  # Initialize the metrics dict.
 
-    def select_metrics(self, metrics: base.List[str]) -> None:
+    def select_metrics(self, metrics: base.List[str], loss: bool = True) -> None:
         """
         Select metrics for computation based on a list of metric names.
 
-        :metrics: List of metric names.
+        :metrics (base.List[str]): List of metric names.
+        :loss (bool, default = True): Keep track of loss as a metric.
         :return out: Dictionary containing name and methods.
         """
+        if loss:
+            metrics.append('loss')
+
         for m in metrics:
             m = m.lower()
             if 'accuracy' in m and 'accuracy':
@@ -45,9 +49,7 @@ class Metrics:
             elif 'f1' in m:
                 self.metrics['f1-score'] = f1_score
                 m = 'f1-score'
-
             self.scores[m] = []
-        self.scores['loss'] = []
 
     def compute(self, labels: base.DataType, preds: base.DataType, **kwargs) -> base.Dict[str, float]:
         """
@@ -101,6 +103,15 @@ class Metrics:
         :returns (float): Return last computed value for the key.
         """
         return self.scores[key][-1]
+
+    def epoch_scores(self) -> base.Dict[str, float]:
+        """
+        Get the last value for every metric that is computed.
+
+        :returns comptued (base.Dict[str, float]): Returns the most recently computed value for each metric.
+        """
+        computed = {self.scores[key][-1] for key in self.scores}
+        return computed
 
     def display(self) -> base.Dict[str, float]:
         """
