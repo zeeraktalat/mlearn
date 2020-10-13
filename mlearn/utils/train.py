@@ -1,4 +1,5 @@
 import torch
+import wandb
 import numpy as np
 from mlearn import base
 from tqdm import tqdm, trange
@@ -56,7 +57,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                            loss: base.Callable, optimizer: base.Callable, metrics: Metrics,
                            dev: base.DataType = None, dev_metrics: Metrics = None, clip: float = None,
                            early_stopping: int = None, low: bool = False, shuffle: bool = True, gpu: bool = True,
-                           hyperopt = None, **kwargs) -> base.Union[list, int, dict, dict]:
+                           hyperopt: bool = None, **kwargs) -> base.Union[list, int, dict, dict]:
     """
     Train a single task pytorch model.
 
@@ -74,9 +75,12 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
     :low (bool, default = False): Lower scores indicate better performance.
     :shuffle (bool, default = True): Shuffle the dataset.
     :gpu (bool, default = True): Run on GPU
-    :hyperopt (default = None): Do hyper parameter optimisation.
+    :hyperopt (bool, default = None): Do hyper parameter optimisation.
     """
     with trange(epochs, desc = "Training epochs", leave = False) as loop:
+        if hyperopt:
+            wandb.watch()
+
         if gpu:
             model = model.cuda()
 
@@ -92,6 +96,9 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
 
             _singletask_epoch(model, optimizer, loss, metrics, batchers, clip, gpu)
 
+            if hyperopt:
+                wandb.log(metrics.epoch_scores())
+
             try:
                 eval_torch_model(model, dev, loss, dev_metrics, gpu, store = False, **kwargs)
 
@@ -101,7 +108,8 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                                  dev_score = f"{dev_metrics.last_display():.4f}")
 
                 if hyperopt:
-                    hyperopt.report(dev_metrics.early_stopping(), ep)
+                    scrs = dev_metrics.epoch_scores()
+                    wandb.log({f'dev_{key}': scrs[key] for key in scrs})
 
                 if early_stopping is not None and early_stopping(model, dev_metrics.early_stopping()):
                     model = early_stopping.best_state
@@ -200,7 +208,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                     early_stopping: int = None, save_path: str = None, dev: base.DataType = None,
                     dev_metrics: object = None, dev_task_id: int = 0, batches_per_epoch: int = None, low: bool = True,
                     shuffle: bool = True, dataset_weights: base.DataType = None, loss_weights: base.DataType = None,
-                    gpu: bool = True, hyperopt = None, **kwargs) -> None:
+                    gpu: bool = True, hyperopt: bool = None, **kwargs) -> None:
     """
     Train a multi-task learning model.
 
@@ -224,11 +232,14 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
     :dataset_weights (base.DataType, default = None): Probability for each dataset to be chosen (must sum to 1.0).
     :loss_weights (base.DataType, default = None): Weight the loss by multiplication.
     :gpu (bool, default = True): Set tot rue if model runs on GPU.
-    :hyperopt (default = None): Trial object for hyper parameter search.
+    :hyperopt (bool, default = None): Do hyper parameter optimisation.
     """
     with trange(epochs, desc = "Training model", leave = False) as loop:
         taskid2name = {i: batchers[i].data.name for i in range(len(batchers))}
         scores = defaultdict(list)
+
+        if hyperopt:
+            wandb.watch()
 
         if gpu:
             model = model.cuda()
@@ -259,6 +270,9 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                 else:
                     scores[score].append(np.mean(metrics.scores[score]))
 
+            if hyperopt:
+                wandb.log(metrics.epoch_scores())
+
             try:
                 eval_torch_model(model, dev, loss, dev_metrics, mtl = dev_task_id, store = False, gpu = gpu, **kwargs)
 
@@ -267,7 +281,8 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                                  dev_score = f"{dev_metrics.last_display():.4f}")
 
                 if hyperopt:
-                    hyperopt.report(dev_metrics.early_stopping(), epoch)
+                    scrs = dev_metrics.epoch_scores()
+                    wandb.log({f'dev_{key}': scrs[key] for key in scrs})
 
                 if early_stopping is not None and earlystop(model, dev_metrics.early_stopping()):
                     model = earlystop.best_state
