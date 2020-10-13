@@ -73,7 +73,10 @@ class EarlyStopping:
         """Load/save the best model state prior to early stopping being activated."""
         tqdm.write("Loading weights from epoch {0}".format(self.best_epoch))
         try:
-            self.model.load_state_dict(torch.load(self.path_prefix)['model_state_dict'])
+            if self.hyperopt:
+                self.model = wandb.restore('/'.split(self.path_prefix)[-1])
+            else:
+                self.model.load_state_dict(torch.load(self.path_prefix)['model_state_dict'])
         except Exception as e:
             tqdm.write("Exception occurred loading the model after early termination.")
             tqdm.write(e)
