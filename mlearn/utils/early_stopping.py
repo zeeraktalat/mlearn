@@ -8,7 +8,7 @@ class EarlyStopping:
     """Early stopping module."""
 
     def __init__(self, path_prefix: str, model: base.ModelType, patience: int = 8, low_is_good: bool = True,
-                 verbose: bool = False) -> None:
+                 verbose: bool = False, hyperopt: bool = False) -> None:
         """
         Early stopping module to identify when a training loop can exit because a local optima is found.
 
@@ -17,6 +17,7 @@ class EarlyStopping:
         :patience (int, default = 8): The number of epochs to allow the model to get out of local optima.
         :low_is_good (bool, default = False): Lower scores indicate better performance.
         :verbose (bool, False): Stop if the current epoch has a worse score then the best epoch so far.
+        :hyperopt (bool, False): Under hyper-optimisation.
         """
         self.patience = patience
         self.best_model = None
@@ -26,6 +27,7 @@ class EarlyStopping:
         self.epoch = 0
         self.low_is_good = low_is_good
         self.path_prefix = f'{path_prefix}_{model.name}.pkl'
+        self.hyperopt = hyperopt
         self.verbose = verbose
         self.model = model
 
@@ -86,4 +88,5 @@ class EarlyStopping:
         :model (base.ModelType): Model being trained.
         """
         torch.save({'model_state_dict': model.state_dict()}, self.path_prefix)
-        wandb.save('/'.split(self.path_prefix)[-1])
+        if self.hyperopt:
+            wandb.save('/'.split(self.path_prefix)[-1])
