@@ -331,6 +331,7 @@ class GeneralDataset(IterableDataset):
                                            disable = os.environ.get('TQDM_DISABLE', False))):
             self.itos[ix] = tok
             self.stoi[tok] = ix
+        print(f"TOKEN COUNTS stoi {len(self.stoi)}, itos {len(self.itos)}")
 
     def extend_vocab(self, data: base.DataType) -> None:
         """
@@ -597,7 +598,7 @@ class GeneralDataset(IterableDataset):
         else:
             encoded = torch.tensor([self.stoi.get(text[ix], self.unk_tok) for ix in range(len(text))],
                                    dtype = torch.long)
-            setattr(doc, 'encoded', encoded)
+            # setattr(doc, 'encoded', encoded)
         return encoded
 
     def split(self, data: base.DataType = None, splits: base.List[float] = None,
@@ -731,6 +732,7 @@ class GeneralDataset(IterableDataset):
         indices = list(range(len(data)))
         train_size, dev_size, test_size = splits
 
+        print(f"SPLIT _split, {dev_size}, {test_size}")
         if (dev_size, test_size) == (0.0, 0.0):
             train, indices = self._split_helper(data, splits[0], indices)
             test, indices = self._split_helper(data, len(data) - splits[0], indices)

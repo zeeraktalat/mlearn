@@ -33,6 +33,8 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: b
                 y = y.cuda()
 
             scores = model(X, **kwargs)
+            print(f"\nX: {[n.tolist()[:10] for n in X]}")
+            print(f"scores: {scores.tolist()}")
             loss = loss_f(scores, y)
             loss.backward()
 
@@ -41,8 +43,12 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: b
 
             optimizer.step()
 
+            inner_preds = torch.argmax(scores, dim = 1).cpu().tolist()
             predictions.extend(torch.argmax(scores, dim = 1).cpu().tolist())
-            labels.extend(y.cpu().tolist())
+            print(f"predictions: {inner_preds}")
+            inner_labels = y.cpu().tolist()
+            labels.extend(inner_labels)
+            print(f"labels: {inner_labels}")
 
             lo = loss.data.item()
             epoch_loss += lo
@@ -82,6 +88,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
 
         if early_stopping is not None:
             early_stopping = EarlyStopping(save_path, model, early_stopping, low_is_good = low)
+        print(f"MODEL CHILDREN: {[x for x in model.named_children()]}")
 
         for ep in loop:
             model.train()
@@ -91,6 +98,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                 batchers.shuffle()
 
             _singletask_epoch(model, optimizer, loss, metrics, batchers, clip, gpu)
+            print(f"\nMETRICS: {metrics.scores}")
 
             try:
                 eval_torch_model(model, dev, loss, dev_metrics, gpu, store = False, **kwargs)

@@ -286,6 +286,98 @@ def wulczyn(cleaners: base.Callable, data_path: str, length: int = None, preproc
     return _loader(**args)
 
 
+def wulczyn_mini(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
+            transformer: base.Callable = None, label_processor: base.Callable = None, annotate: set = None,
+            filters: base.List[str] = None, **kwargs) -> GeneralDataset:
+    """
+    Load the Wulczyn et al. dataset.
+
+    :cleaners (base.Callable): Initialized cleaner.
+    :data_path (str): Path to data directory.
+    :length (int), default = None): Maximum length of sequence.
+    :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
+    :transformer (base.Callable, default = None): Additional document processing, if required.
+    :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :annotate (set, default = None): The annotations to provide ekphrasis with.
+    :filters (base.List[str], default = None): Filters to remove the annotations provided by Ekphrasis.
+    :returns (GeneralDataset): Loaded datasets.
+    """
+    # Labelfield needs to be set to nothing, then fields need to be modified
+    args = {'data_dir': data_path,
+            'ftype': 'tsv',
+            'fields': None,
+            'train': 'wulczyn_mini_train.tsv', 'dev': 'wulczyn_mini_dev.tsv', 'test': 'wulczyn_mini_test.tsv',
+            'train_labels': None, 'dev_labels': None, 'test_labels': None,
+            'sep': '\t',
+            'tokenizer': cleaners,
+            'preprocessor': preprocessor,
+            'transformations': transformer,
+            'length': length,
+            'label_preprocessor': label_processor,
+            'name': 'Wulczyn et al.',
+            'skip_header': True,
+            'line_count': {'train': 59, 'dev': 19, 'test': 19},
+            'annotate': annotate,
+            'filters': filters
+            }
+
+    text = base.Field('text', train = True, label = False, cname = 'comment', ix = 1)
+    label = base.Field('label', train = False, label = True, cname = 'label', ix = 2)
+    idx = base.Field('id', train = False, label = False)
+    ignore = base.Field('ignore', train = False, label = False, ignore = True)
+
+    args['fields'] = [idx, text, label, ignore]
+    args.update(kwargs)
+
+    return _loader(**args)
+
+
+def wulczyn_tiny(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
+            transformer: base.Callable = None, label_processor: base.Callable = None, annotate: set = None,
+            filters: base.List[str] = None, **kwargs) -> GeneralDataset:
+    """
+    Load the Wulczyn et al. dataset.
+
+    :cleaners (base.Callable): Initialized cleaner.
+    :data_path (str): Path to data directory.
+    :length (int), default = None): Maximum length of sequence.
+    :preprocessor (base.Callable, default = None): Preprocessor allowing for different experiments.
+    :transformer (base.Callable, default = None): Additional document processing, if required.
+    :label_processor (base.Callable, default = None): Label preprocessing, allowing for modifying labelset.
+    :annotate (set, default = None): The annotations to provide ekphrasis with.
+    :filters (base.List[str], default = None): Filters to remove the annotations provided by Ekphrasis.
+    :returns (GeneralDataset): Loaded datasets.
+    """
+    # Labelfield needs to be set to nothing, then fields need to be modified
+    args = {'data_dir': data_path,
+            'ftype': 'tsv',
+            'fields': None,
+            'train': 'wulczyn_tiny_train.tsv', 'dev': 'wulczyn_tiny_dev.tsv', 'test': 'wulczyn_tiny_test.tsv',
+            'train_labels': None, 'dev_labels': None, 'test_labels': None,
+            'sep': '\t',
+            'tokenizer': cleaners,
+            'preprocessor': preprocessor,
+            'transformations': transformer,
+            'length': length,
+            'label_preprocessor': label_processor,
+            'name': 'Wulczyn et al.',
+            'skip_header': True,
+            'line_count': {'train': 6, 'dev': 4, 'test': 4},
+            'annotate': annotate,
+            'filters': filters
+            }
+
+    text = base.Field('text', train = True, label = False, cname = 'comment', ix = 1)
+    label = base.Field('label', train = False, label = True, cname = 'label', ix = 2)
+    idx = base.Field('id', train = False, label = False)
+    ignore = base.Field('ignore', train = False, label = False, ignore = True)
+
+    args['fields'] = [idx, text, label, ignore]
+    args.update(kwargs)
+
+    return _loader(**args)
+
+
 def hoover(cleaners: base.Callable, data_path: str, length: int = None, preprocessor: base.Callable = None,
            transformer: base.Callable = None, label_processor: base.Callable = None, annotate: set = None,
            filters: base.List[str] = None, **kwargs) -> GeneralDataset:
