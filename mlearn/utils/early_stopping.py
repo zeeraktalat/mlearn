@@ -1,4 +1,5 @@
 import torch
+import wandb
 from tqdm import tqdm
 from mlearn import base
 
@@ -85,3 +86,4 @@ class EarlyStopping:
         :model (base.ModelType): Model being trained.
         """
         torch.save({'model_state_dict': model.state_dict()}, self.path_prefix)
+        wandb.save('/'.split(self.path_prefix)[-1])
