@@ -110,7 +110,7 @@ class Metrics:
 
         :returns comptued (base.Dict[str, float]): Returns the most recently computed value for each metric.
         """
-        computed = {self.scores[key][-1] for key in self.scores}
+        computed = {key: self.scores[key][-1] for key in self.scores}
         return computed
 
     def display(self) -> base.Dict[str, float]:
