@@ -28,6 +28,9 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: b
         predictions, labels = [], []
         epoch_loss = 0
 
+        model.train()
+        optimizer.zero_grad()  # Zero out gradients
+
         for X, y in loop:
             if gpu:
                 X = X.cuda()
@@ -88,9 +91,6 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
             earlystop = EarlyStopping(save_path, model, early_stopping, low, hyperopt)
 
         for ep in loop:
-            model.train()
-            optimizer.zero_grad()  # Zero out gradients
-
             if shuffle:
                 batchers.shuffle()
 
@@ -111,7 +111,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                     scrs = dev_metrics.epoch_scores()
                     wandb.log({f'dev_{key}': scrs[key] for key in scrs})
 
-                if early_stopping is not None and earlystop(dev_metrics.early_stopping()):
+                if early_stopping is not None and earlystop(model, dev_metrics.early_stopping()):
                     model = earlystop.best_state
                     break
             except Exception:
@@ -165,18 +165,21 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
         label_count = 0
         epoch_loss = 0
 
+        # Set model to training mode
+        model.train()
+
         for i, b in enumerate(loop):
+
             # Select task and get batch
             task_id = np.random.choice(range(len(batchers)), p = dataset_weights)
             X, y = next(iter(batchers[task_id]))
 
+            # Zero out gradients
+            optimizer.zero_grad()
+
             if gpu:
                 X = X.cuda()
                 y = y.cuda()
-
-            # Do model training
-            model.train()
-            optimizer.zero_grad()
 
             scores = model(X, task_id, **kwargs)
             loss = loss_f(scores, y) * loss_weights[task_id]
