@@ -8,7 +8,7 @@ class EarlyStopping:
     """Early stopping module."""
 
     def __init__(self, path_prefix: str, model: base.ModelType, patience: int = 8, low_is_good: bool = True,
-                 verbose: bool = False, hyperopt: bool = False) -> None:
+                 hyperopt: bool = False, verbose: bool = False) -> None:
         """
         Early stopping module to identify when a training loop can exit because a local optima is found.
 
@@ -16,8 +16,8 @@ class EarlyStopping:
         :model (base.ModelType): The model to store.
         :patience (int, default = 8): The number of epochs to allow the model to get out of local optima.
         :low_is_good (bool, default = False): Lower scores indicate better performance.
-        :verbose (bool, False): Stop if the current epoch has a worse score then the best epoch so far.
         :hyperopt (bool, False): Under hyper-optimisation.
+        :verbose (bool, False): Stop if the current epoch has a worse score then the best epoch so far.
         """
         self.patience = patience
         self.best_model = None
