@@ -74,7 +74,7 @@ class EarlyStopping:
         tqdm.write("Loading weights from epoch {0}".format(self.best_epoch))
         try:
             if self.hyperopt:
-                self.model = wandb.restore('/'.split(self.path_prefix)[-1])
+                self.model = wandb.restore(self.path_prefix.split('/')[-1])
             else:
                 self.model.load_state_dict(torch.load(self.path_prefix)['model_state_dict'])
         except Exception as e:
@@ -92,4 +92,4 @@ class EarlyStopping:
         """
         torch.save({'model_state_dict': model.state_dict()}, self.path_prefix)
         if self.hyperopt:
-            wandb.save('/'.split(self.path_prefix)[-1])
+            wandb.save(self.path_prefix.split('/')[-1])
