@@ -78,11 +78,11 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
     :hyperopt (bool, default = False): Do hyper parameter optimisation.
     """
     with trange(epochs, desc = "Training epochs", leave = False) as loop:
-        if hyperopt:
-            wandb.watch()
-
         if gpu:
             model = model.cuda()
+
+        if hyperopt:
+            wandb.watch(model, log = 'all')
 
         if early_stopping is not None:
             earlystop = EarlyStopping(save_path, model, early_stopping, low, hyperopt)
@@ -238,11 +238,11 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
         taskid2name = {i: batchers[i].data.name for i in range(len(batchers))}
         scores = defaultdict(list)
 
-        if hyperopt:
-            wandb.watch()
-
         if gpu:
             model = model.cuda()
+
+        if hyperopt:
+            wandb.watch(model, log = 'all')
 
         if loss_weights is None:
             loss_weights = np.ones(len(batchers))
