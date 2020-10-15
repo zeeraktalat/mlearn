@@ -29,9 +29,10 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: b
         epoch_loss = 0
 
         model.train()
-        optimizer.zero_grad()  # Zero out gradients
 
         for X, y in loop:
+            optimizer.zero_grad()  # Zero out gradients
+
             if gpu:
                 X = X.cuda()
                 y = y.cuda()

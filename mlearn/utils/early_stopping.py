@@ -93,3 +93,4 @@ class EarlyStopping:
         torch.save({'model_state_dict': model.state_dict()}, self.path_prefix)
         if self.hyperopt:
             wandb.save(self.path_prefix)
+            wandb.run.log_artifact(self.model, type = 'model')
