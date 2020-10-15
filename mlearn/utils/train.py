@@ -31,28 +31,38 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: b
         model.train()
 
         for X, y in loop:
-            optimizer.zero_grad()  # Zero out gradients
+            # Zero out Gradients
+            optimizer.zero_grad()
 
+            # Send to GPU, if necessary.
             if gpu:
                 X = X.cuda()
                 y = y.cuda()
 
+            # Compute scores and losses
             scores = model(X, **kwargs)
             loss = loss_f(scores, y)
+
+            # Backprop
             loss.backward()
 
+            # Clip gradients
             if clip is not None:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
 
             optimizer.step()
 
+            # Store labels and predictions
             predictions.extend(torch.argmax(scores, dim = 1).cpu().tolist())
             labels.extend(y.cpu().tolist())
 
+            # Store loss
             lo = loss.data.item()
             epoch_loss += lo
 
             loop.set_postfix(batch_loss = f"{lo / len(y) :.4f}")
+
+        # Compute metrics and store loss
         metrics.compute(labels, predictions)
         metrics.loss = epoch_loss / len(labels)
 
@@ -170,20 +180,23 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
         model.train()
 
         for i, b in enumerate(loop):
+            # Zero out gradients
+            optimizer.zero_grad()
 
             # Select task and get batch
             task_id = np.random.choice(range(len(batchers)), p = dataset_weights)
             X, y = next(iter(batchers[task_id]))
 
-            # Zero out gradients
-            optimizer.zero_grad()
-
+            # Send to GPU
             if gpu:
                 X = X.cuda()
                 y = y.cuda()
 
+            # Compute model prediction and loss
             scores = model(X, task_id, **kwargs)
             loss = loss_f(scores, y) * loss_weights[task_id]
+
+            # Backprop
             loss.backward()
 
             if clip is not None:
@@ -191,6 +204,7 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
 
             optimizer.step()
 
+            # Compute metrics and store loss information
             metrics.compute(torch.argmax(scores, dim = 1).tolist(), y.tolist())
             label_count += len(y.cpu().tolist())
             epoch_loss += loss.data.item()
