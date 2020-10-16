@@ -79,8 +79,7 @@ class EarlyStopping:
             # if self.hyperopt:
             #     self.model = wandb.restore(self.path_prefix.split('/')[-1])
         except Exception as e:
-            tqdm.write("Exception occurred loading the model after early termination.")
-            tqdm.write(e)
+            tqdm.write(f"Exception occurred loading the model after early termination. {e}")
             raise e
         return self.model
 
