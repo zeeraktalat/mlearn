@@ -67,7 +67,7 @@ def select_vectorizer(vectorizer: str = 'dict') -> base.VectType:
 
 
 def _get_datestr():
-    return datetime.now().strftime('%Y/%m/%d:%H:%M:%S')
+    return datetime.now().strftime('%Y.%m.%d.%H.%M.%S')
 
 
 def hyperparam_space(search_space: base.List[dict], hyper_parameters: base.List[base.Tuple]

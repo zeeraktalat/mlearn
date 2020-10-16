@@ -2,6 +2,7 @@ import torch
 import wandb
 from tqdm import tqdm
 from mlearn import base
+from mlearn.utils.pipeline import _get_datestr
 
 
 class EarlyStopping:
@@ -26,7 +27,7 @@ class EarlyStopping:
         self.best_epoch = 0
         self.epoch = 0
         self.low_is_good = low_is_good
-        self.path_prefix = f'{path_prefix}_{model.name}.pkl'
+        self.path_prefix = f'{path_prefix}_{model.name}.{_get_datestr()}.pkl'
         self.hyperopt = hyperopt
         self.verbose = verbose
         self.model = model
