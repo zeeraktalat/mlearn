@@ -99,8 +99,10 @@ class GeneralDataset(IterableDataset):
         data = []
         try:
             num_docs = line_count[dataset]
-        except KeyError:
-            num_docs = line_count
+        except KeyError:  # Dataset key not defined
+            num_docs = None
+        except TypeError:  # line_count not defined
+            num_docs = None
 
         for line in tqdm(self.reader(fp), desc = f'Loading {self.name} ({dataset})',
                          disable = os.environ.get('TQDM_DISABLE', False), total = num_docs):
