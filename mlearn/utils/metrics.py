@@ -18,7 +18,7 @@ class Metrics:
         :avg (str, default = 'macro'): Averaging to use for metric functions.
         :loss (bool, default = True): Track loss score as well.
         """
-        self.scores, self.metrics = OrderedDict()
+        self.scores, self.metrics = {}, OrderedDict()
         self.display_metric = display_metric
         self.early_stop = early_stop if early_stop is not None else display_metric
         self.average = avg
