@@ -7,7 +7,8 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_a
 class Metrics:
     """Metrics data object, to contain methods for computing, extracting, and evaluating different metrics."""
 
-    def __init__(self, metrics: base.List[str], display_metric: str, early_stop: str = None, avg: str = 'macro'):
+    def __init__(self, metrics: base.List[str], display_metric: str, early_stop: str = None, avg: str = 'macro',
+                 loss: bool = True):
         """
         Intialize metrics computation class.
 
@@ -15,13 +16,14 @@ class Metrics:
         :display_metric (str): Metric to display in TQDM loops.
         :early_stop (str, default = None): Metric to evaluate whether to perform early stopping.
         :avg (str, default = 'macro'): Averaging to use for metric functions.
+        :loss (bool, default = True): Track loss score as well.
         """
-        self.scores, self.metrics = {}, OrderedDict()
+        self.scores, self.metrics = OrderedDict()
         self.display_metric = display_metric
         self.early_stop = early_stop if early_stop is not None else display_metric
         self.average = avg
 
-        self.select_metrics(metrics)  # Initialize the metrics dict.
+        self.select_metrics(metrics, loss)  # Initialize the metrics dict.
 
     def select_metrics(self, metrics: base.List[str], loss: bool = True) -> None:
         """
