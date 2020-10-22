@@ -21,7 +21,7 @@ class LSTMClassifier(nn.Module):
         """
         super(LSTMClassifier, self).__init__()
         self.batch_first = batch_first
-        self.name = 'emb lstm'
+        self.name = 'emb_lstm'
         self.info = {'Input dim': input_dim,
                      'Embedding dim': embedding_dim,
                      'Hidden dim': hidden_dim,
@@ -66,10 +66,12 @@ class MLPClassifier(nn.Module):
         """
         Initialise the model.
 
-        :input_dim: The dimension of the input to the model.
-        :hidden_dim: The dimension of the hidden layer.
-        :output_dim: The dimension of the output layer (i.e. the number of classes).
-        :batch_first (bool): Batch the first dimension?
+        :input_dim (int): The dimension of the input to the model.
+        :embedding_dim (int): The dimension of the embedding layer.
+        :hidden_dim (int): The dimension of the hidden layer.
+        :output_dim (int): The dimension of the output layer (i.e. the number of classes).
+        :dropout (float, default = 0.0): The value of dropout.
+        :batch_first (bool, default True): Batch the first dimension?
         :nonlinearity (str, default = 'tanh'): String name of nonlinearity function to be used.
         """
         super(MLPClassifier, self).__init__()
