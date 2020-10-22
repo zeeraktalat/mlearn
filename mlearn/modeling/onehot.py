@@ -123,7 +123,7 @@ class CNNClassifier(nn.Module):
         Initialise the model.
 
         :window_sizes (base.List[int]): The size of the filters (e.g. 1: unigram, 2: bigram, etc.)
-        :no_filters (int): The number of filters to apply.
+        :num_filters (int): The number of filters to apply.
         :input_dim (int): The input dimension (can and should be limited beyond the raw input dimensions).
         :hidden_dim (int): Hidden dimension size.
         :output_dim (int): Output dimension.
