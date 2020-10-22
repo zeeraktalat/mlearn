@@ -334,7 +334,7 @@ class GeneralDataset(IterableDataset):
             self.itos[ix] = tok
             self.stoi[tok] = ix
 
-    def rebuild_token_vocab(self, stoi: base.dict[str, int]) -> None:
+    def rebuild_token_vocab(self, stoi: base.Dict[str, int]) -> None:
         """
         Rebuilds token vocabulary based on a string-index mapping.
 
@@ -420,7 +420,7 @@ class GeneralDataset(IterableDataset):
             self.itol[ix] = l
             self.ltoi[l] = ix
 
-    def rebuild_label_vocab(self, stoi: base.dict[str, int]) -> None:
+    def rebuild_label_vocab(self, stoi: base.Dict[str, int]) -> None:
         """
         Rebuilds label vocabulary based on a string-index mapping.
 
