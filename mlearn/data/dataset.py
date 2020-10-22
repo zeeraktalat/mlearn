@@ -334,6 +334,18 @@ class GeneralDataset(IterableDataset):
             self.itos[ix] = tok
             self.stoi[tok] = ix
 
+    def rebuild_token_vocab(self, stoi: base.dict[str, int]) -> None:
+        """
+        Rebuilds token vocabulary based on a string-index mapping.
+
+        :stoi (base.Dict[str, int]): String-index token mapping to use for rebuilding the vocabulary.
+        """
+        self.unk_tok = stoi['<unk>']
+        self.pad_tok = stoi['<pad>']
+        for tok, ix in stoi.values():
+            self.itos[ix] = tok
+            self.stoi[tok] = ix
+
     def extend_vocab(self, data: base.DataType) -> None:
         """
         Extend the vocabulary.
