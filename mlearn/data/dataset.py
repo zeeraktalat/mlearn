@@ -420,6 +420,16 @@ class GeneralDataset(IterableDataset):
             self.itol[ix] = l
             self.ltoi[l] = ix
 
+    def rebuild_label_vocab(self, stoi: base.dict[str, int]) -> None:
+        """
+        Rebuilds label vocabulary based on a string-index mapping.
+
+        :stoi (base.Dict[str, int]): String-index label mapping to use for rebuilding the vocabulary.
+        """
+        for tok, ix in stoi.values():
+            self.itol[ix] = tok
+            self.ltoi[tok] = ix
+
     def label_name_lookup(self, label: str) -> int:
         """
         Look up label index from label.
