@@ -123,7 +123,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                     wandb.log({f'dev_{key}': scrs[key] for key in scrs})
 
                 if early_stopping is not None and earlystop(model, dev_metrics.early_stopping()):
-                    model = earlystop.best_state
+                    # model = earlystop.best_state
                     break
             except Exception:
                 # Dev is not set.
