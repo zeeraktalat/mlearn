@@ -129,11 +129,12 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                     if len(metrics) >= early_stopping:
                         if any(torch.isnan(metrics.get_last('loss')), torch.isnan(metrics.get_last('loss'))):
                             # there are nan values in the losses, so the model won't learn anything
-                            tqdm.write("NaN loss in the model.Nothing will be learned")
+                            tqdm.write("Early Stopping: NaN loss in the model")
                             # model = earlystop.best_state
                             break
                         if len(set(metrics.display_score)) < 2 or len(set(dev_metrics.display_score)) < 2:
                             # The model is stuck on just one score and is not learning anything
+                            tqdm.write("Early Stopping: The model has not learned anything in {ep} epochs.")
                             # model = earlystop.best_state
                             break
             except Exception:
