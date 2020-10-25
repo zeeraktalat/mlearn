@@ -49,9 +49,13 @@ class EarlyStopping:
             self.best_epoch = self.epoch
             return False
 
-        elif self.epoch > self.best_epoch + self.patience:
+        elif self.epoch > self.best_epoch + self.patience:  # Best score achieved
             tqdm.write("Early stopping: Terminate")
             return True
+
+        # TODO Add code to trigger early stopping if loss is NaN
+        # TODO Add code to trigger early stopping if train score or dev score has remained the same for n iterations
+
         if self.verbose:
             tqdm.write("Early stopping: Worse epoch")
         return False
@@ -74,9 +78,6 @@ class EarlyStopping:
         tqdm.write("Loading weights from epoch {0}".format(self.best_epoch))
         try:
             self.model.load_state_dict(torch.load(self.path_prefix)['model_state_dict'])
-            # TODO: Fix loading from WandB
-            # if self.hyperopt:
-            #     self.model = wandb.restore(self.path_prefix.split('/')[-1])
         except Exception as e:
             tqdm.write(f"Exception occurred loading the model after early termination. {e}")
             raise e
@@ -92,4 +93,3 @@ class EarlyStopping:
         torch.save({'model_state_dict': model.state_dict()}, self.path_prefix)
         if self.hyperopt:
             wandb.save(self.path_prefix)
-            # wandb.run.log_artifact(self.model, type = 'model')
