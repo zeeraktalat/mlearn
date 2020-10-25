@@ -127,7 +127,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                         # model = earlystop.best_state
                         break
                     if len(metrics) >= early_stopping:
-                        if any(torch.isnan(metrics.get_last('loss')), torch.isnan(metrics.get_last('loss'))):
+                        if any([np.isnan(metrics.get_last('loss')), np.isnan(metrics.get_last('loss'))]):
                             # there are nan values in the losses, so the model won't learn anything
                             tqdm.write("Early Stopping: NaN loss in the model")
                             # model = earlystop.best_state
