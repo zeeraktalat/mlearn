@@ -122,9 +122,20 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                     scrs = dev_metrics.epoch_scores()
                     wandb.log({f'dev_{key}': scrs[key] for key in scrs})
 
-                if early_stopping is not None and earlystop(model, dev_metrics.early_stopping()):
-                    # model = earlystop.best_state
-                    break
+                if early_stopping is not None:
+                    if earlystop(model, dev_metrics.early_stopping()):
+                        # model = earlystop.best_state
+                        break
+                    if len(metrics) >= early_stopping:
+                        if any(torch.isnan(metrics.get_last('loss')), torch.isnan(metrics.get_last('loss'))):
+                            # there are nan values in the losses, so the model won't learn anything
+                            tqdm.write("NaN loss in the model.Nothing will be learned")
+                            # model = earlystop.best_state
+                            break
+                        if len(set(metrics.display_score)) < 2 or len(set(dev_metrics.display_score)) < 2:
+                            # The model is stuck on just one score and is not learning anything
+                            # model = earlystop.best_state
+                            break
             except Exception:
                 # Dev is not set.
                 loop.set_postfix(epoch_loss = f"{metrics.get_last('loss'):.4f}", **metrics.display())

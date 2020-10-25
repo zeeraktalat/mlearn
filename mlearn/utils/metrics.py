@@ -132,6 +132,14 @@ class Metrics:
         difference = cur_score - prev_score
         return {self.display_metric: np.mean(self.scores[self.display_metric]), 'diff': difference}
 
+    def display_score(self) -> base.List[float]:
+        """
+        Return all computed display scores.
+
+        :returns (base.List[float]): All computed display scores.
+        """
+        return self.scores[self.display_metric]
+
     def last_display(self) -> float:
         """Get last display score."""
         return self.scores[self.display_metric][-1]
