@@ -28,7 +28,6 @@ setuptools.setup(
         "torchtestcase",
         "torchtext==0.6.0",
         "torch==1.4.0",
-        'optuna',
         'bpemb',
         'ekphrasis',
         'wandb',
