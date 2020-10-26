@@ -128,8 +128,8 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                         break
 
                     if ep >= early_stopping:
-                        if any([not str(metrics.get_last('loss')).isnumeric(),
-                                not str(dev_metrics.get_last('loss')).isnumeric()]):
+                        if any([not str(float(metrics.get_last('loss'))).isnumeric(),
+                                not str(float(dev_metrics.get_last('loss'))).isnumeric()]):
                             # there are nan values in the losses, so the model won't learn anything
                             tqdm.write("Early Stopping: NaN loss in the model")
                             # model = earlystop.best_state
