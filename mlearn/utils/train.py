@@ -127,14 +127,14 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                         # model = earlystop.best_state
                         break
 
-                    if any([not str(metrics.get_last('loss')).isnumeric(),
-                            not str(dev_metrics.get_last('loss')).isnumeric()]):
-                        # there are nan values in the losses, so the model won't learn anything
-                        tqdm.write("Early Stopping: NaN loss in the model")
-                        # model = earlystop.best_state
-                        break
-
                     if ep >= early_stopping:
+                        if any([not str(metrics.get_last('loss')).isnumeric(),
+                                not str(dev_metrics.get_last('loss')).isnumeric()]):
+                            # there are nan values in the losses, so the model won't learn anything
+                            tqdm.write("Early Stopping: NaN loss in the model")
+                            # model = earlystop.best_state
+                            break
+
                         if len(set(metrics.display_score())) < 2 or len(set(dev_metrics.display_score())) < 2:
                             # The model is stuck on just one score and is not learning anything
                             tqdm.write("Early Stopping: The model has not learned anything in {ep} epochs.")
