@@ -69,7 +69,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: b
 
 def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, batchers: base.DataType,
                            loss: base.Callable, optimizer: base.Callable, metrics: Metrics,
-                           dev: base.DataType = None, dev_metrics: Metrics = None, clip: float = None,
+                           dev: base.DataType = None, dev_metrics: Metrics = None, clip: float = 1.0,
                            early_stopping: int = None, low: bool = False, shuffle: bool = True, gpu: bool = True,
                            hyperopt: bool = False, **kwargs) -> base.Union[list, int, dict, dict]:
     """
@@ -128,13 +128,6 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                         break
 
                     if ep >= early_stopping:
-                        if any([not str(float(metrics.get_last('loss'))).isnumeric(),
-                                not str(float(dev_metrics.get_last('loss'))).isnumeric()]):
-                            # there are nan values in the losses, so the model won't learn anything
-                            tqdm.write("Early Stopping: NaN loss in the model")
-                            # model = earlystop.best_state
-                            break
-
                         if len(set(metrics.display_score())) < 2 or len(set(dev_metrics.display_score())) < 2:
                             # The model is stuck on just one score and is not learning anything
                             tqdm.write("Early Stopping: The model has not learned anything in {ep} epochs.")
