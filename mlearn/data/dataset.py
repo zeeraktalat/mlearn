@@ -342,7 +342,7 @@ class GeneralDataset(IterableDataset):
         """
         self.unk_tok = stoi['<unk>']
         self.pad_tok = stoi['<pad>']
-        for tok, ix in stoi.values():
+        for tok, ix in stoi.items():
             self.itos[ix] = tok
             self.stoi[tok] = ix
 
@@ -426,7 +426,7 @@ class GeneralDataset(IterableDataset):
 
         :stoi (base.Dict[str, int]): String-index label mapping to use for rebuilding the vocabulary.
         """
-        for tok, ix in stoi.values():
+        for tok, ix in stoi.items():
             self.itol[ix] = tok
             self.ltoi[tok] = ix
 
