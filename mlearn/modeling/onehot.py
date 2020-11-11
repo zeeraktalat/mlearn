@@ -91,7 +91,7 @@ class MLPClassifier(nn.Module):
 
         # Set dropout and non-linearity
         self.dropout = nn.Dropout(dropout)
-        self.nonlinearity = torch.relu if nonlinearity == 'relu' else torch.relu
+        self.nonlinearity = torch.relu if nonlinearity == 'relu' else torch.tanh
         self.softmax = nn.LogSoftmax(dim = 1)
 
     def forward(self, sequence: base.DataType):
@@ -145,7 +145,7 @@ class CNNClassifier(nn.Module):
         self.itoh = nn.Linear(input_dim, hidden_dim)  # Works
         self.conv = nn.ModuleList([nn.Conv2d(1, num_filters, (w, hidden_dim)) for w in window_sizes])
         self.linear = nn.Linear(len(window_sizes) * num_filters, output_dim)
-        self.nonlinearity = nn.ReLU() if nonlinearity == 'relu' else nn.Tanh()
+        self.nonlinearity = torch.relu if nonlinearity == 'relu' else torch.tanh
         self.softmax = nn.LogSoftmax(dim = 1)
 
     def forward(self, sequence) -> base.DataType:
