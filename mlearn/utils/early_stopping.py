@@ -53,9 +53,6 @@ class EarlyStopping:
             tqdm.write("Early stopping: Terminate")
             return True
 
-        # TODO Add code to trigger early stopping if loss is NaN
-        # TODO Add code to trigger early stopping if train score or dev score has remained the same for n iterations
-
         if self.verbose:
             tqdm.write("Early stopping: Worse epoch")
         return False
