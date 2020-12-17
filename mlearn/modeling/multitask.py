@@ -256,7 +256,7 @@ class OnehotMLPClassifier(nn.Module):
         self.all_parameters.append(self.shared.bias)
 
         self.hidden = {}
-        for task_ix in range(input_dims):
+        for task_ix, _ in enumerate(input_dims):
             layer = nn.Linear(shared_dim, hidden_dims[task_ix])
             self.hidden[task_ix] = layer
 
