@@ -345,13 +345,26 @@ class EmbeddingMLPClassifier(nn.Module):
             # Add parameters
             self.all_parameters.append(layer.weight)
 
-        self.shared = []
-        for i in range(len(hidden_dims)):
-            if i == 0:
-                layer = nn.Linear(embedding_dims, hidden_dims[i])
-            else:
-                layer = nn.Linear(hidden_dims[i - 1], hidden_dims[i])
-            self.shared.append(layer)
+        self.shared = nn.Linear(embedding_dims, shared_dim)
+        self.all_parameters.append(self.shared.weight)
+        self.all_parameters.append(self.shared.bias)
+
+        # self.shared = []
+        # for i in range(len(hidden_dims)):
+        #     if i == 0:
+        #         layer = nn.Linear(embedding_dims, hidden_dims[i])
+        #     else:
+        #         layer = nn.Linear(hidden_dims[i - 1], hidden_dims[i])
+        #     self.shared.append(layer)
+        #
+        #     # Add parameters
+        #     self.all_parameters.append(layer.weight)
+        #     self.all_parameters.append(layer.bias)
+
+        self.hidden = {}
+        for task_ix, _ in enumerate(input_dims):
+            layer = nn.Linear(shared_dim, hidden_dims[task_ix])
+            self.hidden[task_ix] = layer
 
             # Add parameters
             self.all_parameters.append(layer.weight)
@@ -386,13 +399,16 @@ class EmbeddingMLPClassifier(nn.Module):
         if self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        res = self.nonlinearity(self.inputs[task_id](sequence))
+        res = self.inputs[task_id](sequence)
+        res = self.shared(res)
+        res = self.dropout(self.hidden[task_id](res))
+        res = self.nonlinearity(res)
 
-        for layer in self.shared:
-            res = self.dropout(layer(res))
+        # for layer in self.shared:
+        #     res = self.dropout(layer(res))
 
         res = res.mean(0)
-        res = self.outputs[task_id](self.nonlinearity(res))
+        res = self.outputs[task_id](res)
         prob_dist = self.softmax(res)
 
         return prob_dist
