@@ -324,7 +324,7 @@ class EmbeddingMLPClassifier(nn.Module):
         self.name = "emb-mtl-mlp"
         self.batch_first = batch_first
         self.info = {'Input dim': ", ".join([str(it) for it in input_dims]), 'Shared dim': shared_dim,
-                     'Embedding dim': ", ".join([str(it) for it in embedding_dims]),
+                     'Embedding dim': embedding_dims,
                      'Output dim': ", ".join([str(it) for it in output_dims]),
                      'Dropout': dropout, 'Model': self.name, 'nonlinearity': nonlinearity}
 
