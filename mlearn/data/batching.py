@@ -10,7 +10,7 @@ class TorchtextExtractor:
         self.datafield = datafield
         self.labelfield = labelfield
         setattr(self.data, 'name', dataname)
-        self.vocab_size = None
+        self.vocab_size = vocab_size
 
     def __len__(self):
         return len(self.data)
