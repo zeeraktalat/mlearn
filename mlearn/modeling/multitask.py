@@ -51,7 +51,7 @@ class EmbeddingLSTMClassifier(nn.Module):
         self.all_parameters.append(self.shared.bias)
 
         self.lstm = {}
-        for task_ix, _ in enumerate(input_dims):  # TODO Double check this loop
+        for task_ix, _ in enumerate(input_dims):
             layer = nn.LSTM(shared_dim, hidden_dims[task_ix], batch_first = batch_first, num_layers = no_layers)
             self.lstm[task_ix] = layer
 
@@ -89,14 +89,11 @@ class EmbeddingLSTMClassifier(nn.Module):
         if not self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        res = self.dropout(self.inputs[task_id](sequence.long()))
-        res = self.dropout(self.shared(res))
-
+        res = self.inputs[task_id](sequence.long())
+        res = self.shared(res)
         self.lstm[task_id].flatten_parameters()
         lstm_out, (lstm_hidden, _) = self.lstm[task_id](res)
-
         output = self.outputs[task_id](self.dropout(lstm_hidden))
-
         prob_dist = self.softmax(output)  # The probability distribution
 
         return prob_dist.squeeze(0)
@@ -146,18 +143,24 @@ class OnehotLSTMClassifier(nn.Module):
             self.all_parameters.append(layer.weight)
             self.all_parameters.append(layer.bias)
 
-        self.shared = []
-        for i in range(len(hidden_dims) - 1):
-            layer = nn.Linear(hidden_dims[i], hidden_dims[i + 1])
-            self.shared.append(layer)
+        self.shared = nn.Linear(shared_dim, shared_dim)
+        self.all_parameters.append(self.shared.weight)
+        self.all_parameters.append(self.shared.bias)
 
-            # Add parameters
-            self.all_parameters.append(layer.weight)
-            self.all_parameters.append(layer.bias)
+        # for i in range(len(hidden_dims) - 1):
+        #     if i == 0:
+        #         layer =
+        #
+        #     layer = nn.Linear(hidden_dims[i], hidden_dims[i + 1])
+        #     self.shared.append(layer)
+        #
+        #     # Add parameters
+        #     self.all_parameters.append(layer.weight)
+        #     self.all_parameters.append(layer.bias)
 
         self.lstm = {}
-        for task_ix, hdim in enumerate(hidden_dims):
-            layer = nn.LSTM(hdim, hdim, batch_first = batch_first, num_layers = no_layers)  # Will go out of index.
+        for task_ix in enumerate(input_dims):
+            layer = nn.LSTM(shared_dim, hidden_dims[task_id], batch_first = batch_first, num_layers = no_layers)
             self.lstm[task_ix] = layer
 
             # Add parameters
@@ -167,8 +170,8 @@ class OnehotLSTMClassifier(nn.Module):
             self.all_parameters.append(layer.bias_hh_l0)
 
         self.outputs = {}
-        for task_id, _ in enumerate(hidden_dims):
-            layer = nn.Linear(hidden_dims[-1], output_dims[task_id])
+        for task_id, _ in enumerate(input_dims):
+            layer = nn.Linear(hidden_dims[task_id], output_dims[task_id])
             self.outputs[task_id] = layer
 
             # Add parameters
@@ -179,7 +182,7 @@ class OnehotLSTMClassifier(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.softmax = nn.LogSoftmax(dim = 1)
 
-        # TODO Ensure that the model is deterministic (the bias term is added)
+        # Ensure that the model is deterministic (the bias term is added)
         print(self)
         print(list(self.all_parameters))
 
@@ -194,15 +197,11 @@ class OnehotLSTMClassifier(nn.Module):
         if not self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        res = self.dropout(self.inputs[task_id](sequence.float()))
-
-        for layer in self.shared:
-            res = self.dropout(layer(res))
-
+        res = self.inputs[task_id](sequence.float())
+        res = self.shared(res)
+        self.lstm[task_id].flatten_parameters()
         lstm_out, (lstm_hidden, _) = self.lstm[task_id](res)
-
         output = self.outputs[task_id](self.dropout(lstm_hidden))
-
         prob_dist = self.softmax(output)  # The probability distribution
 
         return prob_dist.squeeze(0)
@@ -252,10 +251,14 @@ class OnehotMLPClassifier(nn.Module):
             self.all_parameters.append(layer.weight)
             self.all_parameters.append(layer.bias)
 
-        self.shared = []
-        for i in range(len(hidden_dims) - 1):
-            layer = nn.Linear(hidden_dims[i], hidden_dims[i + 1])
-            self.shared.append(layer)
+        self.shared = nn.Linear(shared_dim, shared_dim)
+        self.all_parameters.append(self.shared.weight)
+        self.all_parameters.append(self.shared.bias)
+
+        self.hidden = {}
+        for task_ix in range(input_dims):
+            layer = nn.Linear(shared_dim, hidden_dims[task_ix])
+            self.hidden[task_ix] = layer
 
             # Add parameters
             self.all_parameters.append(layer.weight)
@@ -263,7 +266,7 @@ class OnehotMLPClassifier(nn.Module):
 
         self.outputs = {}
         for task_id, _ in enumerate(input_dims):
-            layer = nn.Linear(hidden_dims[-1], output_dims[task_id])
+            layer = nn.Linear(hidden_dims[task_ix], output_dims[task_id])
             self.outputs[task_id] = layer
 
             # Add parameters
@@ -291,13 +294,16 @@ class OnehotMLPClassifier(nn.Module):
         if self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        res = self.dropout(self.nonlinearity(self.inputs[task_id](sequence.float())))
+        res = self.inputs[task_id](sequence.float())
+        res = self.shared(res)
+        res = self.dropout(self.hidden[task_id](res))
+        res = self.nonlinearity(res)
 
-        for layer in self.shared:
-            res = self.dropout(layer(res))
+        # for layer in self.shared:
+        #     res = self.dropout(layer(res))
 
         res = res.mean(0)
-        res = self.outputs[task_id](self.nonlinearity(res))
+        res = self.outputs[task_id](res)
         prob_dist = self.softmax(res)
 
         return prob_dist
