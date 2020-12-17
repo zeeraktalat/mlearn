@@ -159,7 +159,7 @@ class OnehotLSTMClassifier(nn.Module):
         #     self.all_parameters.append(layer.bias)
 
         self.lstm = {}
-        for task_ix in enumerate(input_dims):
+        for task_ix, _ in enumerate(input_dims):
             layer = nn.LSTM(shared_dim, hidden_dims[task_id], batch_first = batch_first, num_layers = no_layers)
             self.lstm[task_ix] = layer
 
