@@ -291,7 +291,7 @@ class OnehotMLPClassifier(nn.Module):
         :task_id: The task on which to perform forward pass.
         :return (base.DataType): The "probability" distribution for the classes.
         """
-        if not self.batch_first:
+        if self.batch_first:
             sequence = sequence.transpose(0, 1)
 
         res = self.inputs[task_id](sequence.float())
@@ -302,7 +302,7 @@ class OnehotMLPClassifier(nn.Module):
         # for layer in self.shared:
         #     res = self.dropout(layer(res))
 
-        res = res.mean(-1)   # Reducing from (batch size, sequence length, 64) -> (batch size, sequence length)
+        res = res.mean(0)   # Reducing from (batch size, sequence length, 64) -> (batch size, sequence length)
         res = self.outputs[task_id](res)
         prob_dist = self.softmax(res)
 
@@ -402,7 +402,7 @@ class EmbeddingMLPClassifier(nn.Module):
         :task_id: The task on which to perform forward pass.
         :return (base.DataType): The "probability" distribution for the classes.
         """
-        if not self.batch_first:
+        if self.batch_first:
             sequence = sequence.transpose(0, 1)
 
         res = self.inputs[task_id](sequence)
@@ -413,7 +413,7 @@ class EmbeddingMLPClassifier(nn.Module):
         # for layer in self.shared:
         #     res = self.dropout(layer(res))
 
-        res = res.mean(-1)
+        res = res.mean(0)
         res = self.outputs[task_id](res)
         prob_dist = self.softmax(res)
 
