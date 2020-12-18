@@ -47,7 +47,9 @@ def eval_torch_model(model: base.ModelType, batchers: base.DataType, loss: base.
                 else:
                     predicted = predict_torch_model(model, X)
 
-                lc += loss(predicted, y).data.item()
+                if mtl is None or mtl == 0:
+                    lc += loss(predicted, y).data.item()
+
                 preds.extend(torch.argmax(predicted, dim = 1).tolist())
                 labels.extend(y.tolist())
 
