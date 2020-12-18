@@ -207,108 +207,6 @@ class OnehotLSTMClassifier(nn.Module):
         return prob_dist.squeeze(0)
 
 
-class OnehotMLPClassifier(nn.Module):
-    """Onehot MLP MTL classifier."""
-
-    def __init__(self, input_dims: base.List[int], shared_dim: int, hidden_dims: base.List[int],
-                 output_dims: base.List[int], dropout: float = 0.0, batch_first = True, nonlinearity: str = 'tanh',
-                 **kwargs) -> None:
-        """
-        Initialise the Multitask LSTM.
-
-        :input_dims (base.List[int]): The dimensionality of the input.
-        :shared_dim (int): The dimensionality of the shared layer.
-        :hidden_dims (base.List[int]): The dimensionality of the hidden dimensions for each task.
-        :output_dims (base.List[int]): Number of classes for to predict on.
-        :dropout (float, default = 0.0): Value of dropout layer.
-        :batch_first (boo, default = True): If input tensors have the batch dimension in the first dimensino.
-        """
-        super(OnehotMLPClassifier, self).__init__()
-        self.batch_first = batch_first
-        self.name = "mtl-onehot-mlp"
-        self.info = {'Model': self.name,
-                     'Input dim': ", ".join([str(it) for it in input_dims]), 'Hidden dim': hidden_dims,
-                     'Output dim': ", ".join([str(it) for it in output_dims]), 'Shared dim': shared_dim,
-                     'nonlinearity': nonlinearity, 'Dropout': dropout
-                     }
-
-        # Initialise the hidden dim
-        self.all_parameters = nn.ParameterList()
-
-        assert len(input_dims) == len(output_dims)
-
-        # Input layer (not shared) [Linear]
-        # hidden to hidden layer (shared) [Linear]
-        # Hidden to hidden layer (not shared) [LSTM]
-        # Output layer (not shared) [Linear}
-
-        self.inputs = {}  # Define task inputs
-        for task_id, input_dim in enumerate(input_dims):
-            layer = nn.Linear(input_dim, hidden_dims[0])
-            self.inputs[task_id] = layer
-
-            # Add parameters
-            self.all_parameters.append(layer.weight)
-            self.all_parameters.append(layer.bias)
-
-        self.shared = nn.Linear(shared_dim, shared_dim)
-        self.all_parameters.append(self.shared.weight)
-        self.all_parameters.append(self.shared.bias)
-
-        self.hidden = {}
-        for task_ix, _ in enumerate(input_dims):
-            layer = nn.Linear(shared_dim, hidden_dims[task_ix])
-            self.hidden[task_ix] = layer
-
-            # Add parameters
-            self.all_parameters.append(layer.weight)
-            self.all_parameters.append(layer.bias)
-
-        self.outputs = {}
-        for task_id, _ in enumerate(input_dims):
-            layer = nn.Linear(hidden_dims[task_ix], output_dims[task_id])
-            self.outputs[task_id] = layer
-
-            # Add parameters
-            self.all_parameters.append(layer.weight)
-            self.all_parameters.append(layer.bias)
-
-        # Set the method for producing "probability" distribution.
-        self.dropout = nn.Dropout(dropout)
-        self.softmax = nn.LogSoftmax(dim = 1)
-        self.nonlinearity = torch.tanh if nonlinearity == 'tanh' else torch.relu
-
-        # Ensure that the model is deterministic (the bias term is added)
-        # Uncomment to bughunt
-        # print(self)
-        # print(list(self.all_parameters))
-
-    def forward(self, sequence, task_id, **kwargs) -> base.DataType:
-        """
-        Forward step in the classifier.
-
-        :sequence: The sequence to pass through the network.
-        :task_id: The task on which to perform forward pass.
-        :return (base.DataType): The "probability" distribution for the classes.
-        """
-        if self.batch_first:
-            sequence = sequence.transpose(0, 1)
-
-        res = self.inputs[task_id](sequence.float())
-        res = self.shared(res)
-        res = self.dropout(self.hidden[task_id](res))
-        res = self.nonlinearity(res)
-
-        # for layer in self.shared:
-        #     res = self.dropout(layer(res))
-
-        res = res.mean(0)   # Reducing from (batch size, sequence length, 64) -> (batch size, sequence length)
-        res = self.outputs[task_id](res)
-        prob_dist = self.softmax(res)
-
-        return prob_dist
-
-
 class EmbeddingMLPClassifier(nn.Module):
     """Embedding MLP MTL classifier."""
 
@@ -414,6 +312,108 @@ class EmbeddingMLPClassifier(nn.Module):
         #     res = self.dropout(layer(res))
 
         res = res.mean(0)
+        res = self.outputs[task_id](res)
+        prob_dist = self.softmax(res)
+
+        return prob_dist
+
+
+class OnehotMLPClassifier(nn.Module):
+    """Onehot MLP MTL classifier."""
+
+    def __init__(self, input_dims: base.List[int], shared_dim: int, hidden_dims: base.List[int],
+                 output_dims: base.List[int], dropout: float = 0.0, batch_first = True, nonlinearity: str = 'tanh',
+                 **kwargs) -> None:
+        """
+        Initialise the Multitask LSTM.
+
+        :input_dims (base.List[int]): The dimensionality of the input.
+        :shared_dim (int): The dimensionality of the shared layer.
+        :hidden_dims (base.List[int]): The dimensionality of the hidden dimensions for each task.
+        :output_dims (base.List[int]): Number of classes for to predict on.
+        :dropout (float, default = 0.0): Value of dropout layer.
+        :batch_first (boo, default = True): If input tensors have the batch dimension in the first dimensino.
+        """
+        super(OnehotMLPClassifier, self).__init__()
+        self.batch_first = batch_first
+        self.name = "mtl-onehot-mlp"
+        self.info = {'Model': self.name,
+                     'Input dim': ", ".join([str(it) for it in input_dims]), 'Hidden dim': hidden_dims,
+                     'Output dim': ", ".join([str(it) for it in output_dims]), 'Shared dim': shared_dim,
+                     'nonlinearity': nonlinearity, 'Dropout': dropout
+                     }
+
+        # Initialise the hidden dim
+        self.all_parameters = nn.ParameterList()
+
+        assert len(input_dims) == len(output_dims)
+
+        # Input layer (not shared) [Linear]
+        # hidden to hidden layer (shared) [Linear]
+        # Hidden to hidden layer (not shared) [LSTM]
+        # Output layer (not shared) [Linear}
+
+        self.inputs = {}  # Define task inputs
+        for task_id, input_dim in enumerate(input_dims):
+            layer = nn.Linear(input_dim, hidden_dims[0])
+            self.inputs[task_id] = layer
+
+            # Add parameters
+            self.all_parameters.append(layer.weight)
+            self.all_parameters.append(layer.bias)
+
+        self.shared = nn.Linear(shared_dim, shared_dim)
+        self.all_parameters.append(self.shared.weight)
+        self.all_parameters.append(self.shared.bias)
+
+        self.hidden = {}
+        for task_ix, _ in enumerate(input_dims):
+            layer = nn.Linear(shared_dim, hidden_dims[task_ix])
+            self.hidden[task_ix] = layer
+
+            # Add parameters
+            self.all_parameters.append(layer.weight)
+            self.all_parameters.append(layer.bias)
+
+        self.outputs = {}
+        for task_id, _ in enumerate(input_dims):
+            layer = nn.Linear(hidden_dims[task_ix], output_dims[task_id])
+            self.outputs[task_id] = layer
+
+            # Add parameters
+            self.all_parameters.append(layer.weight)
+            self.all_parameters.append(layer.bias)
+
+        # Set the method for producing "probability" distribution.
+        self.dropout = nn.Dropout(dropout)
+        self.softmax = nn.LogSoftmax(dim = 1)
+        self.nonlinearity = torch.tanh if nonlinearity == 'tanh' else torch.relu
+
+        # Ensure that the model is deterministic (the bias term is added)
+        # Uncomment to bughunt
+        # print(self)
+        # print(list(self.all_parameters))
+
+    def forward(self, sequence, task_id, **kwargs) -> base.DataType:
+        """
+        Forward step in the classifier.
+
+        :sequence: The sequence to pass through the network.
+        :task_id: The task on which to perform forward pass.
+        :return (base.DataType): The "probability" distribution for the classes.
+        """
+        if self.batch_first:
+            sequence = sequence.transpose(0, 1)
+
+        res = self.inputs[task_id](sequence.float())
+        res = self.shared(res)
+        res = self.dropout(self.hidden[task_id](res))
+        res = self.nonlinearity(res)
+
+        # for layer in self.shared:
+        #     res = self.dropout(layer(res))
+
+        res = res.mean(0)   # Reducing from (batch size, sequence length, 64) -> (batch size, sequence length)
         res = self.outputs[task_id](res)
         prob_dist = self.softmax(res)
 
