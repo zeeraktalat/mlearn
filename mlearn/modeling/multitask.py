@@ -50,9 +50,13 @@ class EmbeddingLSTMClassifier(nn.Module):
             # Add parameters
             self.all_parameters.append(layer.weight)
 
-        self.shared = nn.Linear(embedding_dims, shared_dim)
-        self.all_parameters.append(self.shared.weight)
-        self.all_parameters.append(self.shared.bias)
+        self.shared = []
+        for layer in [shared_dim]:
+            layer = nn.Linear(embedding_dims, shared_dim)
+            self.shared.append(layer)
+
+            self.all_parameters.append(layer.weight)
+            self.all_parameters.append(layer.bias)
 
         self.lstm = {}
         for task_ix, _ in enumerate(input_dims):
@@ -94,7 +98,10 @@ class EmbeddingLSTMClassifier(nn.Module):
             sequence = sequence.transpose(0, 1)
 
         res = self.inputs[task_id](sequence.long())
-        res = self.shared(res)
+
+        for layer in self.shared:
+            res = layer(res)
+
         self.lstm[task_id].flatten_parameters()
         lstm_out, (lstm_hidden, _) = self.lstm[task_id](res)
         output = self.outputs[task_id](self.dropout(lstm_hidden))
@@ -147,9 +154,13 @@ class OnehotLSTMClassifier(nn.Module):
             self.all_parameters.append(layer.weight)
             self.all_parameters.append(layer.bias)
 
-        self.shared = nn.Linear(shared_dim, shared_dim)
-        self.all_parameters.append(self.shared.weight)
-        self.all_parameters.append(self.shared.bias)
+        self.shared = []
+        for layer in [shared_dim]:
+            layer = nn.Linear(hidden_dims[0], shared_dim)
+            self.shared.append(layer)
+
+            self.all_parameters.append(layer.weight)
+            self.all_parameters.append(layer.bias)
 
         # for i in range(len(hidden_dims) - 1):
         #     if i == 0:
@@ -202,7 +213,10 @@ class OnehotLSTMClassifier(nn.Module):
             sequence = sequence.transpose(0, 1)
 
         res = self.inputs[task_id](sequence.float())
-        res = self.shared(res)
+
+        for layer in self.shared:
+            res = layer(res)
+
         self.lstm[task_id].flatten_parameters()
         lstm_out, (lstm_hidden, _) = self.lstm[task_id](res)
         output = self.outputs[task_id](self.dropout(lstm_hidden))
@@ -292,9 +306,13 @@ class EmbeddingMLPClassifier(nn.Module):
             # Add parameters
             self.all_parameters.append(layer.weight)
 
-        self.shared = nn.Linear(embedding_dims, shared_dim)
-        self.all_parameters.append(self.shared.weight)
-        self.all_parameters.append(self.shared.bias)
+        self.shared = []
+        for layer in [shared_dim]:
+            layer = nn.Linear(embedding_dims, shared_dim)
+            self.shared.append(layer)
+
+            self.all_parameters.append(layer.weight)
+            self.all_parameters.append(layer.bias)
 
         # self.shared = []
         # for i in range(len(hidden_dims)):
@@ -347,7 +365,10 @@ class EmbeddingMLPClassifier(nn.Module):
             sequence = sequence.transpose(0, 1)
 
         res = self.inputs[task_id](sequence)
-        res = self.shared(res)
+
+        for layer in self.shared:
+            res = layer(res)
+
         res = self.dropout(self.hidden[task_id](res))
         res = self.nonlinearity(res)
 
@@ -405,9 +426,13 @@ class OnehotMLPClassifier(nn.Module):
             self.all_parameters.append(layer.weight)
             self.all_parameters.append(layer.bias)
 
-        self.shared = nn.Linear(shared_dim, shared_dim)
-        self.all_parameters.append(self.shared.weight)
-        self.all_parameters.append(self.shared.bias)
+        self.shared = []
+        for layer in [shared_dim]:
+            layer = nn.Linear(hidden_dims[0], shared_dim)
+            self.shared.append(layer)
+
+            self.all_parameters.append(layer.weight)
+            self.all_parameters.append(layer.bias)
 
         self.hidden = {}
         for task_ix, _ in enumerate(input_dims):
@@ -449,7 +474,10 @@ class OnehotMLPClassifier(nn.Module):
             sequence = sequence.transpose(0, 1)
 
         res = self.inputs[task_id](sequence.float())
-        res = self.shared(res)
+
+        for layer in self.shared:
+            res = layer(res)
+
         res = self.dropout(self.hidden[task_id](res))
         res = self.nonlinearity(res)
 
