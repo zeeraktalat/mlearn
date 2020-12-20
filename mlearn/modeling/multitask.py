@@ -23,10 +23,14 @@ class EmbeddingLSTMClassifier(nn.Module):
         super(EmbeddingLSTMClassifier, self).__init__()
         self.name = "emb-mtl-lstm"
         self.batch_first = batch_first
-        self.info = {'Input dim': ", ".join([str(it) for it in input_dims]), 'Embedding dim': embedding_dims,
-                     'Shared dim': shared_dim, 'Hidden dim': ", ".join([str(it) for it in hidden_dims]),
+        self.info = {'Input dim': ", ".join([str(it) for it in input_dims]),
+                     'Embedding dim': embedding_dims,
+                     'Shared dim': shared_dim,
+                     'Hidden dim': ", ".join([str(it) for it in hidden_dims]),
                      'Output dim': ", ".join([str(it) for it in output_dims]),
-                     '# layers': no_layers, 'Dropout': dropout, 'Model': self.name}
+                     '# layers': no_layers,
+                     'Dropout': dropout,
+                     'Model': self.name}
 
         assert len(input_dims) == len(output_dims)
 
@@ -207,6 +211,42 @@ class OnehotLSTMClassifier(nn.Module):
         return prob_dist.squeeze(0)
 
 
+class EmbeddingCNNClassifier(nn.Module):
+    """Embedding CNN MTL classifier"""
+
+    def __init__(self, input_dims: base.List[int], shared_dim: int, embedding_dims: int, hidden_dims: base.List[int],
+                 window_sizes: base.List[int], num_filters: int,
+                 output_dims: base.List[int], dropout: float = 0.0, batch_first: bool = True,
+                 nonlinearity: str = 'tanh', **kwargs) -> None:
+        """
+        Initialise the Multitask LSTM.
+
+        :input_dims (base.List[int]): The dimensionality of the input.
+        :shared_dim (int): The dimensionality of the shared layer.
+        :embedding_dims (base.List[int]): The dimensionality of the hidden dimensions for each task.
+        :hidden_dims (base.List[int]): The dimensionality of the hidden dimensions for each task.
+        :window_sizes (base.list[int]): The size of the filters (e.g. 1: unigram, 2: bigram, etc.)
+        :num_filters (int): The number of filters to apply.
+        :output_dims (base.List[int]): Number of classes for to predict on.
+        :dropout (float, default = 0.0): Value of dropout layer.
+        :batch_first (bool, default = True): If input tensors have the batch dimension in the first dimension.
+        """
+        super(EmbeddingCNNClassifier, self).__init__()
+        self.name = "emb-mtl-mlp"
+        self.batch_first = batch_first
+        self.info = {'Input dim': ", ".join([str(it) for it in input_dims]),
+                     'Shared dim': shared_dim,
+                     'Embedding dim': embedding_dims,
+                     'Window Sizes': " ".join([str(it) for it in window_sizes]),
+                     '# Filters': num_filters,
+                     'Output dim': ", ".join([str(it) for it in output_dims]),
+                     'Dropout': dropout,
+                     'Model': self.name,
+                     'nonlinearity': nonlinearity}
+
+        # TODO define model
+
+
 class EmbeddingMLPClassifier(nn.Module):
     """Embedding MLP MTL classifier."""
 
@@ -227,10 +267,13 @@ class EmbeddingMLPClassifier(nn.Module):
         super(EmbeddingMLPClassifier, self).__init__()
         self.name = "emb-mtl-mlp"
         self.batch_first = batch_first
-        self.info = {'Input dim': ", ".join([str(it) for it in input_dims]), 'Shared dim': shared_dim,
+        self.info = {'Input dim': ", ".join([str(it) for it in input_dims]),
+                     'Shared dim': shared_dim,
                      'Embedding dim': embedding_dims,
                      'Output dim': ", ".join([str(it) for it in output_dims]),
-                     'Dropout': dropout, 'Model': self.name, 'nonlinearity': nonlinearity}
+                     'Dropout': dropout,
+                     'Model': self.name,
+                     'nonlinearity': nonlinearity}
 
         # Initialise the hidden dim
         self.all_parameters = nn.ParameterList()
@@ -275,9 +318,9 @@ class EmbeddingMLPClassifier(nn.Module):
             self.all_parameters.append(layer.bias)
 
         self.outputs = {}
-        for task_id, _ in enumerate(input_dims):
-            layer = nn.Linear(hidden_dims[-1], output_dims[task_id])
-            self.outputs[task_id] = layer
+        for task_ix, _ in enumerate(input_dims):
+            layer = nn.Linear(hidden_dims[task_ix], output_dims[task_ix])
+            self.outputs[task_ix] = layer
 
             # Add parameters
             self.all_parameters.append(layer.weight)
