@@ -2,7 +2,8 @@ import wandb
 import torch
 from tqdm import tqdm
 from mlearn import base
-from mlearn.utils import metrics, _get_datestr
+from mlearn.utils import metrics
+from mlearn.utils.pipeline import _get_datestr
 
 
 def predict_torch_model(model: base.ModelType, X, **kwargs) -> list:
