@@ -15,8 +15,16 @@ def predict_torch_model(model: base.ModelType, X, **kwargs) -> list:
     return model(X, **kwargs).cpu()
 
 
-def eval_torch_model(model: base.ModelType, batchers: base.DataType, loss: base.Callable, metrics: metrics.Metrics,
-                     gpu: bool, mtl: int = None, store: bool = True, data: base.DataType = None, **kwargs) -> None:
+def eval_torch_model(model: base.ModelType,
+                     batchers: base.DataType,
+                     loss: base.Callable,
+                     metrics: metrics.Metrics,
+                     gpu: bool,
+                     mtl: int = None,
+                     store: bool = True,
+                     data: base.DataType = None,
+                     torchtext: bool = True,  # TODO Delete this when the library is fixed.
+                     **kwargs) -> None:
     """
     Evalute pytorch model.
 
