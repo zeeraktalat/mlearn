@@ -70,6 +70,8 @@ def eval_torch_model(model: base.ModelType,
             else:
                 timestamp = _get_datestr()
                 for pred, label in zip(preds, labels):
+                    pred = kwargs['labels'].vocab.itos[pred]
+                    label = kwargs['labels'].vocab.itos[label]
                     out = [timestamp, kwargs['data_name'], pred, label]
                     kwargs['pred_writer'].writerow(out)
                 wandb.save(kwargs['pred_path'])
