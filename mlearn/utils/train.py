@@ -335,12 +335,12 @@ def run_mtl_model(train: bool, writer: base.Callable, pred_writer: base.Callable
     else:
         func = eval_torch_model if library == 'pytorch' else eval_sklearn_model
 
-    func(**kwargs)
+    func(**kwargs, pred_writer = pred_writer)
 
     write_results(writer, **kwargs)
 
-    if not train and pred_writer is not None:
-        write_predictions(pred_writer, **kwargs)
+    # if not train and pred_writer is not None:
+    #     write_predictions(pred_writer, **kwargs)
 
 
 def train_sklearn_cv_model(model: base.ModelType, vectorizer: base.VectType, dataset: base.DataType,
