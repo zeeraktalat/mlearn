@@ -1,7 +1,8 @@
+import wandb
 import torch
 from tqdm import tqdm
 from mlearn import base
-from mlearn.utils import metrics
+from mlearn.utils import metrics, _get_datestr
 
 
 def predict_torch_model(model: base.ModelType, X, **kwargs) -> list:
@@ -61,12 +62,18 @@ def eval_torch_model(model: base.ModelType,
                 preds.extend(torch.argmax(predicted, dim = 1).tolist())
                 labels.extend(y.tolist())
 
-            if store:
+        if store:
+            if not torchtext:
                 for doc, pred in zip(data, preds):
                     setattr(doc, 'pred', pred)
-
-            metrics.compute(labels, preds)
-            metrics.loss = lc / len(labels)
+            else:
+                timestamp = _get_datestr()
+                for pred, label in zip(preds, labels):
+                    out = [timestamp, kwargs['data_name'], pred, label]
+                    kwargs['pred_writer'].writerow(out)
+                wandb.save(kwargs['pred_path'])
+        metrics.compute(labels, preds)
+        metrics.loss = lc / len(labels)
 
 
 def predict_sklearn_model(model: base.ModelType, batchers: base.DataType, metrics: metrics.Metrics = None,
