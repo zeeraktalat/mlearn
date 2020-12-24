@@ -2,6 +2,7 @@ import torch
 import wandb
 from tqdm import tqdm
 from mlearn import base
+from copy import deepcopy
 
 
 class EarlyStopping:
@@ -74,7 +75,12 @@ class EarlyStopping:
         """Load/save the best model state prior to early stopping being activated."""
         tqdm.write("Loading weights from epoch {0}".format(self.best_epoch))
         try:
-            self.model.load_state_dict(torch.load(self.path_prefix)['model_state_dict'])
+            self.model.load_state_dict(self.best_state_dict['model_state_dict'])
+            torch.save({'model_state_dict': self.best_state_dict}, self.path_prefix)
+            if self.hyperopt:
+                wandb.save(self.path_prefix)
+
+            # self.model.load_state_dict(torch.load(self.path_prefix)['model_state_dict'])
         except Exception as e:
             tqdm.write(f"Exception occurred loading the model after early termination. {e}")
             raise e
@@ -87,6 +93,9 @@ class EarlyStopping:
 
         :model (base.ModelType): Model being trained.
         """
-        torch.save({'model_state_dict': model.state_dict()}, self.path_prefix)
-        if self.hyperopt:
-            wandb.save(self.path_prefix)
+        self.best_state_dict = deepcopy({'model_state_dict': model.state_dict()})
+
+        # if disk:
+        #     torch.save({'model_state_dict': model.state_dict()}, self.path_prefix)
+        # if self.hyperopt:
+        #     wandb.save(self.path_prefix)
