@@ -229,12 +229,29 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
                              task = task_id)
 
 
-def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], optimizer: base.Callable,
-                    loss: base.Callable, metrics: object, batch_size: int = 64, epochs: int = 2, clip: float = None,
-                    early_stopping: int = None, save_path: str = None, dev: base.DataType = None,
-                    dev_metrics: object = None, dev_task_id: int = 0, batches_per_epoch: int = None, low: bool = True,
-                    shuffle: bool = True, dataset_weights: base.DataType = None, loss_weights: base.DataType = None,
-                    gpu: bool = True, hyperopt: bool = False, **kwargs) -> None:
+def train_mtl_model(model: base.ModelType,
+                    batchers: base.List[base.DataType],
+                    optimizer: base.Callable,
+                    loss: base.Callable,
+                    metrics: object,
+                    batch_size: int = 64,
+                    epochs: int = 2,
+                    clip: float = None,
+                    early_stopping: int = None,
+                    save_path: str = None,
+                    dev: base.DataType = None,
+                    dev_metrics: object = None,
+                    dev_task_id: int = 0,
+                    batches_per_epoch: int = None,
+                    low: bool = True,
+                    shuffle: bool = True,
+                    imbalanced: bool = False,
+                    dataset_weights: base.DataType = None,
+                    loss_weights: base.DataType = None,
+                    loss_norm: base.DataType = None,
+                    gpu: bool = True,
+                    hyperopt: bool = False,
+                    **kwargs) -> None:
     """
     Train a multi-task learning model.
 
@@ -255,8 +272,10 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                                               training examples.
     :low (bool, default = True): If lower value is to be interpreted as better by EarlyStopping.
     :shuffle: Whether to shuffle data at training.
+    :imbalanced (bool, default = False): Set to true if there is a large imbalance between the data sizes of the task.
     :dataset_weights (base.DataType, default = None): Probability for each dataset to be chosen (must sum to 1.0).
     :loss_weights (base.DataType, default = None): Weight the loss by multiplication.
+    :loss_norm (base.DataType, default = None): Weight the loss.
     :gpu (bool, default = True): Set tot rue if model runs on GPU.
     :hyperopt (bool, default = False): Do hyper parameter optimisation.
     """
@@ -270,14 +289,22 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
         if hyperopt:
             wandb.watch(model, log = 'all')
 
+        # Normalise loss for each task by the number of datapoints in each task
+        if loss_norm is None:
+            loss_norm = np.ones(len(batchers)) / [len(dataset) * batch_size for dataset in batchers]
+
         if loss_weights is None:
-            loss_weights = np.ones(len(batchers))
+            loss_scaling = np.ones(len(batchers)) * loss_norm
 
         if dataset_weights is None:
             dataset_weights = np.ones(len(batchers)) / len(batchers)
 
         if batches_per_epoch is None:
             batches_per_epoch = sum([len(dataset) * batch_size for dataset in batchers]) // batch_size
+
+        # Limit batches_per_epoch to the maximum number of batches in the main task data
+        if if imbalanced and batches_per_epoch > len(batchers[0]):
+            batches_per_epoch = len(batchers[0])
 
         if early_stopping is not None:
             earlystop = EarlyStopping(save_path, model, early_stopping, low, hyperopt)
@@ -287,7 +314,7 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                 for batch in batchers:
                     batch.shuffle()
 
-            _mtl_epoch(model, loss, loss_weights, optimizer, metrics, batchers, batches_per_epoch, dataset_weights,
+            _mtl_epoch(model, loss, loss_scaling, optimizer, metrics, batchers, batches_per_epoch, dataset_weights,
                        taskid2name, i, clip, gpu = gpu, **kwargs)
 
             for score in metrics.scores:  # Compute average value of the scores computed in each epoch.
