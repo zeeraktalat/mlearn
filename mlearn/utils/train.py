@@ -245,7 +245,7 @@ def train_mtl_model(model: base.ModelType,
                     batches_per_epoch: int = None,
                     low: bool = True,
                     shuffle: bool = True,
-                    imbalanced: bool = False,
+                    imbalanced: bool = True,
                     dataset_weights: base.DataType = None,
                     loss_weights: base.DataType = None,
                     loss_norm: base.DataType = None,
@@ -272,7 +272,7 @@ def train_mtl_model(model: base.ModelType,
                                               training examples.
     :low (bool, default = True): If lower value is to be interpreted as better by EarlyStopping.
     :shuffle: Whether to shuffle data at training.
-    :imbalanced (bool, default = False): Set to true if there is a large imbalance between the data sizes of the task.
+    :imbalanced (bool, default = False): Set to False if the main task contains >= # docs in all aux tasks.
     :dataset_weights (base.DataType, default = None): Probability for each dataset to be chosen (must sum to 1.0).
     :loss_weights (base.DataType, default = None): Weight the loss by multiplication.
     :loss_norm (base.DataType, default = None): Weight the loss.
@@ -303,7 +303,7 @@ def train_mtl_model(model: base.ModelType,
             batches_per_epoch = sum([len(dataset) * batch_size for dataset in batchers]) // batch_size
 
         # Limit batches_per_epoch to the maximum number of batches in the main task data
-        if if imbalanced and batches_per_epoch > len(batchers[0]):
+        if imbalanced and batches_per_epoch > len(batchers[0]):
             batches_per_epoch = len(batchers[0])
 
         if early_stopping is not None:
