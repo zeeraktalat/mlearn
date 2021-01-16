@@ -43,6 +43,9 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: b
             scores = model(X, **kwargs)
             loss = loss_f(scores, y)
 
+            if torch.isnan(loss):
+                raise ValueError
+
             # Backprop
             loss.backward()
 
@@ -105,7 +108,11 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
             if shuffle:
                 batchers.shuffle()
 
-            _singletask_epoch(model, optimizer, loss, metrics, batchers, clip, gpu)
+            try:
+                _singletask_epoch(model, optimizer, loss, metrics, batchers, clip, gpu)
+            except ValueError as e:
+                tqdm.write(f"QUITTING: NaN loss error occured. Exiting.\nTraceback: {e}")
+                break
 
             if hyperopt:
                 wandb.log(metrics.epoch_scores())
@@ -203,6 +210,9 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
             # Compute model prediction and loss
             scores = model(X, task_id, **kwargs)
             loss = loss_f(scores, y) * loss_weights[task_id]
+
+            if torch.isnan(loss):
+                raise ValueError
 
             # Backprop
             loss.backward()
@@ -313,9 +323,12 @@ def train_mtl_model(model: base.ModelType,
             if shuffle:
                 for batch in batchers:
                     batch.shuffle()
-
-            _mtl_epoch(model, loss, loss_scaling, optimizer, metrics, batchers, batches_per_epoch, dataset_weights,
-                       taskid2name, i, clip, gpu = gpu, **kwargs)
+            try:
+                _mtl_epoch(model, loss, loss_scaling, optimizer, metrics, batchers, batches_per_epoch, dataset_weights,
+                           taskid2name, i, clip, gpu = gpu, **kwargs)
+            except ValueError as e:
+                tqdm.write(f"QUITTING: NaN loss error occured. Exiting.\nTraceback: {e}")
+                break
 
             for score in metrics.scores:  # Compute average value of the scores computed in each epoch.
                 if score == 'loss':
