@@ -115,7 +115,8 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
                 break
 
             if hyperopt:
-                wandb.log(metrics.epoch_scores())
+                epoch_scores = metrics.epoch_scores()
+                wandb.log({f'train/{key}': epoch_scores[key] for key in epoch_scores.keys()})
 
             try:
                 eval_torch_model(model, dev, loss, dev_metrics, gpu, store = False, **kwargs)
@@ -127,7 +128,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
 
                 if hyperopt:
                     scrs = dev_metrics.epoch_scores()
-                    wandb.log({f'dev_{key}': scrs[key] for key in scrs})
+                    wandb.log({f'dev/{key}': scrs[key] for key in scrs})
 
                 if early_stopping is not None:
                     if earlystop(model, dev_metrics.early_stopping()):
