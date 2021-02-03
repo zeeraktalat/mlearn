@@ -116,7 +116,7 @@ class BatchExtractor(base.Batch):
     def __iter__(self):
         """Iterate over batches in the data."""
         for batch in self.batcher:
-            X = torch.cat([doc for doc in self.data.encode(batch, onehot = self.onehot)], dim = 0)
+            X = torch.stack([doc for doc in self.data.encode(batch, onehot = self.onehot)], dim = 0)
             y = torch.tensor([getattr(doc, self.lf) for doc in batch]).flatten()
             yield (X, y)
 
