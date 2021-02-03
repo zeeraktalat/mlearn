@@ -27,7 +27,7 @@ setuptools.setup(
         "scikit-learn==0.23.1",
         "torchtestcase",
         "torchtext==0.6.0",
-        "torch==1.4.0",
+        "torch==1.7.1",
         'bpemb',
         'ekphrasis',
         'wandb',
