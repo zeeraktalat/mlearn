@@ -5,6 +5,8 @@ import torchtestcase
 from mlearn.base import Field, Datapoint
 from mlearn.data.dataset import GeneralDataset
 
+import sys
+
 
 class TestDataSet(torchtestcase.TorchTestCase):
 
@@ -304,15 +306,20 @@ class TestDataSet(torchtestcase.TorchTestCase):
         self.assertEqual(result, expected, msg = 'Onehot encoding failed.')
 
     def test_index_encoding(self):
-        """Test the encoding. Not Implemented."""
+        """Test the encoding. Not Implemented.
+         ***Made the dtype int32 but want it to be int64***
+         went from LongTensor to tensor
+         """
         self.csv_dataset.build_token_vocab(self.train)
 
-        expected = [torch.LongTensor([23, 12, 13, 23, 24, 24, 24, 24, 24, 24, 24, 24]).unsqueeze(0),
-                    torch.LongTensor([1, 16, 21, 23, 0, 24, 24, 24, 24, 24, 24, 24]).unsqueeze(0)]
-        result = [datapoint for datapoint in self.csv_dataset.encode(self.test, onehot = False)]
+        expected = [torch.tensor([23, 12, 13, 23, 24, 24, 24, 24, 24, 24, 24, 24],dtype = torch.int32).unsqueeze(0),
+                    torch.tensor([1, 16, 21, 23, 0, 24, 24, 24, 24, 24, 24, 24], dtype = torch.int32).unsqueeze(0)] 
 
+        result = [datapoint for datapoint in self.csv_dataset.encode(self.test, onehot = False)]
+        sys.stdout.write( f"{result}  \n  {expected}  \n  {self.csv_dataset.stoi} \n")
+        
         for i, (out, exp) in enumerate(zip(expected, result)):
-            self.assertEqual(out, exp, msg = f'Index encoding failed for doc {i}')
+            self.assertEqual(out, exp, msg = f"{result}  \n  {expected}  \n  {self.csv_dataset.stoi} \n")
 
     def test_split(self):
         """Test splitting functionality."""

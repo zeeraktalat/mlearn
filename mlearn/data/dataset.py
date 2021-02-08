@@ -9,6 +9,7 @@ from mlearn import base
 from torch.nn.functional import one_hot
 from collections import Counter, defaultdict
 from torch.utils.data import IterableDataset
+from . import Cython_Index
 
 
 class GeneralDataset(IterableDataset):
@@ -307,6 +308,8 @@ class GeneralDataset(IterableDataset):
         train_fields = self.train_fields
         self.token_counts = Counter()
 
+        
+
         for doc in tqdm(data, desc = f"Building vocabulary ({self.name})",
                         disable = os.environ.get('TQDM_DISABLE', False)):
             if original:
@@ -317,13 +320,8 @@ class GeneralDataset(IterableDataset):
 
         self.itos, self.stoi = {}, {}
 
-        self.unk_tok = len(self.token_counts)
-        self.pad_tok = len(self.token_counts) + 1
-
-        if '<pad>' in self.token_counts:
-            del self.token_counts['<pad>']
-        if '<unk>' in self.token_counts:
-            del self.token_counts['<unk>']
+        self.pad_tok = 0
+        self.unk_tok = 1
 
         self.stoi['<unk>'] = self.unk_tok
         self.stoi['<pad>'] = self.pad_tok
@@ -331,8 +329,8 @@ class GeneralDataset(IterableDataset):
         self.itos[self.pad_tok] = '<pad>'
         for ix, (tok, _) in enumerate(tqdm(self.token_counts.most_common(), desc = "Encoding vocabulary",
                                            disable = os.environ.get('TQDM_DISABLE', False))):
-            self.itos[ix] = tok
-            self.stoi[tok] = ix
+            self.itos[ix + 2] = tok
+            self.stoi[tok] = ix + 2 #TODO: removed hardcode, added a plus 2 
 
     def rebuild_token_vocab(self, stoi: base.Dict[str, int]) -> None:
         """
@@ -605,7 +603,10 @@ class GeneralDataset(IterableDataset):
         :doc (base.Datapoint): The datapoint to encode.
         :returns (base.DataType): Return onehot encoded tensor.
         """
+        # This is Zeeraks code
         encoded = self.encode_doc(text, doc).unsqueeze(0)
+        # This is my Cython code 
+        """encoded = torch.from_numpy(Cython_Index.encode_doc_TEST(self,text)).unsqueeze(0)"""
         return encoded
 
     def encode_doc(self, text: base.DataType, doc: base.Datapoint) -> base.DataType:

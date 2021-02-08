@@ -81,6 +81,38 @@ class Batch(base.Batch):
         """
         return self.batches[idx]
 
+    # Added these two methods below form extractor 
+    
+    def __iter__(self):
+        """Iterate over batches in the data."""
+        # Using global largeset batch file to encode, we want to encode per lenght of document 
+
+
+
+        # look at longest file in the specific batch, not longest file in all files 
+        # move all encoding to batch class 
+
+
+
+        # move every method that has the word "encode" into the batch class straight up, 
+        # TODO:CONSEQUENCE stoi.dict will not be available
+        # modify batch class 
+        for batch in self.batcher:
+            X = torch.cat([doc for doc in self.data.encode(batch, onehot = self.onehot)], dim = 0)
+            y = torch.tensor([getattr(doc, self.lf) for doc in batch]).flatten()
+            yield (X, y)
+
+    def __getitem__(self, idx: int) -> base.DataType:
+        """
+        Get a batch given and index.
+
+        :idx (int): Get an individual batch given and index.
+        :returns (base.DataType): Batch.
+        """
+        X = torch.cat([doc for doc in self.data.encode(self.batcher[idx], onehot = self.onehot)], dim = 0)
+        y = torch.tensor([getattr(doc, self.lf) for doc in self.batcher[idx]]).flatten()
+        return (X, y)
+
     # def __getattr__(self, attr: str):
     #     """
     #     Get attribute from the batch.
@@ -94,6 +126,10 @@ class Batch(base.Batch):
 
 class BatchExtractor(base.Batch):
     """A class to get the information from the batches."""
+
+    # currently dataset argument holds the stoi dict , we want to reference it in the general dataset class, when looking for vocab we want to reference the dataset object 
+    # so self.stoi and self.itos need to exist in this dataset object
+    # since we already have dataset as an arg in batchextractor we could just change the init from batch class to also make dataset an arg and then reference stoi from ther e
 
     def __init__(self, labelfield: str, batcher: Batch, dataset: base.DataType, onehot: bool = True) -> None:
         """
@@ -112,24 +148,6 @@ class BatchExtractor(base.Batch):
     def __len__(self):
         """Get number of the batches."""
         return len(self.batcher)
-
-    def __iter__(self):
-        """Iterate over batches in the data."""
-        for batch in self.batcher:
-            X = torch.cat([doc for doc in self.data.encode(batch, onehot = self.onehot)], dim = 0)
-            y = torch.tensor([getattr(doc, self.lf) for doc in batch]).flatten()
-            yield (X, y)
-
-    def __getitem__(self, idx: int) -> base.DataType:
-        """
-        Get a batch given and index.
-
-        :idx (int): Get an individual batch given and index.
-        :returns (base.DataType): Batch.
-        """
-        X = torch.cat([doc for doc in self.data.encode(self.batcher[idx], onehot = self.onehot)], dim = 0)
-        y = torch.tensor([getattr(doc, self.lf) for doc in self.batcher[idx]]).flatten()
-        return (X, y)
 
     def shuffle(self):
         """Shuffle dataset."""
