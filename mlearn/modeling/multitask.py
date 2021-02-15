@@ -570,7 +570,6 @@ class MTMLP(nn.Module):
         """
         # print(input_task_id)
         x = x.float()
-        breakpoint()
         dropout = self.dropout
         x = self.inputs[input_task_id](x)
         x = dropout(self.tanh(x))
