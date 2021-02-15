@@ -43,6 +43,9 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: b
             scores = model(X, **kwargs)
             loss = loss_f(scores, y)
 
+            if torch.isnan(loss):
+                raise ValueError
+
             # Backprop
             loss.backward()
 
@@ -105,10 +108,15 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
             if shuffle:
                 batchers.shuffle()
 
-            _singletask_epoch(model, optimizer, loss, metrics, batchers, clip, gpu)
+            try:
+                _singletask_epoch(model, optimizer, loss, metrics, batchers, clip, gpu)
+            except ValueError as e:
+                tqdm.write(f"QUITTING: NaN loss error occured. Exiting.\nTraceback: {e}")
+                break
 
             if hyperopt:
-                wandb.log(metrics.epoch_scores())
+                epoch_scores = metrics.epoch_scores()
+                wandb.log({f'train/{key}': epoch_scores[key] for key in epoch_scores.keys()})
 
             try:
                 eval_torch_model(model, dev, loss, dev_metrics, gpu, store = False, **kwargs)
@@ -120,7 +128,7 @@ def train_singletask_model(model: base.ModelType, save_path: str, epochs: int, b
 
                 if hyperopt:
                     scrs = dev_metrics.epoch_scores()
-                    wandb.log({f'dev_{key}': scrs[key] for key in scrs})
+                    wandb.log({f'dev/{key}': scrs[key] for key in scrs})
 
                 if early_stopping is not None:
                     if earlystop(model, dev_metrics.early_stopping()):
@@ -204,6 +212,9 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
             scores = model(X, task_id, **kwargs)
             loss = loss_f(scores, y) * loss_weights[task_id]
 
+            if torch.isnan(loss):
+                raise ValueError
+
             # Backprop
             loss.backward()
 
@@ -229,12 +240,29 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
                              task = task_id)
 
 
-def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], optimizer: base.Callable,
-                    loss: base.Callable, metrics: object, batch_size: int = 64, epochs: int = 2, clip: float = None,
-                    early_stopping: int = None, save_path: str = None, dev: base.DataType = None,
-                    dev_metrics: object = None, dev_task_id: int = 0, batches_per_epoch: int = None, low: bool = True,
-                    shuffle: bool = True, dataset_weights: base.DataType = None, loss_weights: base.DataType = None,
-                    gpu: bool = True, hyperopt: bool = False, **kwargs) -> None:
+def train_mtl_model(model: base.ModelType,
+                    batchers: base.List[base.DataType],
+                    optimizer: base.Callable,
+                    loss: base.Callable,
+                    metrics: object,
+                    batch_size: int = 64,
+                    epochs: int = 2,
+                    clip: float = None,
+                    early_stopping: int = None,
+                    save_path: str = None,
+                    dev: base.DataType = None,
+                    dev_metrics: object = None,
+                    dev_task_id: int = 0,
+                    batches_per_epoch: int = None,
+                    low: bool = True,
+                    shuffle: bool = True,
+                    imbalanced: bool = True,
+                    dataset_weights: base.DataType = None,
+                    loss_weights: base.DataType = None,
+                    loss_norm: base.DataType = None,
+                    gpu: bool = True,
+                    hyperopt: bool = False,
+                    **kwargs) -> None:
     """
     Train a multi-task learning model.
 
@@ -255,8 +283,10 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
                                               training examples.
     :low (bool, default = True): If lower value is to be interpreted as better by EarlyStopping.
     :shuffle: Whether to shuffle data at training.
+    :imbalanced (bool, default = False): Set to False if the main task contains >= # docs in all aux tasks.
     :dataset_weights (base.DataType, default = None): Probability for each dataset to be chosen (must sum to 1.0).
     :loss_weights (base.DataType, default = None): Weight the loss by multiplication.
+    :loss_norm (base.DataType, default = None): Weight the loss.
     :gpu (bool, default = True): Set tot rue if model runs on GPU.
     :hyperopt (bool, default = False): Do hyper parameter optimisation.
     """
@@ -270,14 +300,22 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
         if hyperopt:
             wandb.watch(model, log = 'all')
 
+        # Normalise loss for each task by the number of datapoints in each task
+        if loss_norm is None:
+            loss_scaling = np.ones(len(batchers)) / [len(dataset) * batch_size for dataset in batchers]
+
         if loss_weights is None:
-            loss_weights = np.ones(len(batchers))
+            loss_scaling = np.ones(len(batchers)) * loss_scaling
 
         if dataset_weights is None:
             dataset_weights = np.ones(len(batchers)) / len(batchers)
 
         if batches_per_epoch is None:
             batches_per_epoch = sum([len(dataset) * batch_size for dataset in batchers]) // batch_size
+
+        # Limit batches_per_epoch to the maximum number of batches in the main task data
+        if imbalanced and batches_per_epoch > len(batchers[0]):
+            batches_per_epoch = len(batchers[0])
 
         if early_stopping is not None:
             earlystop = EarlyStopping(save_path, model, early_stopping, low, hyperopt)
@@ -286,9 +324,12 @@ def train_mtl_model(model: base.ModelType, batchers: base.List[base.DataType], o
             if shuffle:
                 for batch in batchers:
                     batch.shuffle()
-
-            _mtl_epoch(model, loss, loss_weights, optimizer, metrics, batchers, batches_per_epoch, dataset_weights,
-                       taskid2name, i, clip, gpu = gpu, **kwargs)
+            try:
+                _mtl_epoch(model, loss, loss_scaling, optimizer, metrics, batchers, batches_per_epoch, dataset_weights,
+                           taskid2name, i, clip, gpu = gpu, **kwargs)
+            except ValueError as e:
+                tqdm.write(f"QUITTING: NaN loss error occured. Exiting.\nTraceback: {e}")
+                break
 
             for score in metrics.scores:  # Compute average value of the scores computed in each epoch.
                 if score == 'loss':
