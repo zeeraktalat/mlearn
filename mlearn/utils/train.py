@@ -339,7 +339,8 @@ def train_mtl_model(model: base.ModelType,
                     scores[score].append(np.mean(metrics.scores[score]))
 
             if hyperopt:
-                wandb.log(metrics.epoch_scores())
+                scrs = metrics.epoch_scores()
+                wandb.log({f'train/{key}': scrs[key] for key in scrs})
 
             try:
                 eval_torch_model(model, dev, loss, dev_metrics, mtl = dev_task_id, store = False, gpu = gpu, **kwargs)
@@ -350,7 +351,7 @@ def train_mtl_model(model: base.ModelType,
 
                 if hyperopt:
                     scrs = dev_metrics.epoch_scores()
-                    wandb.log({f'dev_{key}': scrs[key] for key in scrs})
+                    wandb.log({f'dev/{key}': scrs[key] for key in scrs})
 
                 if early_stopping is not None and earlystop(model, dev_metrics.early_stopping()):
                     model = earlystop.best_state
