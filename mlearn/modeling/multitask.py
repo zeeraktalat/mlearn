@@ -516,16 +516,10 @@ class MTMLP(nn.Module):
 
         # Define task inputs
         self.inputs = {}
-        if share_input:
-            layer = nn.Embedding(input_dims[0], hidden_dims[0])
+        for task_id, input_dim in enumerate(input_dims):
+            layer = nn.Embedding(input_dim, hidden_dims[0])
+            self.inputs[task_id] = layer
             self.all_parameters.append(layer.weight)
-            for task_id in range(len(input_dims)):
-                self.inputs[task_id] = layer
-        else:
-            for task_id, input_dim in enumerate(input_dims):
-                layer = nn.Linear(input_dim, hidden_dims[0])
-                self.inputs[task_id] = layer
-                self.all_parameters.append(layer.weight)
 
         # Define shared hidden layers
         self.shared = []
@@ -554,15 +548,15 @@ class MTMLP(nn.Module):
 
         # Initialize all weights
         for weight_matrix in self.all_parameters:
-            nn.init.xavier_normal(weight_matrix)
+            nn.init.xavier_normal_(weight_matrix)
 
-    def forward(self, x, input_task_id=0, output_all=True,
-                output_lang_id=True, **kwargs):
+    def forward(self, x, task_id=0, output_all=True,
+                output_lang_id=True, gpu = True, **kwargs):
         """
         Defines a forward pass of the model. Note we don't softmax the output
         here, this is done by the loss function
         :param x: fixed-size input
-        :param input_task_id: which task ID to use for input
+        :param task_id: which task ID to use for input
         :param output_all: whether to return outputs for all tasks
         :param train_mode: dropout yay or nay
         :return: a list containing the linear class distribution
@@ -570,13 +564,15 @@ class MTMLP(nn.Module):
         """
         # print(input_task_id)
         x = x.long()
-        dropout = self.dropout
-        x = self.inputs[input_task_id](x)
-        x = dropout(self.tanh(x))
+        x = self.inputs[task_id](x)
+        x = self.dropout(self.tanh(x))
         for layer in self.shared:
-            x = dropout(self.tanh(layer(x)))
+            if gpu:
+                layer = layer.cuda()
+            x = self.dropout(self.tanh(layer(x)))
 
         # output = [output(x) for output in self.outputs] if output_all else self.outputs[input_task_id](x)
-        output = self.outputs[input_task_id](x)
+        output_layer = self.outputs[task_id].cuda() if gpu else self.outputs[task_id]
+        output = output_layer(x)
         output = output.mean(1)
         return output
