@@ -517,7 +517,7 @@ class MTMLP(nn.Module):
         # Define task inputs
         self.inputs = {}
         if share_input:
-            layer = nn.Linear(input_dims[0], hidden_dims[0])
+            layer = nn.Embedding(input_dims[0], hidden_dims[0])
             self.all_parameters.append(layer.weight)
             for task_id in range(len(input_dims)):
                 self.inputs[task_id] = layer
