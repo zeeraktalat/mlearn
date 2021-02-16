@@ -569,7 +569,7 @@ class MTMLP(nn.Module):
         for every model output
         """
         # print(input_task_id)
-        x = x.float()
+        x = x.long()
         dropout = self.dropout
         x = self.inputs[input_task_id](x)
         x = dropout(self.tanh(x))
