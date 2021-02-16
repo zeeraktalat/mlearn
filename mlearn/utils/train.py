@@ -205,6 +205,8 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
 
             # Send to GPU
             if gpu:
+                print("here")
+                model = model.cuda()
                 X = X.cuda()
                 y = y.cuda()
 
