@@ -515,21 +515,21 @@ class MTMLP(nn.Module):
         self.all_parameters = nn.ParameterList()
 
         # Define task inputs
-        self.inputs = {}
+        self.inputs = nn.ModuleDict()
         for task_id, input_dim in enumerate(input_dims):
             layer = nn.Embedding(input_dim, hidden_dims[0])
-            self.inputs[task_id] = layer
+            self.inputs[str(task_id)] = layer
             self.all_parameters.append(layer.weight)
 
         # Define shared hidden layers
-        self.shared = []
+        self.shared = nn.ModuleList()
         for i in range(len(hidden_dims) - 1):
             layer = nn.Linear(hidden_dims[i], hidden_dims[i + 1])
             self.shared.append(layer)
             self.all_parameters.append(layer.weight)
 
         # Define outputs
-        self.outputs = []
+        self.outputs = nn.ModuleList()
         for output_dim in output_dims:
             layer = nn.Linear(hidden_dims[-1], output_dim)
             self.outputs.append(layer)
@@ -564,15 +564,16 @@ class MTMLP(nn.Module):
         """
         # print(input_task_id)
         x = x.long()
-        x = self.inputs[task_id](x)
+        x = self.inputs[str(task_id)](x)
         x = self.dropout(self.tanh(x))
         for layer in self.shared:
-            if gpu:
-                layer = layer.cuda()
+            # if gpu:
+            #     layer = layer.cuda()
             x = self.dropout(self.tanh(layer(x)))
 
         # output = [output(x) for output in self.outputs] if output_all else self.outputs[input_task_id](x)
-        output_layer = self.outputs[task_id].cuda() if gpu else self.outputs[task_id]
+        # output_layer = self.outputs[task_id].cuda() if gpu else self.outputs[task_id]
+        output_layer = self.outputs[task_id]
         output = output_layer(x)
         output = output.mean(1)
         return output
