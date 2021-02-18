@@ -216,6 +216,9 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
             if torch.isnan(loss):
                 raise ValueError
 
+            if loss.item() < 0.0:
+                loss = loss * -1
+
             # Backprop
             loss.backward()
 
@@ -344,6 +347,9 @@ def train_mtl_model(model: base.ModelType,
 
             try:
                 eval_torch_model(model, dev, loss, dev_metrics, mtl = dev_task_id, store = False, gpu = gpu, **kwargs)
+
+                if dev_metrics.get_last('loss') < 0.0:
+                    dev_metrics.scores['loss'][-1] = dev_metrics.scores['loss'] * -1
 
                 loop.set_postfix(loss = f"{metrics.get_last('loss'):.4f}",
                                  dev_loss = f"{dev_metrics.get_last('loss'):.4f}",
