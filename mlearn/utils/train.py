@@ -305,11 +305,12 @@ def train_mtl_model(model: base.ModelType,
             wandb.watch(model, log = 'all')
 
         # Normalise loss for each task by the number of datapoints in each task
-        if loss_norm is None:
-            loss_scaling = np.ones(len(batchers)) / [len(dataset) * batch_size for dataset in batchers]
+        # if loss_norm is None:
+        #     loss_scaling = np.ones(len(batchers)) / [len(dataset) * batch_size for dataset in batchers]
 
         if loss_weights is None:
-            loss_scaling = np.ones(len(batchers)) * loss_scaling
+            # loss_scaling = np.ones(len(batchers)) * loss_scaling
+            loss_scaling = np.ones(len(batchers))
 
         if dataset_weights is None:
             dataset_weights = np.ones(len(batchers)) / len(batchers)
