@@ -311,6 +311,8 @@ def train_mtl_model(model: base.ModelType,
         if loss_weights is None:
             # loss_scaling = np.ones(len(batchers)) * loss_scaling
             loss_scaling = np.ones(len(batchers))
+        else:
+            loss_scaling = loss_weights
 
         if dataset_weights is None:
             dataset_weights = np.ones(len(batchers)) / len(batchers)
