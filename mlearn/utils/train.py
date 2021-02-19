@@ -365,8 +365,9 @@ def train_mtl_model(model: base.ModelType,
                 if early_stopping is not None and earlystop(model, dev_metrics.early_stopping()):
                     model = earlystop.best_state
                     break
-            except Exception:
+            except Exception as e:
                 loop.set_postfix(epoch_loss = metrics.get_last('loss'))
+                tqdm.write(f"EXCEPTION: {e}")
             finally:
                 loop.refresh()
         metrics.scores = scores
