@@ -42,15 +42,15 @@ class EmbeddingLSTMClassifier(nn.Module):
         # Hidden to hidden layer (not shared) [LSTM]
         # Output layer (not shared) [Linear}
 
-        self.inputs = {}  # Define task inputs
+        self.inputs = nn.ModuleDict()  # Define task inputs
         for task_id, input_dim in enumerate(input_dims):
             layer = nn.Embedding(input_dim, embedding_dims)
-            self.inputs[task_id] = layer
+            self.inputs[str(task_id)] = layer
 
             # Add parameters
             self.all_parameters.append(layer.weight)
 
-        self.shared = []
+        self.shared = nn.ModuleList()
         for layer in [shared_dim]:
             layer = nn.Linear(embedding_dims, shared_dim)
             self.shared.append(layer)
@@ -58,10 +58,10 @@ class EmbeddingLSTMClassifier(nn.Module):
             self.all_parameters.append(layer.weight)
             self.all_parameters.append(layer.bias)
 
-        self.lstm = {}
+        self.lstm = nn.ModuleDict()
         for task_ix, _ in enumerate(input_dims):
             layer = nn.LSTM(shared_dim, hidden_dims[task_ix], batch_first = batch_first, num_layers = no_layers)
-            self.lstm[task_ix] = layer
+            self.lstm[str(task_ix)] = layer
 
             # Add parameters
             self.all_parameters.append(layer.weight_ih_l0)
@@ -69,10 +69,10 @@ class EmbeddingLSTMClassifier(nn.Module):
             self.all_parameters.append(layer.bias_ih_l0)
             self.all_parameters.append(layer.bias_hh_l0)
 
-        self.outputs = {}
+        self.outputs = nn.ModuleDict()
         for task_ix, _ in enumerate(input_dims):
             layer = nn.Linear(hidden_dims[task_ix], output_dims[task_ix])
-            self.outputs[task_ix] = layer
+            self.outputs[str(task_ix)] = layer
 
             # Add parameters
             self.all_parameters.append(layer.weight)
@@ -97,14 +97,14 @@ class EmbeddingLSTMClassifier(nn.Module):
         if not self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        res = self.inputs[task_id](sequence.long())
+        res = self.inputs[str(task_id)](sequence.long())
 
         for layer in self.shared:
             res = layer(res)
 
-        self.lstm[task_id].flatten_parameters()
-        lstm_out, (lstm_hidden, _) = self.lstm[task_id](res)
-        output = self.outputs[task_id](self.dropout(lstm_hidden))
+        self.lstm[str(task_id)].flatten_parameters()
+        lstm_out, (lstm_hidden, _) = self.lstm[str(task_id)](res)
+        output = self.outputs[str(task_id)](self.dropout(lstm_hidden))
         prob_dist = self.softmax(output)  # The probability distribution
 
         return prob_dist.squeeze(0)
