@@ -1,5 +1,7 @@
 import torch
 from mlearn import base
+from torch.nn.functional import one_hot
+from . import Cython_Index
 
 
 class TorchtextExtractor:
@@ -28,7 +30,7 @@ class TorchtextExtractor:
 class Batch(base.Batch):
     """Create batches."""
 
-    def __init__(self, batch_size: int, data: base.DataType):
+    def __init__(self, batch_size: int, data: base.DataType, dataset: base.DataType, onehot: bool = True):
         """
         Initialize batch object.
 
@@ -38,6 +40,16 @@ class Batch(base.Batch):
         self.batch_size = batch_size
         self.data = data
         self.batches = None
+
+        # from below 
+        # self.batcher = batcher
+        self.dataset = dataset
+        self.onehot = onehot
+
+        self.train_fields = dataset.train_fields
+        self.length = dataset.length
+
+        
 
     def create_batches(self, data: base.DataType = None):
         """
@@ -82,25 +94,6 @@ class Batch(base.Batch):
         return self.batches[idx]
 
     # Added these two methods below form extractor 
-    
-    def __iter__(self):
-        """Iterate over batches in the data."""
-        # Using global largeset batch file to encode, we want to encode per lenght of document 
-
-
-
-        # look at longest file in the specific batch, not longest file in all files 
-        # move all encoding to batch class 
-
-
-
-        # move every method that has the word "encode" into the batch class straight up, 
-        # TODO:CONSEQUENCE stoi.dict will not be available
-        # modify batch class 
-        for batch in self.batcher:
-            X = torch.cat([doc for doc in self.data.encode(batch, onehot = self.onehot)], dim = 0)
-            y = torch.tensor([getattr(doc, self.lf) for doc in batch]).flatten()
-            yield (X, y)
 
     def __getitem__(self, idx: int) -> base.DataType:
         """
@@ -109,7 +102,7 @@ class Batch(base.Batch):
         :idx (int): Get an individual batch given and index.
         :returns (base.DataType): Batch.
         """
-        X = torch.cat([doc for doc in self.data.encode(self.batcher[idx], onehot = self.onehot)], dim = 0)
+        X = torch.cat([doc for doc in self.encode(self.batcher[idx], onehot = self.onehot)], dim = 0) # self.data.encode
         y = torch.tensor([getattr(doc, self.lf) for doc in self.batcher[idx]]).flatten()
         return (X, y)
 
@@ -124,7 +117,93 @@ class Batch(base.Batch):
     #         yield [getattr(doc, attr) for doc in batch]
 
 
-class BatchExtractor(base.Batch):
+    def encode(self, data: base.DataType, onehot: bool = True) -> base.Iterator[base.DataType]:
+        """
+        Encode a documenbase.
+
+        :data (base.DataType): List of datapoints to be encoded.
+        :onehot (bool, default = True): Set to true to onehot encode the documenbase.
+        :returns (base.Iterator[base.DataType]): Return documents encoded as tensors.
+        """
+        
+        # for att in dir(data):
+        #     print (att, getattr(data,att))
+
+        encoding_func = self.onehot_encode_doc if onehot else self.index_encode_doc
+
+        names = [getattr(f, 'name') for f in self.train_fields]
+
+
+
+        for doc in data:
+            text = [tok for name in names for tok in getattr(doc, name)]
+
+            if len(text) != self.length:
+                text = self._pad_doc(text, self.length)
+
+            yield encoding_func(text, doc)
+
+    def _pad_doc(self, text, length) -> base.List[str]: # copied this over to batching.py 
+        """
+        Do the actual padding.
+
+        :text: The extracted text to be padded or trimmed.
+        :length: The length of the sequence length to be applied.
+        :return (base.List[str]): Return padded document as a list.
+        """
+        delta = length - len(text)
+        padded = text[:delta] if delta < 0 else text + ['<pad>'] * delta
+        return padded
+
+    def onehot_encode_doc(self, text: base.DataType, doc: base.Datapoint) -> base.DataType:
+        """
+        Onehot encode a single document.
+
+        :text (base.DataType): The document represented as a tokens.
+        :doc (base.Datapoint): The datapoint to encode.
+        :returns (base.DataType): Return onehot encoded tensor.
+        """
+        self.encoded = one_hot(self.encode_doc(text, doc), len(self.dataset.stoi)).type(torch.long).unsqueeze(0)
+
+        return self.encoded
+
+    def index_encode_doc(self, text: base.DataType, doc: base.Datapoint) -> base.DataType:
+        """
+        Index encode a single document.
+
+        :text (base.DataType): The document represented as a tokens.
+        :doc (base.Datapoint): The datapoint to encode.
+        :returns (base.DataType): Return onehot encoded tensor.
+        """
+        # This is Zeeraks code
+        self.encoded = self.encode_doc(text, doc).unsqueeze(0)
+        # This is my Cython code 
+        """encoded = torch.from_numpy(Cython_Index.encode_doc_TEST(self,text)).unsqueeze(0)"""
+        return self.encoded
+
+    def encode_doc(self, text: base.DataType, doc: base.Datapoint , dataset: base.DataType = dataset) -> base.DataType:
+        """
+        Encode documents using just the index of the tokens that are present in the document.
+
+        :text (base.DataType): The document represented as a tokens.
+        :doc (base.Datapoint): The datapoint to encode.
+        :returns (base.DataType): Return index encoded
+        """
+        if hasattr(doc, 'encoded'):
+            self.encoded = doc.encoded
+        else:
+            
+            self.encoded = torch.tensor([dataset.stoi.get(text[ix], self.unk_tok) for ix in range(len(text))],
+                                   dtype = torch.long)
+            
+            #self.encoded = torch.from_numpy(Cython_Index.encode_doc_TEST(self,text))
+            
+            setattr(doc, 'encoded', encoded)
+            
+        return self.encoded
+
+
+class BatchExtractor(Batch):
     """A class to get the information from the batches."""
 
     # currently dataset argument holds the stoi dict , we want to reference it in the general dataset class, when looking for vocab we want to reference the dataset object 
@@ -144,6 +223,9 @@ class BatchExtractor(base.Batch):
         self.data = dataset
         self.onehot = onehot
         self.lf = labelfield
+        super().__init__( len(self.batcher) , dataset , dataset) # telling code to remember that we are inherited from another obj, and then ini
+
+        
 
     def __len__(self):
         """Get number of the batches."""
@@ -158,3 +240,23 @@ class BatchExtractor(base.Batch):
         """Shuffle the batch order."""
         self.batcher = self.batcher.shuffle_batches()
         return self
+
+    def __iter__(self):
+        """Iterate over batches in the data."""
+        # Using global largeset batch file to encode, we want to encode per lenght of document 
+
+
+
+        # look at longest file in the specific batch, not longest file in all files 
+        # move all encoding to batch class 
+
+
+
+        # move every method that has the word "encode" into the batch class straight up, 
+        # TODO:CONSEQUENCE stoi.dict will not be available
+        # modify batch class 
+        for batch in self.batcher: # needs to use the cython code here, 
+            X = torch.cat([doc for doc in self.encode( batch, onehot = self.onehot)], dim = 0)
+            
+            y = torch.tensor([getattr(doc, self.lf) for doc in batch]).flatten()
+            yield (X, y)

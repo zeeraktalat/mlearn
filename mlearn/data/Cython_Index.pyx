@@ -16,7 +16,7 @@ cpdef np.ndarray[np.int64_t, ndim=1] encode_doc_TEST( data_object , text):
     for ix in range(dim2):
         if text[ix] == '<pad>':
             break
-        encoded[ix] = data_object.stoi.get(text[ix],data_object.unk_tok)
+        encoded[ix] = dataset.stoi.get(text[ix],data_object.unk_tok)
 
     #|||| 
     

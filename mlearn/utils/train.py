@@ -10,9 +10,10 @@ from mlearn.utils.evaluate import eval_torch_model, eval_sklearn_model
 from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV
 from mlearn.data.fileio import write_predictions, write_results, mtl_batch_writer
 
-
+# batchers gets the batchExtractor object, we iterate over it in line 33
 def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: base.Callable, metrics: Metrics,
                       batchers: base.DataType, clip: float = None, gpu: bool = True, **kwargs):
+    
     """
     Training procedure for single task pytorch models.
 
@@ -30,7 +31,7 @@ def _singletask_epoch(model: base.ModelType, optimizer: base.Callable, loss_f: b
 
         model.train()
 
-        for X, y in loop:
+        for X, y in loop: # here we iterate over the batching stuff and encode the data
             # Zero out Gradients
             optimizer.zero_grad()
 

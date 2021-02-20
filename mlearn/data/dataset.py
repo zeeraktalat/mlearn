@@ -6,10 +6,10 @@ import numpy as np
 from tqdm import tqdm
 from math import floor
 from mlearn import base
-from torch.nn.functional import one_hot
+from torch.nn.functional import one_hot # put this in batching.py
 from collections import Counter, defaultdict
 from torch.utils.data import IterableDataset
-from . import Cython_Index
+from . import Cython_Index # put this in batching.py
 
 
 class GeneralDataset(IterableDataset):
@@ -524,7 +524,7 @@ class GeneralDataset(IterableDataset):
         :returns (list): Return list of padded datapoints.
         """
         if length is None:
-            length = self.length
+            length = max([len(doc) for doc in data])
 
         padded = []
         for doc in data:
@@ -534,7 +534,7 @@ class GeneralDataset(IterableDataset):
                 padded.append(doc)
         return padded
 
-    def _pad_doc(self, text, length) -> base.List[str]:
+    def _pad_doc(self, text, length) -> base.List[str]: # copied this over to batching.py 
         """
         Do the actual padding.
 
@@ -563,67 +563,6 @@ class GeneralDataset(IterableDataset):
             vectorized = vectorizer.transform(data)
             vectorizer.fitted = True
         return vectorized
-
-    def encode(self, data: base.DataType, onehot: bool = True) -> base.Iterator[base.DataType]:
-        """
-        Encode a documenbase.
-
-        :data (base.DataType): List of datapoints to be encoded.
-        :onehot (bool, default = True): Set to true to onehot encode the documenbase.
-        :returns (base.Iterator[base.DataType]): Return documents encoded as tensors.
-        """
-        names = [getattr(f, 'name') for f in self.train_fields]
-        encoding_func = self.onehot_encode_doc if onehot else self.index_encode_doc
-
-        for doc in data:
-            text = [tok for name in names for tok in getattr(doc, name)]
-
-            if len(text) != self.length:
-                text = self._pad_doc(text, self.length)
-
-            yield encoding_func(text, doc)
-
-    def onehot_encode_doc(self, text: base.DataType, doc: base.Datapoint) -> base.DataType:
-        """
-        Onehot encode a single document.
-
-        :text (base.DataType): The document represented as a tokens.
-        :doc (base.Datapoint): The datapoint to encode.
-        :returns (base.DataType): Return onehot encoded tensor.
-        """
-        encoded = one_hot(self.encode_doc(text, doc), len(self.stoi)).type(torch.long).unsqueeze(0)
-
-        return encoded
-
-    def index_encode_doc(self, text: base.DataType, doc: base.Datapoint) -> base.DataType:
-        """
-        Index encode a single document.
-
-        :text (base.DataType): The document represented as a tokens.
-        :doc (base.Datapoint): The datapoint to encode.
-        :returns (base.DataType): Return onehot encoded tensor.
-        """
-        # This is Zeeraks code
-        encoded = self.encode_doc(text, doc).unsqueeze(0)
-        # This is my Cython code 
-        """encoded = torch.from_numpy(Cython_Index.encode_doc_TEST(self,text)).unsqueeze(0)"""
-        return encoded
-
-    def encode_doc(self, text: base.DataType, doc: base.Datapoint) -> base.DataType:
-        """
-        Encode documents using just the index of the tokens that are present in the document.
-
-        :text (base.DataType): The document represented as a tokens.
-        :doc (base.Datapoint): The datapoint to encode.
-        :returns (base.DataType): Return index encoded
-        """
-        if hasattr(doc, 'encoded'):
-            encoded = doc.encoded
-        else:
-            encoded = torch.tensor([self.stoi.get(text[ix], self.unk_tok) for ix in range(len(text))],
-                                   dtype = torch.long)
-            setattr(doc, 'encoded', encoded)
-        return encoded
 
     def split(self, data: base.DataType = None, splits: base.List[float] = None,
               store: bool = True, stratify: str = None, **kwargs) -> base.Tuple[base.DataType]:

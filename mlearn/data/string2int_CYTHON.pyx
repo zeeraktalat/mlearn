@@ -30,8 +30,8 @@ ctypedef np.int32_t ITYPE_t
 cdef class IntFloatDict:
     cdef cpp_map[ITYPE_t, DTYPE_t] my_map
 
-    def __init__(self, np.ndarray[ITYPE_t, ndim=1] keys,
-                       np.ndarray[DTYPE_t, ndim=1] values):
+    def __init__(self, np.ndarray[DTYPE_t, ndim=1] keys,
+                       np.ndarray[ITYPE_t, ndim=1] values):
         cdef cpp_map[ITYPE_t,DTYPE_t] my_map
         cdef int i
         cdef int size = values.size
