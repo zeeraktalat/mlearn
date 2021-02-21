@@ -316,6 +316,9 @@ def train_mtl_model(model: base.ModelType,
 
         if dataset_weights is None:
             dataset_weights = np.ones(len(batchers)) / len(batchers)
+        elif np.sum(dataset_weights) != 1.0:
+            diff = 1 - np.sum(dataset_weights)
+            dataset_weights[0] += diff
 
         if batches_per_epoch is None:
             batches_per_epoch = sum([len(dataset) * batch_size for dataset in batchers]) // batch_size
