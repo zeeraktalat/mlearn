@@ -60,7 +60,11 @@ class EmbeddingLSTMClassifier(nn.Module):
 
         self.lstm = nn.ModuleDict()
         for task_ix, _ in enumerate(input_dims):
-            layer = nn.LSTM(shared_dim, hidden_dims[task_ix], batch_first = batch_first, num_layers = no_layers)
+            layer = nn.LSTM(shared_dim,
+                            hidden_dims[task_ix],
+                            batch_first = batch_first,
+                            num_layers = no_layers,
+                            bidirectional = True)
             self.lstm[str(task_ix)] = layer
 
             # Add parameters
