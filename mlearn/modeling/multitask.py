@@ -64,7 +64,7 @@ class EmbeddingLSTMClassifier(nn.Module):
                             hidden_dims[task_ix],
                             batch_first = batch_first,
                             num_layers = no_layers,
-                            bidirectional = True)
+                            bidirectional = False)
             self.lstm[str(task_ix)] = layer
 
             # Add parameters
