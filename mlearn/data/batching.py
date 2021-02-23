@@ -20,7 +20,7 @@ class TorchtextExtractor:
     def __iter__(self):
         for batch in self.data:
             if self.vocab_size is not None:
-                X = torch.nn.functional.one_hot(getattr(batch, self.datafield), self.vocab_size)
+                X = one_hot(getattr(batch, self.datafield), self.vocab_size) # changed this since the import 
             else:
                 X = getattr(batch, self.datafield)
             y = getattr(batch, self.labelfield)
@@ -163,7 +163,9 @@ class Batch(base.Batch):
         :doc (base.Datapoint): The datapoint to encode.
         :returns (base.DataType): Return onehot encoded tensor.
         """
-        self.encoded = one_hot(self.encode_doc(text, doc), len(self.dataset.stoi)).type(torch.long).unsqueeze(0)
+        self.encoded = one_hot(self.encode_doc(text, doc).type(torch.long).unsqueeze(0) , len(self.dataset.stoi) ).type(torch.long).unsqueeze(0) #len(self.dataset.stoi)
+
+                       #one_hot(getattr(batch, self.datafield), self.vocab_size)
 
         return self.encoded
 
@@ -176,12 +178,12 @@ class Batch(base.Batch):
         :returns (base.DataType): Return onehot encoded tensor.
         """
         # This is Zeeraks code
-        self.encoded = self.encode_doc(text, doc).unsqueeze(0)
+        """self.encoded = self.encode_doc(text, doc).unsqueeze(0)"""
         # This is my Cython code 
-        """encoded = torch.from_numpy(Cython_Index.encode_doc_TEST(self,text)).unsqueeze(0)"""
+        self.encoded = torch.from_numpy(Cython_Index.encode_doc_TEST(self.dataset,text)).unsqueeze(0)
         return self.encoded
 
-    def encode_doc(self, text: base.DataType, doc: base.Datapoint , dataset: base.DataType = dataset) -> base.DataType:
+    def encode_doc(self, text: base.DataType, doc: base.Datapoint) -> base.DataType:
         """
         Encode documents using just the index of the tokens that are present in the document.
 
@@ -193,12 +195,12 @@ class Batch(base.Batch):
             self.encoded = doc.encoded
         else:
             
-            self.encoded = torch.tensor([dataset.stoi.get(text[ix], self.unk_tok) for ix in range(len(text))],
-                                   dtype = torch.long)
+            # self.encoded = torch.tensor([dataset.stoi.get(text[ix], self.unk_tok) for ix in range(len(text))],
+            #                        dtype = torch.long)
             
-            #self.encoded = torch.from_numpy(Cython_Index.encode_doc_TEST(self,text))
+            self.encoded = torch.from_numpy(Cython_Index.encode_doc_TEST(self.dataset,text))
             
-            setattr(doc, 'encoded', encoded)
+            setattr(doc, 'encoded', self.encoded)
             
         return self.encoded
 
