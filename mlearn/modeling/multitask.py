@@ -42,7 +42,7 @@ class EmbeddingLSTMClassifier(nn.Module):
         # Hidden to hidden layer (not shared) [LSTM]
         # Output layer (not shared) [Linear}
 
-        self.inputs = nn.ModuleDict()  # Define task inputs
+        self.inputs = nn.ModuleDict()  # Not Shared: (input -> emb)
         for task_id, input_dim in enumerate(input_dims):
             layer = nn.Embedding(input_dim, embedding_dims)
             self.inputs[str(task_id)] = layer
@@ -50,17 +50,20 @@ class EmbeddingLSTMClassifier(nn.Module):
             # Add parameters
             self.all_parameters.append(layer.weight)
 
-        self.shared = nn.ModuleList()
-        for layer in [shared_dim]:
-            layer = nn.Linear(embedding_dims, shared_dim)
+        self.shared = nn.ModuleList()  # Shared: i = 0: emb -> hidden_dims[0]; i != 0: hidden_dims[i] -> hidden_dims[-1]
+        for ix in range(len(hidden_dims) - 1):
+            if ix == 0:
+                layer  = nn.Linear(embedding_dims, hidden_dims[ix])
+            else:
+                layer = nn.Linear(hidden_dims[ix], hidden_dims[ix + 1])
             self.shared.append(layer)
 
             self.all_parameters.append(layer.weight)
             self.all_parameters.append(layer.bias)
 
-        self.lstm = nn.ModuleDict()
+        self.lstm = nn.ModuleDict()  # Not Shared: hidden_dims[-1] -> hidden_dims[task_ix]
         for task_ix, _ in enumerate(input_dims):
-            layer = nn.LSTM(shared_dim,
+            layer = nn.LSTM(hidden_dims[-1],
                             hidden_dims[task_ix],
                             batch_first = batch_first,
                             num_layers = no_layers,
@@ -73,7 +76,7 @@ class EmbeddingLSTMClassifier(nn.Module):
             self.all_parameters.append(layer.bias_ih_l0)
             self.all_parameters.append(layer.bias_hh_l0)
 
-        self.outputs = nn.ModuleDict()
+        self.outputs = nn.ModuleDict()  # Not Shared: hidden_dims[task_ix] -> output_dims[task_ix]
         for task_ix, _ in enumerate(input_dims):
             layer = nn.Linear(hidden_dims[task_ix], output_dims[task_ix])
             self.outputs[str(task_ix)] = layer
@@ -85,10 +88,6 @@ class EmbeddingLSTMClassifier(nn.Module):
         # Set the method for producing "probability" distribution.
         self.dropout = nn.Dropout(dropout)
         self.softmax = nn.LogSoftmax(dim = 1)
-
-        # Ensure that the model is deterministic (the bias term is added)
-        # print(self)
-        # print(list(self.all_parameters))
 
     def forward(self, sequence, task_id, **kwargs) -> base.DataType:
         """
