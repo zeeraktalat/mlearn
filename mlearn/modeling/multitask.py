@@ -97,7 +97,7 @@ class EmbeddingLSTMClassifier(nn.Module):
         if not self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        res = self.inputs[task_id](sequence.long())
+        res = self.inputs[task_id](sequence.long()) # STOPS HERE
 
         for layer in self.shared:
             res = layer(res)
