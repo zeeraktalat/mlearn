@@ -84,6 +84,7 @@ class GeneralDataset(IterableDataset):
         self.label_preprocessor = label_preprocessor
         self.length = length
         self.gpu = gpu
+        
 
     def load(self, dataset: str = 'train', skip_header = True, line_count: dict = None, **kwargs) -> None:
         """

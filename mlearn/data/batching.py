@@ -191,16 +191,16 @@ class Batch(base.Batch):
         :doc (base.Datapoint): The datapoint to encode.
         :returns (base.DataType): Return index encoded
         """
-        if hasattr(doc, 'encoded'):
-            self.encoded = doc.encoded
-        else:
+        # if hasattr(doc, 'encoded'):
+        #     self.encoded = doc.encoded
+        # else:
             
             # self.encoded = torch.tensor([dataset.stoi.get(text[ix], self.unk_tok) for ix in range(len(text))],
             #                        dtype = torch.long)
             
-            self.encoded = torch.from_numpy(Cython_Index.encode_doc_TEST(self.dataset,text))
+        self.encoded = torch.from_numpy(Cython_Index.encode_doc_TEST(self.dataset,text)) # came here
             
-            setattr(doc, 'encoded', self.encoded)
+            # setattr(doc, 'encoded', self.encoded)
             
         return self.encoded
 
@@ -261,4 +261,4 @@ class BatchExtractor(Batch):
             X = torch.cat([doc for doc in self.encode( batch, onehot = self.onehot)], dim = 0)
             
             y = torch.tensor([getattr(doc, self.lf) for doc in batch]).flatten()
-            yield (X, y)
+            yield (X, y) # come here from mtl_epoch

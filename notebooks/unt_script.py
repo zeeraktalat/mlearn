@@ -272,7 +272,7 @@ def _mtl_epoch(model: base.ModelType, loss_f: base.Callable, loss_weights: base.
                 y = y.cuda()
 
             # Do model training
-            model.train()
+            model.train() # inside here
             optimizer.zero_grad()
 
             scores = model(X, task_id, **kwargs)
