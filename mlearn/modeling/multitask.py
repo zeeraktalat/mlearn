@@ -205,6 +205,14 @@ class EmbeddingMLPClassifier(nn.Module):
             self.all_parameters.append(layer.weight)
             self.all_parameters.append(layer.bias)
 
+        self.hidden = nn.ModuleDict() # Not-shared: shared ->hidden[task_ix]
+        for task_ix in enumerate(input_dims):
+            layer = nn.Linear(shared_dim, hidden_dims[task_ix])
+            self.hidden[str(task_ix)] = layer
+
+            self.all_parameters.append(layer.weight)
+            self.all_parameters.append(layer.bias)
+
         self.outputs = nn.ModuleDict()  # Not shared: shared -> hidden[task_ix]
         for task_ix, _ in enumerate(input_dims):
             layer = nn.Linear(shared_dim, output_dims[task_ix])
