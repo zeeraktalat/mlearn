@@ -8,13 +8,13 @@ class EmbeddingLSTMClassifier(nn.Module):
 
     def __init__(self,
                  input_dims: base.List[int],
-                 embedding_dims: int
-                 shared_dim: int
+                 embedding_dims: int,
+                 shared_dim: int,
                  hidden_dims: base.List[int],
-                 output_dims: base.List[int]
-                 no_layers: int = 1
-                 dropout: float = 0.0
-                 batch_first = True
+                 output_dims: base.List[int],
+                 no_layers: int = 1,
+                 dropout: float = 0.0,
+                 batch_first = True,
                  **kwargs) -> None:
         """
         Initialise the Multitask LSTM.
@@ -205,7 +205,7 @@ class EmbeddingMLPClassifier(nn.Module):
             self.all_parameters.append(layer.weight)
             self.all_parameters.append(layer.bias)
 
-        self.hidden = nn.ModuleDict() # Not-shared: shared ->hidden[task_ix]
+        self.hidden = nn.ModuleDict()  # Not-shared: shared ->hidden[task_ix]
         for task_ix in enumerate(input_dims):
             layer = nn.Linear(shared_dim, hidden_dims[task_ix])
             self.hidden[str(task_ix)] = layer
@@ -251,7 +251,7 @@ class EmbeddingMLPClassifier(nn.Module):
         res = self.nonlinearity(res)
 
         res = res.mean(0)
-        res = self.outputs[task_id](res)
+        res = self.outputs[str(task_id)](res)
         prob_dist = self.softmax(res)
 
         return prob_dist
