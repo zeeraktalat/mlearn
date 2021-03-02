@@ -183,47 +183,25 @@ class EmbeddingMLPClassifier(nn.Module):
         # hidden to hidden layer (shared) [Linear]
         # Output layer (not shared) [Linear}
 
-        self.inputs = {}  # Define task inputs
+        self.inputs = nn.ModuleDict()  # Not shared: input -> emb
         for task_id, input_dim in enumerate(input_dims):
             layer = nn.Embedding(input_dim, embedding_dims)
-            self.inputs[task_id] = layer
+            self.inputs[str(task_id)] = layer
 
             # Add parameters
             self.all_parameters.append(layer.weight)
 
-        self.shared = []
-        for layer in [shared_dim]:
+        self.shared = nn.ModuleList()  # Shared: emb -> shared
+        for dim in [shared_dim]:
             layer = nn.Linear(embedding_dims, shared_dim)
-            self.shared.append(layer)
 
             self.all_parameters.append(layer.weight)
             self.all_parameters.append(layer.bias)
 
-        # self.shared = []
-        # for i in range(len(hidden_dims)):
-        #     if i == 0:
-        #         layer = nn.Linear(embedding_dims, hidden_dims[i])
-        #     else:
-        #         layer = nn.Linear(hidden_dims[i - 1], hidden_dims[i])
-        #     self.shared.append(layer)
-        #
-        #     # Add parameters
-        #     self.all_parameters.append(layer.weight)
-        #     self.all_parameters.append(layer.bias)
-
-        self.hidden = {}
+        self.outputs = nn.ModuleDict()  # Not shared: shared -> hidden[task_ix]
         for task_ix, _ in enumerate(input_dims):
-            layer = nn.Linear(shared_dim, hidden_dims[task_ix])
-            self.hidden[task_ix] = layer
-
-            # Add parameters
-            self.all_parameters.append(layer.weight)
-            self.all_parameters.append(layer.bias)
-
-        self.outputs = {}
-        for task_ix, _ in enumerate(input_dims):
-            layer = nn.Linear(hidden_dims[task_ix], output_dims[task_ix])
-            self.outputs[task_ix] = layer
+            layer = nn.Linear(shared_dim, output_dims[task_ix])
+            self.outputs[str(task_ix)] = layer
 
             # Add parameters
             self.all_parameters.append(layer.weight)
