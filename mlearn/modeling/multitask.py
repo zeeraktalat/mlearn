@@ -6,8 +6,15 @@ from mlearn import base
 class EmbeddingLSTMClassifier(nn.Module):
     """Multitask LSTM Classifier."""
 
-    def __init__(self, input_dims: base.List[int], embedding_dims: int, shared_dim: int, hidden_dims: base.List[int],
-                 output_dims: base.List[int], no_layers: int = 1, dropout: float = 0.0, batch_first = True,
+    def __init__(self,
+                 input_dims: base.List[int],
+                 embedding_dims: int
+                 shared_dim: int
+                 hidden_dims: base.List[int],
+                 output_dims: base.List[int]
+                 no_layers: int = 1
+                 dropout: float = 0.0
+                 batch_first = True
                  **kwargs) -> None:
         """
         Initialise the Multitask LSTM.
@@ -232,102 +239,11 @@ class EmbeddingMLPClassifier(nn.Module):
         for layer in self.shared:
             res = self.dropout(self.nonlinearity(layer(res)))
 
-        res = self.dropout(self.hidden[task_id](res))
+        res = self.dropout(self.hidden[str(task_id)](res))
         res = self.nonlinearity(res)
-
-        # for layer in self.shared:
-        #     res = self.dropout(layer(res))
 
         res = res.mean(0)
         res = self.outputs[task_id](res)
         prob_dist = self.softmax(res)
 
         return prob_dist
-
-
-class MTMLP(nn.Module):
-
-    def __init__(self, input_dims, hidden_dims, output_dims, dropout=0.2,
-                 share_input=False, nonlinearity = 'tanh', **kwargs):
-        self.share_input = share_input
-        super(MTMLP, self).__init__()
-        self.name = 'MTMLP'
-        self.info = {'Model': self.name,
-                     'Input dim': ", ".join([str(it) for it in input_dims]), 'Hidden dim': hidden_dims,
-                     'Output dim': ", ".join([str(it) for it in output_dims]),
-                     'nonlinearity': nonlinearity, 'Dropout': dropout
-                     }
-
-        if type(hidden_dims) == int:
-            print("Warning: you passed a single integer ({}) as argument "
-                  "hidden_dims, but a list of integers specifying dimensions"
-                  "for all hidden layers is expected. The model will now have"
-                  "a single hidden layer with the dimensionality you "
-                  "specified.".format(hidden_dims))
-            hidden_dims = [hidden_dims]
-
-        self.all_parameters = nn.ParameterList()
-
-        # Define task inputs
-        self.inputs = nn.ModuleDict()
-        for task_id, input_dim in enumerate(input_dims):
-            layer = nn.Embedding(input_dim, hidden_dims[0])
-            self.inputs[str(task_id)] = layer
-            self.all_parameters.append(layer.weight)
-
-        # Define shared hidden layers
-        self.shared = nn.ModuleList()
-        for i in range(len(hidden_dims) - 1):
-            layer = nn.Linear(hidden_dims[i], hidden_dims[i + 1])
-            self.shared.append(layer)
-            self.all_parameters.append(layer.weight)
-
-        # Define outputs
-        self.outputs = nn.ModuleList()
-        for output_dim in output_dims:
-            layer = nn.Linear(hidden_dims[-1], output_dim)
-            self.outputs.append(layer)
-            self.all_parameters.append(layer.weight)
-
-        # predict at lowest hidden layer, output dimensionality is number
-        # of languages (== number of tasks == number of outputs)
-        self.lang_id_output = nn.Linear(hidden_dims[0], len(output_dims))
-        self.all_parameters.append(self.lang_id_output.weight)
-
-        # Define nonlinearity and dropout (used across all hidden
-        # layers in self.forward())
-        self.tanh = nn.Tanh()
-        self.dropout = nn.Dropout(dropout)
-        # self.dropout = nn.Dropout(0.0)
-
-        # Initialize all weights
-        for weight_matrix in self.all_parameters:
-            nn.init.xavier_normal_(weight_matrix)
-
-    def forward(self, x, task_id=0, output_all=True,
-                output_lang_id=True, gpu = True, **kwargs):
-        """
-        Defines a forward pass of the model. Note we don't softmax the output
-        here, this is done by the loss function
-        :param x: fixed-size input
-        :param task_id: which task ID to use for input
-        :param output_all: whether to return outputs for all tasks
-        :param train_mode: dropout yay or nay
-        :return: a list containing the linear class distribution
-        for every model output
-        """
-        # print(input_task_id)
-        x = x.long()
-        x = self.inputs[str(task_id)](x)
-        x = self.dropout(self.tanh(x))
-        for layer in self.shared:
-            # if gpu:
-            #     layer = layer.cuda()
-            x = self.dropout(self.tanh(layer(x)))
-
-        # output = [output(x) for output in self.outputs] if output_all else self.outputs[input_task_id](x)
-        # output_layer = self.outputs[task_id].cuda() if gpu else self.outputs[task_id]
-        output_layer = self.outputs[task_id]
-        output = output_layer(x)
-        output = output.mean(1)
-        return output
