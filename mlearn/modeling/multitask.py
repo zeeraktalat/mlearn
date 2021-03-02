@@ -42,7 +42,7 @@ class EmbeddingLSTMClassifier(nn.Module):
         # Hidden to hidden layer (not shared) [LSTM]
         # Output layer (not shared) [Linear}
 
-        self.inputs = nn.ModuleDict()  # Not Shared: (input -> emb)
+        self.inputs = nn.ModuleDict()  # Not Shared: input -> emb
         for task_id, input_dim in enumerate(input_dims):
             layer = nn.Embedding(input_dim, embedding_dims)
             self.inputs[str(task_id)] = layer
@@ -50,20 +50,17 @@ class EmbeddingLSTMClassifier(nn.Module):
             # Add parameters
             self.all_parameters.append(layer.weight)
 
-        self.shared = nn.ModuleList()  # Shared: i = 0: emb -> hidden_dims[0]; i != 0: hidden_dims[i] -> hidden_dims[-1]
-        for ix in range(len(hidden_dims) - 1):
-            if ix == 0:
-                layer  = nn.Linear(embedding_dims, hidden_dims[ix])
-            else:
-                layer = nn.Linear(hidden_dims[ix], hidden_dims[ix + 1])
+        self.shared = nn.ModuleList()  # Shared: emb -> shared_dim
+        for dim in [shared_dim]:
+            layer = nn.Linear(embedding_dims, shared_dim)
             self.shared.append(layer)
 
             self.all_parameters.append(layer.weight)
             self.all_parameters.append(layer.bias)
 
-        self.lstm = nn.ModuleDict()  # Not Shared: hidden_dims[-1] -> hidden_dims[task_ix]
+        self.lstm = nn.ModuleDict()  # Not Shared: shared_dim -> hidden_dims[task_ix]
         for task_ix, _ in enumerate(input_dims):
-            layer = nn.LSTM(hidden_dims[-1],
+            layer = nn.LSTM(shared_dim,
                             hidden_dims[task_ix],
                             batch_first = batch_first,
                             num_layers = no_layers,
