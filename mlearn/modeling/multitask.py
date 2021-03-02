@@ -100,7 +100,7 @@ class EmbeddingLSTMClassifier(nn.Module):
         res = self.inputs[str(task_id)](sequence.long())
 
         for layer in self.shared:
-            res = layer(res)
+            res = self.dropout(layer(res))
 
         self.lstm[str(task_id)].flatten_parameters()
         lstm_out, (lstm_hidden, _) = self.lstm[str(task_id)](res)
@@ -227,10 +227,10 @@ class EmbeddingMLPClassifier(nn.Module):
         if self.batch_first:
             sequence = sequence.transpose(0, 1)
 
-        res = self.inputs[task_id](sequence)
+        res = self.inputs[str(task_id)](sequence)
 
         for layer in self.shared:
-            res = layer(res)
+            res = self.dropout(self.nonlinearity(layer(res)))
 
         res = self.dropout(self.hidden[task_id](res))
         res = self.nonlinearity(res)
