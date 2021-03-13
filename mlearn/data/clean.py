@@ -298,7 +298,7 @@ class Cleaner(object):
                                           unpack_hashtags = hashtags,
                                           unpack_contractions = contractions,
                                           spell_correct_elong = elong_spell,
-                                          tokenize = SocialTokenizer(lowercase = True).tokenize)
+                                          tokenizer = SocialTokenizer(lowercase = True).tokenize)
         self.filters = filters
 
     def _filter_ekphrasis(self, document: base.DocType, **kwargs) -> base.List[str]:
