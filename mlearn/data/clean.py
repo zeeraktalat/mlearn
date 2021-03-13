@@ -195,7 +195,7 @@ class Preprocessors(object):
         parse_doc = []
         doc = doc.split() if isinstance(doc, str) else doc
 
-        for w in doc.split():
+        for w in doc:
             if all(c in punctuation for c in w):
                 parse_doc.append(w)
             elif any(c in punctuation for c in w):
