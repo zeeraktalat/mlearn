@@ -190,16 +190,19 @@ class Preprocessors(object):
         """
         if not self.liwc_dict:
             self.liwc_dict = self.read_liwc()
-        liwc_doc = []
         kleene_star = [k[:-1] for k in self.liwc_dict if k[-1] == '*']
 
         if isinstance(doc, str):
-            doc = [w if w[0] not in punctuation and w[-1] not in punctuation
-                   else w.strip(punctuation) for w in doc.split()]
-
-        liwc_doc = [self._compute_liwc_token(tok, kleene_star) for tok in doc]
-
-        assert(len(liwc_doc) == len(doc))
+            parse_doc = []
+            for w in doc.split():
+                if all(c in punctuation for c in w):
+                    parse_doc.append(w)
+                elif any(c in punctuation for c in w):
+                    parse_doc.append(w.strip(punctuation))
+                else:
+                    parse_doc.append(w)
+        liwc_doc = [self._compute_liwc_token(tok, kleene_star) for tok in parse_doc]
+        assert(len(liwc_doc) == len(parse_doc))
 
         return liwc_doc
 
