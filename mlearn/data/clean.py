@@ -310,10 +310,13 @@ class Cleaner(object):
         """
         if self.filters is not None:
 
+            if isinstance(document, list):
+                document = " ".join(document)
+
             for filtr in self.filters:
                 document = document.replace(filtr, '')
 
-            document = document.split()
+            document = document.split(" ")
         return document
 
     def ekphrasis_tokenize(self, document: base.DocType, processes: base.List[str] = None, **kwargs
