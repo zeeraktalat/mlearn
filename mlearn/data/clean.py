@@ -308,14 +308,11 @@ class Cleaner(object):
         :document (base.DocType): The document to process.
         :returns document: Document filtered for ekphrasis specific tokens.
         """
+        if isinstance(document, list):
+            document = " ".join(document)
         if self.filters is not None:
-
-            if isinstance(document, list):
-                document = " ".join(document)
-
             for filtr in self.filters:
                 document = document.replace(filtr, '')
-
             document = document.split(" ")
         return document
 
