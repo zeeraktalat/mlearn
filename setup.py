@@ -21,7 +21,7 @@ setuptools.setup(
     python_requires='>3.6',
     install_requires=[
         "Cython==0.29.21",
-        "numpy==1.18.2",
+        "numpy==1.18.4",
         "tqdm==4.36.1",
         "spacy==2.2.2",
         "scikit-learn==0.23.1",
