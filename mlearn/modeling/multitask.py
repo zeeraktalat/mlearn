@@ -201,6 +201,7 @@ class EmbeddingMLPClassifier(nn.Module):
         self.shared = nn.ModuleList()  # Shared: emb -> shared
         for dim in [shared_dim]:
             layer = nn.Linear(embedding_dims, shared_dim)
+            self.shared.append(layer)
 
             self.all_parameters.append(layer.weight)
             self.all_parameters.append(layer.bias)
