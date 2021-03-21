@@ -215,7 +215,7 @@ class EmbeddingMLPClassifier(nn.Module):
 
         self.outputs = nn.ModuleDict()  # Not shared: shared -> hidden[task_ix]
         for task_ix, _ in enumerate(input_dims):
-            layer = nn.Linear(shared_dim, output_dims[task_ix])
+            layer = nn.Linear(hidden_dims[task_ix], output_dims[task_ix])
             self.outputs[str(task_ix)] = layer
 
             # Add parameters
