@@ -24,7 +24,7 @@ setuptools.setup(
         "numpy==1.18.4",
         "tqdm==4.36.1",
         "spacy==2.2.2",
-        "scikit-learn==0.24.1",
+        "scikit-learn==0.23.2",
         "torchtestcase",
         "torchtext==0.6.0",
         "torch==1.7.1",
